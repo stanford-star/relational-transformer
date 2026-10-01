@@ -57,7 +57,7 @@ is the same data those plots were drawn from.
 
 | | |
 |---|---|
-| **Hardware** | one GPU per job, 80 GB cards for the largest contexts. The LightGBM arms are CPU-only by construction (`plan.METHOD_DEVICE`). CPU is not an option for the RT jobs — see "Running a stage" below. |
+| **Hardware** | one GPU per job. The paper's runs used 80 GB A100s and H100s; a smaller card needs a smaller `tokens_per_gpu` (the plans pass `2**18`), which costs time rather than changing a result. The LightGBM arms are CPU-only by construction (`plan.METHOD_DEVICE`); CPU is not an option for the RT jobs — see "Running a stage" below. |
 | **Disk, downloaded** | ~51 GB preprocessed RelBench data for RT-J (`RT_PRE_DIR`; the `legacy/` subdirectory is another ~57 GB and is needed only for the two legacy checkpoints), ~19 GB raw RelBench data (`RT_RAW_DIR`, baseline featurizers only), 164 MB for the RT-J checkpoint. |
 | **Disk, derived** | `RT_SHARE` grows to roughly 240 GB once every stage's inputs exist, dominated by the FAISS retrieval indices (~141 GB) and the baseline feature tables (~51 GB). Per-task result JSONs in `RT_OUT_ROOT` are kilobytes. |
 | **Time** | the committed `series/`, `tune/tuned_configs.json` and `valtest/results.json` cost nothing. Re-running a stage's evaluations costs hundreds of GPU-hours; the 120-point context grid in `tune/` is roughly 200 GPU-hours on its own; re-pretraining is thousands. A single job is minutes to a few hours — one task of the subsampled RT arm, six context sizes up to 8192 over 8192 subsampled rows, took 2 min 23 s on one A100. |
@@ -90,6 +90,17 @@ Running a plan as a module executes its jobs **sequentially, in this process**:
 python -m reproduce.enscurve.plan     # 42 jobs, one GPU, sequential
 python -m reproduce.enscurve.reduce   # -> series/enscurve/{default,tuned}.json
 ```
+
+To see a stage's job list without running anything:
+
+```bash
+python -c "from reproduce.enscurve.plan import jobs; from reproduce.launch import describe; describe(jobs())"
+```
+
+`reproduce.scaling.plan.jobs` is the one that takes an argument — the arm names
+to enumerate, `sorted(reproduce.scaling.plan.arms())` for all 24. A plan lists
+only the jobs whose output is missing, so it prints `0 jobs` once a stage is
+finished.
 
 That is the honest default, not a scheduler. The paper's runs were submitted in
 parallel to a Slurm cluster, and the partitions, QoS names, accounts, node
@@ -222,10 +233,11 @@ printing:
   six context sizes (0.017 at the smallest, 256), which is the sampler's seed
   noise and not a code difference.
 - **Verified without a GPU.** `scaling/reduce.py` regenerates all 18 committed
-  series files byte-for-byte from the paper's per-task JSONs;
-  `enscurve/reduce.py` does the same for both ensemble curves;
-  `tune/collect.py` and `valtest/collect.py` reproduce the two committed
-  intermediates byte-for-byte; `leaderboard/reduce.py` scores all 21 tasks
+  series files byte-for-byte from the paper's per-task JSONs and
+  `enscurve/reduce.py` does the same for both ensemble curves — re-run from a
+  clean checkout, with nothing in `series/` changing. `tune/collect.py` and
+  `valtest/collect.py` reproduce the two committed intermediates byte-for-byte,
+  and `leaderboard/reduce.py` scores all 21 tasks
   through RelBench's own evaluator. Every `plan.py` enumerates its job list
   (408 scaling jobs over 24 arms, 84 leaderboard, 42 enscurve, 21 tune, 35
   baselines when none of their outputs exist), and an unset environment

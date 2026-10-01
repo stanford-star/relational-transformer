@@ -113,6 +113,11 @@ The two legacy checkpoints also need differently preprocessed data (the
 [Downloads](docs/downloads.md); `from_pretrained` resolves `stanford-star/rt-j`
 from the Hub on demand, so the quickstart above needs no manual download.
 
+Each checkpoint's architecture, training recipe, evaluation protocol, licence
+and limitations are on its Hub card. The cards are kept in this repository
+under [`docs/cards/`](docs/cards/), which also holds the cards of the
+preprocessed datasets.
+
 ## Bring your own database
 
 Point RT at your **own** database, define a
@@ -150,6 +155,19 @@ later stage reads them from there, so the grid never has to be re-run.
 | Re-run the evaluations behind a figure | each stage's `plan.py` | hundreds of GPU-hours |
 | Re-run the context grid | [`reproduce/tune/`](reproduce/tune/) | ~200 GPU-hours |
 | Re-run the pretraining | [`docs/train.md`](docs/train.md) | thousands of GPU-hours |
+
+**Expect agreement to a few tenths of a point, not to the digit.** Two changes
+landed after the paper's runs: the BFS child sampler now draws without
+replacement, which leaves the distribution of contexts alone but changes the
+random stream; and input z-scoring statistics are now restricted to the train
+period, where they used to be computed over all rows, so the published
+preprocessed datasets carry the older normalization until they are regenerated.
+We measured the second one with the released checkpoint at its default context
+over seven tasks: mean −0.045 AUROC points and −0.035 nMAE points, every
+per-task move under 0.51 points, mixed in sign.
+[`reproduce/README.md`](reproduce/README.md#what-agreement-to-expect) has the
+table, the caveats, and which parts of `reproduce/` have actually been run on a
+GPU versus which are untested.
 
 The paper's own plotting scripts are **not** in this repository. They read our
 private Weights & Biases projects with no cache in between, so for anyone
@@ -194,6 +212,8 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
 | [Baselines](docs/baselines.md) | Run the `rel2tab` tabular baselines through the same eval path |
 | [Context visualization](docs/context-visualization.md) | Inspect the context a config samples, in a browser |
+| [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, what agreement to expect, and what is out of reach |
+| [Model and dataset cards](docs/cards/README.md) | Per-artifact architecture, training recipe, evaluation protocol, licence and limitations |
 
 There is no CLI: RT is a library, and a run is a script that calls it. Copy
 something from [`examples/`](examples/) and edit it — every entry point takes

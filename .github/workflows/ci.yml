@@ -6,6 +6,20 @@ on:
   pull_request:
   workflow_dispatch:
 
+# One run per ref. Every job here does a full `maturin build --release` of
+# polars, so a burst of pushes otherwise queues several identical release builds
+# against the same runner pool and the newest commit's verdict arrives last.
+# Cancelling applies to `main` too: a superseded run is testing a tree that no
+# longer exists, and the only result anyone acts on is the tip's.
+#
+# A `workflow_dispatch` run gets a group of its own (`github.run_id` is unique),
+# so a manual verification run is never cancelled by the next push -- which is
+# the only way to get a verdict on a specific tree while several sessions are
+# committing to `main` minutes apart.
+concurrency:
+  group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest

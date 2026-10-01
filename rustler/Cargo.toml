@@ -19,25 +19,40 @@ crate-type = ["cdylib"]
 default = []
 vecdb = ["dep:faiss"]
 
+# Every requirement is the major the crate is written against, not `*`. A
+# wildcard resolves to whatever major exists on the build day, which an
+# incremental local build never notices -- the installed environment was linked
+# against the old one -- and a fresh build hits immediately. Taken literally
+# today, `*` moves pyo3 0.24 -> 0.29 and polars 0.46 -> 0.55, and the crate
+# stops compiling: `PyObject` moved, `Python::allow_threads` is gone,
+# `DataFrame::iter` is gone, `TimeUnit` no longer derefs. That is the path a
+# reader installing the sdist takes, so it is the path that must be pinned.
+# Bumping a major here is a deliberate, tested change.
 [dependencies]
-polars = {version = "*", features = ["parquet", "lazy", "dtype-categorical"]}
+polars = { version = "0.46", features = [
+    "parquet",
+    "lazy",
+    "dtype-categorical",
+] }
 chrono = "0.4"
-serde_yaml = "*"
-serde_json = "*"
-glob = "*"
-itertools = "*"
-serde = { version = "*", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
+glob = "0.3"
+itertools = "0.14"
+serde = { version = "1.0", features = ["derive"] }
 rand = "0.9.1"
-clap = { version = "*", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 # abi3-py311: one stable-ABI extension for every CPython from 3.11 up, so a
 # single wheel covers the whole supported range and needs no rebuild per minor
 # version. The floor is the package's requires-python.
-pyo3 = { version = "*", features = ["abi3-py311"] }
-memmap2 = "*"
-rkyv = { version = "*", features = ["pointer_width_64"] }
-numpy = { version = "*", features = ["half"] }
-indicatif = "*"
-half = { version = "*", features = ["rkyv"] }
-rayon = "*"
-dashmap = "*"
-faiss = { version = "*", features = ["static"], optional = true }
+pyo3 = { version = "0.24", features = ["abi3-py311"] }
+memmap2 = "0.9"
+rkyv = { version = "0.8", features = ["pointer_width_64"] }
+# Must track pyo3's major: numpy 0.24 is the release built against pyo3 0.24,
+# and a mismatch is a type error on every `PyArray` boundary.
+numpy = { version = "0.24", features = ["half"] }
+indicatif = "0.17"
+half = { version = "2.5", features = ["rkyv"] }
+rayon = "1.10"
+dashmap = "6.1"
+faiss = { version = "0.13", features = ["static"], optional = true }
