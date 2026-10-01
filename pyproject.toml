@@ -8,6 +8,18 @@ version = "1.9.0"
 description = "Relational Transformer (RT): a foundation model for relational data, bundling a native Rust data-processing engine (rt.rustler)."
 readme = "README.md"
 license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 # 3.11, not 3.12: nothing in `src/` uses 3.12-only syntax or stdlib, and a
 # consumer that pins 3.11 (relarena does, `~=3.11.0`) cannot resolve this
 # package at all if the floor is 3.12. Development still happens on 3.12 --
@@ -46,6 +58,11 @@ dependencies = [
     "wandb",
 ]
 
+[project.urls]
+Homepage = "https://star-project.stanford.edu/rt-j"
+Repository = "https://github.com/stanford-star/relational-transformer"
+Issues = "https://github.com/stanford-star/relational-transformer/issues"
+
 [project.optional-dependencies]
 # What the tree needs to test and lint itself, and nothing else: the suite, the
 # linter the suite is checked with, the pre-commit hooks and the build backend.
@@ -60,18 +77,16 @@ dev = [
 # featurizer's query engine, and the FAISS indices the sampler's opt-in vecdb
 # cargo feature reads. Heavy, and no shipped module under `src/rt` imports any
 # of it, so it is never installed by default.
+#
+# The three git dependencies these extras used to carry (`exaonetabular`,
+# `tabfm`, `roach`) are declared in `[tool.pixi.pypi-dependencies]` instead:
+# PyPI rejects an upload whose `Requires-Dist` contains a direct URL reference,
+# so a `foo @ git+https://...` entry anywhere in `[project]` makes the
+# distribution unpublishable. pixi resolves them from there unchanged.
 baselines = [
-    # EXAONE Tabular v1.0. Its pins (numpy >=2.3.5, scikit-learn >=1.7.2,
-    # torch >=2.6) are all satisfied here, so unlike rdblearn it solves in
-    # place.
-    "exaonetabular @ git+https://github.com/LGAI-Research/EXAONE-Tabular@8638e07d09fad154249bd75ba4786181491f7025",
     "duckdb",
     "faiss-cpu",
     "lightgbm",
-    # Google's TabFM v1.0. The pytorch extra, not jax: its pytorch backend
-    # needs only torch, while the jax extra would pull jax/jaxlib/flax/optax/
-    # orbax and a cpu-pinned torch into an environment built around torch+cu130.
-    "tabfm[pytorch] @ git+https://github.com/google-research/tabfm@fbb665569425fd2f490c6576b3af967876fe11ff",
     # TabICL v2, the in-context tabular predictor.
     "tabicl>=2.1.1,<3",
     # Prior Labs' TabPFN-3.5. v9 is the first release whose default
@@ -85,9 +100,6 @@ baselines = [
 # Cluster submission and plotting: the workflow around a research run rather
 # than the library or its tests. Never installed by default.
 research = [
-    # Submits jobs and is the job-side entry point (roach.slurm.run); pin and
-    # the submitting environment must agree (see its README).
-    "roach @ git+https://github.com/rishabh-ranjan/roach@main",
     "matplotlib",
     "tqdm",
     "wandb-workspaces",
@@ -171,6 +183,21 @@ relational-transformer = { path = ".", editable = true, extras = [
 # deliberately. The relarena branch pins `==2.1.2` instead (the package version
 # is relarena's data version); that pin belongs to that branch, not to `main`.
 relbench = { git = "https://github.com/stanford-star/relbench", rev = "bac62c99cf1a60fbfd7c61c5fd7cb183453b7997" }
+# The three git dependencies the `baselines` and `research` extras cannot
+# declare (a direct URL reference in `Requires-Dist` makes the distribution
+# unpublishable on PyPI). Same revisions as before; nothing under `src/rt`
+# imports any of them.
+#
+# EXAONE Tabular v1.0. Its pins (numpy >=2.3.5, scikit-learn >=1.7.2, torch
+# >=2.6) are all satisfied here, so unlike rdblearn it solves in place.
+exaonetabular = { git = "https://github.com/LGAI-Research/EXAONE-Tabular", rev = "8638e07d09fad154249bd75ba4786181491f7025" }
+# Google's TabFM v1.0. The pytorch extra, not jax: its pytorch backend needs
+# only torch, while the jax extra would pull jax/jaxlib/flax/optax/orbax and a
+# cpu-pinned torch into an environment built around torch+cu130.
+tabfm = { git = "https://github.com/google-research/tabfm", rev = "fbb665569425fd2f490c6576b3af967876fe11ff", extras = ["pytorch"] }
+# Submits jobs and is the job-side entry point (roach.slurm.run); pin and the
+# submitting environment must agree (see its README).
+roach = { git = "https://github.com/rishabh-ranjan/roach", branch = "main" }
 
 # Baseline featurization runs against the classic relbench 2.x API
 # (`relbench.datasets` / `relbench.tasks`), which the fork above does not carry,
@@ -234,3 +261,23 @@ pyarrow = "*"
 [tool.pixi.environments]
 featurize = { features = ["featurize"], no-default-feature = true }
 gnn = { features = ["gnn"], no-default-feature = true }
+
+# The lint scope is the public tree plus `reproduce/`: everything a reader who
+# arrived from the paper will open. `expts/` is private research code held to
+# different rules (see `expts/CLAUDE.md`) and is excluded here rather than in a
+# workflow argument, so a bare `ruff check` at the root, the pre-commit hook and
+# CI all see the same tree.
+[tool.ruff]
+extend-exclude = ["expts", "local", "rustler/target"]
+# pre-commit hands ruff an explicit file list, which overrides the exclusions
+# unless this is set. Without it a commit touching `expts/` is linted to the
+# public tree's standard.
+force-exclude = true
+
+# Code blocks inside Markdown are illustrative, not compiled: the snippets in
+# `README.md` and `docs/` are hand-wrapped so a reader can see a call's
+# arguments grouped by what they do. `ruff format` would one-argument-per-line
+# them and triple the quickstart's length. `ruff check` ignores Markdown
+# already; this makes the formatter agree.
+[tool.ruff.format]
+exclude = ["*.md"]

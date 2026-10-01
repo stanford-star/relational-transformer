@@ -19,7 +19,7 @@ def _fit_predict(X_train, y_train, X_test, task_type, params):
 class LGBMPredictor:
     def __init__(self, n_jobs):
         self.n_jobs = n_jobs
-        self.params = dict(n_jobs=1, verbose=-1)
+        self.params = {"n_jobs": 1, "verbose": -1}
 
     def _prep(self, train_features, train_labels, test_features, task_type):
         if len(train_labels) < 2:

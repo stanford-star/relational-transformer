@@ -53,6 +53,16 @@ The paper's own plotting scripts are not in this repository; they read our
 private Weights & Biases projects, so they would be a dead pointer. `series/`
 is the same data those plots were drawn from.
 
+## What you need
+
+| | |
+|---|---|
+| **Hardware** | one GPU per job, 80 GB cards for the largest contexts. The LightGBM arms are CPU-only by construction (`plan.METHOD_DEVICE`). CPU is not an option for the RT jobs — see "Running a stage" below. |
+| **Disk, downloaded** | ~51 GB preprocessed RelBench data for RT-J (`RT_PRE_DIR`; the `legacy/` subdirectory is another ~57 GB and is needed only for the two legacy checkpoints), ~19 GB raw RelBench data (`RT_RAW_DIR`, baseline featurizers only), 164 MB for the RT-J checkpoint. |
+| **Disk, derived** | `RT_SHARE` grows to roughly 240 GB once every stage's inputs exist, dominated by the FAISS retrieval indices (~141 GB) and the baseline feature tables (~51 GB). Per-task result JSONs in `RT_OUT_ROOT` are kilobytes. |
+| **Time** | the committed `series/`, `tune/tuned_configs.json` and `valtest/results.json` cost nothing. Re-running a stage's evaluations costs hundreds of GPU-hours; the 120-point context grid in `tune/` is roughly 200 GPU-hours on its own; re-pretraining is thousands. A single job is minutes to a few hours — one task of the subsampled RT arm, six context sizes up to 8192 over 8192 subsampled rows, took 2 min 23 s on one A100. |
+| **Software** | `pixi install` at the repository root, and nothing else. No `module load`, no cluster, no Weights & Biases account; `reproduce/` imports only `rt` and public packages. |
+
 ## Configuration
 
 Every path comes from an environment variable and nothing is defaulted — an
@@ -148,6 +158,85 @@ Metrics are computed on the sampler's normalized target scale, which for
 regression equals RelBench's NMAE and for classification is AUROC. Only
 `leaderboard/reduce.py` writes prediction CSVs and scores them with RelBench's
 own evaluator.
+
+## What agreement to expect
+
+**Not bit-exactness.** Two changes after the paper's runs mean a fresh run
+cannot be expected to match a published digit-for-digit:
+
+- **The context sampler's random stream changed.** The BFS child sampler used
+  to draw indices with replacement until it filled its quota; it now draws
+  without replacement. The distribution of contexts is unchanged — for rows
+  with fewer than `bfs_width` visible children the old loop already returned
+  essentially all of them — but which rows land in a context at a given seed is
+  not, so contexts and every feature computed from them differ.
+- **Input normalization changed.** Numeric and datetime cells are z-scored with
+  per-column statistics. Those statistics used to be computed over all rows of
+  every table, which let the validation and test periods set the scale that
+  training inputs were normalized with; they are now restricted to the train
+  period. The published preprocessed datasets still carry the old
+  normalization, so a reader who regenerates the data from raw is evaluating on
+  slightly different inputs than the paper did.
+
+**How much the normalization change is worth: a few tenths of a point.** We
+measured it directly — the released `stanford-star/rt-j` checkpoint at the
+released default context (`ctx=8192`, `lcs=256`, `bfs_width=32`,
+`prefer_latest=True`), one context seed, run twice with nothing but the
+preprocessed directory differing:
+
+| task | metric | old | new | new − old | rows |
+|---|---|--:|--:|--:|--:|
+| rel-f1/driver-dnf | AUROC ↑ | 82.843 | 82.537 | −0.306 | 702 |
+| rel-f1/driver-top3 | AUROC ↑ | 90.537 | 90.683 | +0.146 | 726 |
+| rel-event/user-repeat | AUROC ↑ | 79.101 | 79.088 | −0.013 | 246 |
+| rel-hm/user-churn | AUROC ↑ | 61.955 | 61.947 | −0.008 | 4096 |
+| rel-f1/driver-position | nMAE ↓ | 38.667 | 39.107 | +0.440 | 760 |
+| rel-trial/study-adverse | nMAE ↓ | 16.413 | 16.375 | −0.038 | 3098 |
+| rel-avito/ad-ctr | nMAE ↓ | 42.624 | 42.117 | −0.507 | 1816 |
+| **mean, 4 classification tasks** | AUROC ↑ | 78.609 | 78.564 | **−0.045** | |
+| **mean, 3 regression tasks** | nMAE ↓ | 32.568 | 32.533 | **−0.035** | |
+
+Every move is under 0.51 points, five of the seven are under 0.31, and the sign
+is mixed — it is noise-scale, not a systematic correction. The caveat matters as
+much as the number: this is one context seed over at most 4096 rows per task,
+far noisier than the paper's full-test four-seed ensembles, so it bounds the
+magnitude of the effect and does not correct any published figure. It also does
+not cover the two legacy checkpoints (`rt-v1`, `rt-plurel`), whose data lives in
+the `legacy/` tree and changes under the same fix.
+
+**So what a reader should expect:** running this code against the published
+preprocessed data, or against data regenerated from raw, lands within a few
+tenths of a point of the published numbers. A difference of that size is the
+expected outcome and not a sign that something is wrong; a difference of a
+point or more is.
+
+## What has actually been run
+
+Being specific about this, because "it should work" is not a claim worth
+printing:
+
+- **Verified on a GPU.** One job of `scaling/run.py` — the subsampled RT arm on
+  rel-f1/driver-dnf, six context sizes from 256 to 8192 — ran to completion in
+  2 min 23 s on one A100 80 GB and wrote its result JSON. Against the committed
+  series for that arm and task it agreed to within 0.003 AUROC at five of the
+  six context sizes (0.017 at the smallest, 256), which is the sampler's seed
+  noise and not a code difference.
+- **Verified without a GPU.** `scaling/reduce.py` regenerates all 18 committed
+  series files byte-for-byte from the paper's per-task JSONs;
+  `enscurve/reduce.py` does the same for both ensemble curves;
+  `tune/collect.py` and `valtest/collect.py` reproduce the two committed
+  intermediates byte-for-byte; `leaderboard/reduce.py` scores all 21 tasks
+  through RelBench's own evaluator. Every `plan.py` enumerates its job list
+  (408 scaling jobs over 24 arms, 84 leaderboard, 42 enscurve, 21 tune, 35
+  baselines when none of their outputs exist), and an unset environment
+  variable fails loudly.
+- **Untested.** The other stages' job bodies have not been run from this
+  directory on a GPU: `enscurve/run.py`, the `tune` grid, the `leaderboard`
+  jobs, and the baseline featurizers under `baselines/`. They are the paper's
+  code, carried across with the cluster submission layer removed and `device`
+  taken as an argument instead of hardcoded, and the reduce layer that consumes
+  their output is verified — but we say untested because untested is what they
+  are.
 
 ## What is not reproducible, and why
 

@@ -60,9 +60,43 @@ jobs:
             exit 1
           }
 
+  check:
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install twine packaging
+      - run: twine check --strict dist/*
+      - run: |
+          python - <<'EOF'
+          import glob, zipfile
+          from email.parser import BytesParser
+          from packaging.requirements import Requirement
+
+          bad = []
+          for whl in glob.glob("dist/*.whl"):
+              z = zipfile.ZipFile(whl)
+              name = next(n for n in z.namelist() if n.endswith(".dist-info/METADATA"))
+              meta = BytesParser().parsebytes(z.read(name))
+              for raw in meta.get_all("Requires-Dist") or []:
+                  if Requirement(raw).url is not None:
+                      bad.append(f"{whl}: {raw}")
+          if bad:
+              raise SystemExit(
+                  "PyPI rejects a distribution whose Requires-Dist carries a direct "
+                  "URL reference:\n" + "\n".join(bad)
+              )
+          EOF
+
   publish:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [wheels, sdist, tag-matches-version]
+    needs: [wheels, sdist, check, tag-matches-version]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

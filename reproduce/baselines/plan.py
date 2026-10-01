@@ -31,14 +31,14 @@ def jobs() -> list[Job]:
             Job(
                 name=f"featurize-sql-{db}",
                 target="reproduce.baselines.featurize_sql:featurize_db",
-                args=dict(
-                    db=db,
-                    db_task_list=config.db_task_list(),
-                    pre_dir=pre_dir,
-                    raw_dir=raw_dir,
-                    features_root=f"{share}/features",
-                    relbench_cache_dir=f"{share}/relbench-cache",
-                ),
+                args={
+                    "db": db,
+                    "db_task_list": config.db_task_list(),
+                    "pre_dir": pre_dir,
+                    "raw_dir": raw_dir,
+                    "features_root": f"{share}/features",
+                    "relbench_cache_dir": f"{share}/relbench-cache",
+                },
             )
         )
 
@@ -50,17 +50,17 @@ def jobs() -> list[Job]:
             Job(
                 name=f"featurize-rdblearn-{db}-{table}",
                 target="reproduce.baselines.featurize_rdblearn:featurize_table",
-                args=dict(
-                    db=db,
-                    table=table,
-                    task_type=task.task_type,
-                    pre_dir=pre_dir,
-                    raw_dir=raw_dir,
-                    features_root=f"{share}/features",
-                    relbench_cache_dir=f"{share}/relbench-cache",
-                    max_depth=2,
-                    max_train_samples=1000,
-                ),
+                args={
+                    "db": db,
+                    "table": table,
+                    "task_type": task.task_type,
+                    "pre_dir": pre_dir,
+                    "raw_dir": raw_dir,
+                    "features_root": f"{share}/features",
+                    "relbench_cache_dir": f"{share}/relbench-cache",
+                    "max_depth": 2,
+                    "max_train_samples": 1000,
+                },
             )
         )
 
@@ -71,19 +71,19 @@ def jobs() -> list[Job]:
             Job(
                 name=f"featurize-rt-{db}",
                 target="reproduce.baselines.featurize_rt:featurize_db",
-                args=dict(
-                    db=db,
-                    db_task_list=config.db_task_list(),
-                    pre_dir=pre_dir,
-                    features_root=f"{share}/features",
-                    ckpt=config.ckpt(),
-                    local_ctx_size=256,
-                    bfs_width=32,
-                    shuffle_seed=0,
-                    context_seed=0,
-                    db_cutoff=None,
-                    batch_size=1024,
-                ),
+                args={
+                    "db": db,
+                    "db_task_list": config.db_task_list(),
+                    "pre_dir": pre_dir,
+                    "features_root": f"{share}/features",
+                    "ckpt": config.ckpt(),
+                    "local_ctx_size": 256,
+                    "bfs_width": 32,
+                    "shuffle_seed": 0,
+                    "context_seed": 0,
+                    "db_cutoff": None,
+                    "batch_size": 1024,
+                },
             )
         )
 
@@ -102,14 +102,14 @@ def jobs() -> list[Job]:
             Job(
                 name=f"vector-db-{subdir.removesuffix('_features')}",
                 target="reproduce.baselines.build_vector_db:build_all",
-                args=dict(
-                    db_task_list=config.db_task_list(),
-                    pre_dir=pre_dir,
-                    features_root=f"{share}/features",
-                    features_subdir=subdir,
-                    vector_db_root=root,
-                    ivf_threshold=IVF_THRESHOLD,
-                ),
+                args={
+                    "db_task_list": config.db_task_list(),
+                    "pre_dir": pre_dir,
+                    "features_root": f"{share}/features",
+                    "features_subdir": subdir,
+                    "vector_db_root": root,
+                    "ivf_threshold": IVF_THRESHOLD,
+                },
             )
         )
     return out

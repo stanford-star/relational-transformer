@@ -42,3 +42,4 @@ local/
 src/rt/rustler*.so
 dist/
 rustler/.develop.lock
+%h/

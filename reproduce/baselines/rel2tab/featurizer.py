@@ -1,3 +1,4 @@
+import itertools
 import json
 from pathlib import Path
 
@@ -23,7 +24,7 @@ def table_offset_and_len(pre_dir: str, db: str, table_name: str) -> tuple[int, i
     sorted_offsets = sorted(
         (info["node_idx_offset"], info["num_nodes"]) for info in splits_info.values()
     )
-    for (off, n), (nxt, _) in zip(sorted_offsets, sorted_offsets[1:]):
+    for (off, n), (nxt, _) in itertools.pairwise(sorted_offsets):
         assert off + n == nxt, (
             f"non-contiguous node_idxs across splits for {db}/{table_name}: "
             f"{sorted_offsets}"

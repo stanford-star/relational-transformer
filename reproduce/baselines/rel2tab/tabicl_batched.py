@@ -323,7 +323,7 @@ class TabICLBatchedPredictor:
     def _standardize_y_batched(y_train, real_lens):
         device = y_train.device
         dtype = y_train.dtype
-        B, T = y_train.shape
+        _, T = y_train.shape
 
         arange_T = torch.arange(T, device=device).unsqueeze(0)
         real_mask = arange_T < real_lens.unsqueeze(-1)

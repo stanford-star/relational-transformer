@@ -75,7 +75,7 @@ native data engine ships as a prebuilt stable-ABI extension.
 - **`rt.data.stage`**: stages `pre_dir` onto node-local storage before it is
   mmapped; worker tensors are shared by descriptor so nothing leaks into
   `/dev/shm`.
-- **`CITATION.cff`, `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE` (MIT)**, a
+- **`CITATION.cff`, `SECURITY.md`, `LICENSE` (MIT)**, a
   GitHub Actions CI workflow (wheel build + tests in a plain venv, ruff
   lint/format) and a release workflow that builds wheels and an sdist on a
   `v*` tag and publishes them with PyPI trusted publishing.

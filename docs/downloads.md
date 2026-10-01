@@ -51,7 +51,7 @@ Raw data (only needed to re-run preprocessing yourself, see
 [preprocess.md](preprocess.md)) and checkpoints:
 
 ```bash
-# Raw "the Join" (650+ databases in RelBench format)
+# Raw "the Join" (639 databases in RelBench format)
 pixi run hf download stanford-star/the-join --repo-type dataset
 
 # Raw RelBench databases (RelBench format)
@@ -103,10 +103,24 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 Two further things fix a result besides the data: the checkpoint, and the
 `rustler` commit the data was preprocessed with and the contexts were sampled
 with. The published preprocessed repositories above were all built **before**
-`8030aa8` (`rustler: column stats from the train period only`), so they carry
-z-scoring statistics computed over the validation and test rows as well as the
-train period. Regenerating them at or after that commit changes the data without
-changing the on-disk format.
+`8030aa8` (`rustler: column stats from the train period only`), which restricted
+z-scoring statistics to the train period. Regenerating at or after that commit
+changes the data without changing the on-disk format — but not every repository
+is affected:
+
+| repository | changed by `8030aa8`? |
+|---|---|
+| `relbench-preprocessed` | **yes** — 34 of 50 database tables are time-indexed, and 27 of 40 numeric columns shift by more than 0.1 old-std (worst 1.43). `legacy/_transformed/` moves too, so RT-v1 results are pinned to this revision as well. |
+| `plurel-preprocessed` | **yes** — PluRel manifests carry a real `val_timestamp`. |
+| `the-join-preprocessed` | **no** — all 639 manifests have `val_timestamp: null` and the collection has no val/test splits, so neither half of the fix engages. The published revision is what the current code reproduces. |
+
+The downstream effect, measured with the released `rt-j` at its released default
+context, same commit and seed, only `pre_dir` differing: mean **−0.045 AUROC**
+and **−0.035 nMAE** over seven paired tasks, no task moving more than 0.51, sign
+mixed and largely cancelling. That is one context seed over at most 4,096 rows
+per task, so it bounds the magnitude rather than correcting any published
+number; the per-task table is on the
+[`relbench-preprocessed` card](https://huggingface.co/datasets/stanford-star/relbench-preprocessed).
 
 Without `--local-dir` these land in the shared HuggingFace cache
 (`~/.cache/huggingface/hub`, or `$HF_HOME`), which is what you want for
