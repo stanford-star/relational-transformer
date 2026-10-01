@@ -1,8 +1,8 @@
 ---
-# CC BY-SA 4.0 is inherited, not chosen: about half the source databases are
-# share-alike upstream and this artifact reproduces their text verbatim. The
-# "Licence" section below says so in prose.
-license: cc-by-sa-4.0
+# CC BY 4.0 covers these artifacts because they contain no verbatim upstream
+# content: the source strings are not shipped, only embeddings of them. The
+# "Licence" section below says what that does and does not cover.
+license: cc-by-4.0
 pretty_name: The Join (preprocessed for Relational Transformer)
 tags:
   - relational-deep-learning
@@ -41,8 +41,8 @@ the on-disk format the Relational Transformer dataloaders read. It is
 |---|---|
 | Databases | 523 (those under the 5 GB per-database cutoff, `all_5gb_cutoff`) |
 | Tasks | 13,243 (db, task) pairs over those 523 databases |
-| Files | 4,189 |
-| Size | 278,794,986,854 bytes (~259.6 GiB) |
+| Files | 3,667 |
+| Size | 275,371,755,983 bytes (~256.5 GiB) |
 | Text embedder | `sentence-transformers/all-MiniLM-L12-v2` (384-d) |
 
 Per-file-kind totals, which is what a partial download is planned against:
@@ -53,7 +53,6 @@ Per-file-kind totals, which is what a partial download is planned against:
 | `text_emb_all-MiniLM-L12-v2.bin` | ~29.8 GiB |
 | `p2f_adj.rkyv` | ~26.1 GiB |
 | `offsets.rkyv` | ~5.3 GiB |
-| `text.json` | ~3.2 GiB |
 
 ## Relation to the raw dataset
 
@@ -91,8 +90,16 @@ db-task-lists/
   offsets.rkyv                         # row offsets into nodes
   p2f_adj.rkyv                         # primary->foreign key adjacency
   text_emb_all-MiniLM-L12-v2.bin       # frozen text-column embeddings
-  text.json                            # the source strings (not needed to train)
 ```
+
+There is no `text.json`. `rustler` writes one during preprocessing — the
+deduplicated table of source strings that the embedder consumes — and it is
+**not shipped**, because nothing reads it after the embeddings exist: a string
+cell in `nodes.rkyv` is an index, and training and inference gather the
+embedding at that index straight out of `text_emb_*.bin`. Removing it is also
+what makes the licence below true. The consequence for you: to use a different
+text embedder, re-run preprocessing from the raw repository rather than
+re-embedding this tree.
 
 ## How to load it
 
@@ -110,8 +117,8 @@ every argument spelled out, and the released pretraining values live in it. Its
 `db_task_list` points at `db-task-lists/rt-j.json`, which is stale at this
 revision — see **Known defects** below for the one-block fix.
 [`docs/downloads.md`](https://github.com/stanford-star/relational-transformer/blob/main/docs/downloads.md)
-has the `--include` patterns that skip `text.json` and the embedders you are not
-using (~256 GiB instead of ~260), and the revision pins below.
+has the `--include` patterns that skip the embedders you are not using, and the
+revision pins below.
 
 ## How it was produced
 
@@ -131,30 +138,17 @@ num_shards=N` splits the collection across a job array.
 preprocessing-code commit before the upload on 2026-08-05/07); the 2026-09-12
 commits are a trim and a task-list regeneration, not a re-preprocessing.
 
-### The temporal-normalization fix does not change this dataset
+### Column statistics
 
-`rustler` PR #4 (`rustler: column stats from the train period only`, commit
-`8030aa8`, merged 2026-10-01) is a temporal-leakage fix: before it, per-column
-z-scoring statistics and the global datetime statistics were computed over the
-validation and test rows as well as the train period. It changes
-[`relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
-and
-[`plurel-preprocessed`](https://huggingface.co/datasets/stanford-star/plurel-preprocessed).
-**It does not change this one, and this one was therefore not regenerated.**
+`rustler` z-scores numeric and datetime cells. Since PR #4 (`rustler: column
+stats from the train period only`, commit `8030aa8`) the statistics come from
+the train period alone. That change leaves this collection byte-identical:
+every manifest in `stanford-star/the-join` has `val_timestamp: null` and the
+collection has no validation or test splits, so neither half of the fix
+engages.
 
-The fix has two halves and neither engages here. It cuts database-table
-statistics at the manifest's `val_timestamp`, and all 639 manifests in
-`stanford-star/the-join` have `val_timestamp: null`, which the fix explicitly
-leaves on full-table statistics. And it drops validation and test *task* tables
-out of the statistics loop, but this collection has no validation or test
-splits at all — the 6,023 forecasting tasks ship a `train.parquet` and nothing
-else. So the pre-#4 and post-#4 preprocessors produce byte-identical artifacts
-for every database here, and the published revision is the one the current code
-reproduces.
-
-A second merged change, PR #3 (`rustler: draw BFS children without rejection
-sampling`, `fly.rs`), affects the *sampler*, not this data, but means contexts
-drawn over it are not bit-identical to the paper's.
+PR #3 (`rustler: draw BFS children without rejection sampling`, `fly.rs`)
+changed the context *sampler*, not this data.
 
 ## Known defects at the current revision
 
@@ -201,61 +195,51 @@ pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
 
 ## Licence
 
-**CC BY-SA 4.0**, inherited from
-[`stanford-star/the-join`](https://huggingface.co/datasets/stanford-star/the-join)
-and, through it, from the upstream sources.
+**CC BY 4.0** — attribution only, commercial use permitted.
 
-The share-alike is not a choice made here. Of the 523 databases published in
-this repository, **264 (50.5%)** are copyleft, non-commercial or no-derivatives
-upstream:
-
-| upstream source | databases | declared licence |
-|---|---:|---|
-| Spider 1.0 | 143 | CC BY-SA 4.0 |
-| BIRD | 58 | CC BY-SA 4.0 |
-| Stack Exchange dumps | 40 | CC BY-SA 4.0 |
-| Wikipedia-derived | 5 | CC BY-SA 4.0 |
-| OpenStreetMap / Overture / GeoNuclearData | 4 | ODbL 1.0 |
-| Lahman / Baseball Databank, other | 3 | CC BY-SA 3.0 |
-| exploit-db (Offensive Security) | 1 | GPL 2.0 |
-| non-commercial or no-derivatives (2 of them also share-alike) | 12 | see the warning below |
-| unrestricted (CC0, CC BY, MIT, BSD, public domain) | 259 | — |
-
-That is 254 share-alike and 12 non-commercial / no-derivatives, overlapping in
-two, so 264 encumbered and 259 unrestricted.
-
-Per-database attribution — the `license` and `source_url` columns for all 639
-databases — lives on the raw repository,
+The raw collection,
 [`stanford-star/the-join`](https://huggingface.co/datasets/stanford-star/the-join),
-in `STATS/databases.parquet`. It applies to the derived artifacts here.
+is **CC BY-SA 4.0** and stays that way: it is an aggregate of 639 third-party
+databases, about half of them share-alike upstream (Spider 1.0 143, BIRD 58,
+Stack Exchange dumps 40, Wikipedia-derived 5, ODbL 4, CC BY-SA 3.0 3, GPL 2.0
+1), and that obligation is inherited rather than chosen. Per-database
+attribution — the `license` and `source_url` columns for all 639 — is in
+`STATS/databases.parquet` there.
 
-**Why the obligation carries into the preprocessed form.** This is a format
-conversion, not an independent work. `text.json` is a verbatim, deduplicated
-intern table of every string cell value in the source database, and
-`nodes.rkyv` stores the index into it, so every string and free-text column is
-exactly reconstructible — for the Spider, BIRD and Stack Exchange databases,
-whose content is overwhelmingly text, the share-alike material is present
-essentially in full, over a reproduced schema and foreign-key graph. Numeric
-and datetime cells are z-scored and the statistics are not serialized, so
-absolute scale is unrecoverable, and primary-key columns are dropped. Neither
-makes the textual content derived.
+This repository can be more permissive because **it contains no verbatim
+upstream content.** Per database it holds, and only holds:
 
-What share-alike does and does not do here: it applies when you redistribute
-this dataset or a modified version of it. It does **not** restrict commercial
-use, and it does **not** reach model weights trained on the data — the
-checkpoints released alongside it are CC BY 4.0.
+| | |
+|---|---|
+| `text_emb_*.bin` | one 384-d `bf16` MiniLM embedding per distinct source string |
+| `nodes.rkyv` | numeric and datetime cells z-scored, text cells as an embedding index, raw row timestamps |
+| `offsets.rkyv`, `p2f_adj.rkyv` | row offsets and the foreign-key graph |
+| `meta.json`, `table_info.json`, `column_index.json` | table and column names, row counts, semantic types |
 
-> **Twelve databases carry terms stricter than share-alike, and no outbound
-> licence cures them.** `join-yoochoose` is CC BY-NC-ND 4.0, and
-> no-derivatives is in tension with preprocessing itself.
-> `join-apple-podcasts` and `join-atp-tennis` are CC BY-NC-SA 4.0.
-> `join-imdb-full`, `join-imdb-ijs`, `join-imdb-small` (IMDb),
-> `join-imsa`, `join-indycar` (Racing-Reference) and `join-nascar-cup`,
-> `join-nascar-trk` (NASCAR Digital Media) assert non-commercial use and, in
-> several cases, **no redistribution**. `join-gbif-biodiversity` and
-> `join-gbif-species` are mixed CC0 / CC BY / CC BY-NC per occurrence record.
-> If your use is commercial, or you intend to redistribute, exclude these
-> before you do.
+The string cell values themselves are not here: `text.json` is a preprocessing
+intermediate and is not shipped, so no string or free-text column can be read
+back out. The z-scoring statistics are not serialized either, so numeric scale
+is unrecoverable, and primary-key columns are dropped. What remains is a lossy
+derived representation plus schema metadata — the same basis on which the
+released checkpoints are CC BY 4.0.
+
+So CC BY 4.0 covers **these artifacts**. It is not a licence for the underlying
+databases, and it is not a route around their terms:
+
+- To work with the source data, go to
+  [`stanford-star/the-join`](https://huggingface.co/datasets/stanford-star/the-join)
+  and follow each database's own licence.
+- Cite the RT-J paper for this artifact, and the upstream sources for the data
+  behind it. Several require attribution to the original publisher.
+- Twelve of the 523 databases carry upstream terms stricter than share-alike —
+  `join-yoochoose` (CC BY-NC-ND 4.0), `join-apple-podcasts` and
+  `join-atp-tennis` (CC BY-NC-SA 4.0), `join-imdb-full`, `join-imdb-ijs`,
+  `join-imdb-small`, `join-imsa`, `join-indycar`, `join-nascar-cup`,
+  `join-nascar-trk` (non-commercial, several also no-redistribution), and
+  `join-gbif-biodiversity`, `join-gbif-species` (mixed per occurrence record).
+  Those terms bind the source data, not the derived vectors here, but if you
+  intend to reconstruct or redistribute anything resembling the originals, start
+  from the raw repository and read them.
 
 ## Citation
 

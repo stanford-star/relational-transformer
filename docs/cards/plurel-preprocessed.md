@@ -108,22 +108,13 @@ repository commit **`970167c`** (2026-09-09, `rustler: no boolean sem type in
 sampler output; bools are z-scored numbers end to end`), the last
 preprocessing-code commit before that rebuild.
 
-> **This is pre-fix, leaky normalization.** `rustler` PR #4 (`rustler: column
-> stats from the train period only`, commit `8030aa8`, merged 2026-10-01)
-> restricted z-scoring statistics to the train period; before it, column
-> statistics and the global datetime statistics were computed over the
-> validation and test rows too. The on-disk format is unchanged, so this
-> dataset keeps the **old, leaky** normalization until it is regenerated. RT-J
-> phase 1 and RT-PluRel were both trained on this pre-#4 data. The fix engages
-> here because PluRel manifests carry a real `val_timestamp`; it does *not*
-> engage on
-> [`the-join-preprocessed`](https://huggingface.co/datasets/stanford-star/the-join-preprocessed),
-> whose manifests have `val_timestamp: null`. For a measured bound on how far
-> the fix moves downstream numbers, see the
-> [`relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
-> card: mean −0.045 AUROC and −0.035 nMAE over seven paired tasks, mixed in
-> sign, one context seed. That bounds the magnitude; it does not correct any
-> published number.
+`rustler` z-scores numeric and datetime cells. Since PR #4 (`rustler: column
+stats from the train period only`, commit `8030aa8`) the statistics come from
+the train period alone; PluRel manifests carry a real `val_timestamp`, so that
+change does affect this collection. The tree published at this revision
+predates `8030aa8`; a regenerated one is on its way and will be uploaded here,
+with the preprocessing commit above updated to match. Pin the revision below
+for the published numbers.
 
 ## Revisions
 
@@ -151,9 +142,15 @@ is published as CC BY-SA 4.0. The upstream collection keeps its own CC BY-SA
 4.0 terms when you redistribute *it*; CC BY 4.0 here applies to this
 preprocessed build.
 
-This reasoning does not carry over to the preprocessed builds of real-world
-data (`the-join-preprocessed`, `relbench-preprocessed`), whose source
-databases are third-party and share-alike.
+The preprocessed builds of real-world data,
+[`the-join-preprocessed`](https://huggingface.co/datasets/stanford-star/the-join-preprocessed)
+and
+[`relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed),
+are CC BY 4.0 as well, but for a different reason: their sources *are*
+third-party and share-alike, so those repositories ship no verbatim source
+content — only embeddings of it — and omit the `text.json` string table
+entirely. Here that was never necessary, so `text.json` ships and you can
+re-embed this tree with a different text embedder without regenerating it.
 
 ## Citation
 

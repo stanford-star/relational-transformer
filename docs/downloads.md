@@ -25,27 +25,35 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 
 Those are the paths the scripts default to (`--train.pre-dir data/the-join-preprocessed`,
 `--eval.pre-dir data/relbench-preprocessed`); pass your own to put them elsewhere.
-Each repo also ships its curated task lists under `db-task-lists/`, so they
-arrive with the data they refer to.
+The curated `(db, task)` mixtures are **not** in these repos: they are vendored
+in the Python package and read with `rt.data.get_mixture(collection, name)` /
+`rt.data.get_mixture_path(collection, name)`, where `collection` is one of
+`the-join`, `relbench`, `plurel`. `rt.data.list_mixtures()` names every one.
 
-The full preprocessed Join is **~260 GiB** at the current revision, since the
+The full preprocessed Join is **~256 GiB** at the current revision, since the
 2026-09-12 trim to the 523 databases under the 5 GB per-database cutoff (it was
-~1.5 TiB before). To fetch only what a run needs, keep
-the core rustler artifacts plus the one text embedder you train with, and skip
-`text.json`:
+~1.5 TiB before). To fetch only what a run needs, keep the core rustler
+artifacts plus the one text embedder you train with:
 
 ```bash
 pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
   --local-dir data/the-join-preprocessed --max-workers 16 \
-  --include "db-task-lists/*" "*/meta.json" "*/table_info.json" "*/column_index.json" \
+  --include "*/meta.json" "*/table_info.json" "*/column_index.json" \
             "*/nodes.rkyv" "*/offsets.rkyv" "*/p2f_adj.rkyv" \
             "*/text_emb_all-MiniLM-L12-v2.bin"
 ```
 
-Narrow it further with `--include "<db>/*"` per database (a `db-task-lists/*.json`
-entry names the dbs a mixture needs). Sizes across the 523 databases:
+Narrow it further with `--include "<db>/*"` per database (a mixture from
+`rt.data.get_mixture("the-join", "rt-j")` names the dbs it needs). Sizes across the 523 databases:
 `nodes.rkyv` ~195 GiB, `text_emb_all-MiniLM-L12-v2.bin` ~30 GiB, `p2f_adj.rkyv`
-~26 GiB, `offsets.rkyv` ~5 GiB, `text.json` ~3 GiB.
+~26 GiB, `offsets.rkyv` ~5 GiB.
+
+The preprocessed repositories carry no source strings: `rustler` writes a
+`text.json` intern table while preprocessing, the embedder consumes it, and a
+string cell in `nodes.rkyv` is then just an index into `text_emb_*.bin`. Only
+`plurel-preprocessed`, whose databases are synthetic, ships it. To train with a
+different text embedder, re-run preprocessing from the raw repository (see
+[preprocess.md](preprocess.md)) rather than re-embedding a downloaded tree.
 
 Raw data (only needed to re-run preprocessing yourself, see
 [preprocess.md](preprocess.md)) and checkpoints:
@@ -102,25 +110,12 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 
 Two further things fix a result besides the data: the checkpoint, and the
 `rustler` commit the data was preprocessed with and the contexts were sampled
-with. The published preprocessed repositories above were all built **before**
-`8030aa8` (`rustler: column stats from the train period only`), which restricted
-z-scoring statistics to the train period. Regenerating at or after that commit
-changes the data without changing the on-disk format — but not every repository
-is affected:
-
-| repository | changed by `8030aa8`? |
-|---|---|
-| `relbench-preprocessed` | **yes** — 34 of 50 database tables are time-indexed, and 27 of 40 numeric columns shift by more than 0.1 old-std (worst 1.43). `legacy/_transformed/` moves too, so RT-v1 results are pinned to this revision as well. |
-| `plurel-preprocessed` | **yes** — PluRel manifests carry a real `val_timestamp`. |
-| `the-join-preprocessed` | **no** — all 639 manifests have `val_timestamp: null` and the collection has no val/test splits, so neither half of the fix engages. The published revision is what the current code reproduces. |
-
-The downstream effect, measured with the released `rt-j` at its released default
-context, same commit and seed, only `pre_dir` differing: mean **−0.045 AUROC**
-and **−0.035 nMAE** over seven paired tasks, no task moving more than 0.51, sign
-mixed and largely cancelling. That is one context seed over at most 4,096 rows
-per task, so it bounds the magnitude rather than correcting any published
-number; the per-task table is on the
-[`relbench-preprocessed` card](https://huggingface.co/datasets/stanford-star/relbench-preprocessed).
+with. `8030aa8` (`rustler: column stats from the train period only`) restricted
+z-scoring statistics to the train period, which changes `relbench-preprocessed`
+and `plurel-preprocessed` but leaves `the-join-preprocessed` byte-identical —
+its manifests have `val_timestamp: null` and it has no val/test splits, so
+neither half of the change engages. Each card records the commit its tree was
+built at.
 
 Without `--local-dir` these land in the shared HuggingFace cache
 (`~/.cache/huggingface/hub`, or `$HF_HOME`), which is what you want for
