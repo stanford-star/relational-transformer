@@ -55,7 +55,7 @@ Raw data (only needed to re-run preprocessing yourself, see
 pixi run hf download stanford-star/the-join --repo-type dataset
 
 # Raw RelBench databases (RelBench format)
-pixi run hf download stanford-star/relbench --repo-type dataset
+pixi run hf download stanford-star/relbench-v1 --repo-type dataset
 
 # The RT-J checkpoint
 pixi run hf download stanford-star/rt-j --repo-type model
@@ -82,7 +82,7 @@ Every number in the RT-J paper was produced against these revisions:
 | `stanford-star/relbench-preprocessed` | `1016626ddb30c027b92458bf866903850cc205e1` | 2026-08-08 |
 | `stanford-star/plurel-preprocessed` | `9d70172425b44053f1270b19094ba6dcf7d66464` | 2026-09-12 |
 | `stanford-star/the-join` | `ec028dddca63c7eeb49bbce3d7a713783e165eea` | 2026-08-04 |
-| `stanford-star/relbench` | `d8e976fd0a4b78877204bc8dfbcfc9a9f7f48600` | 2026-08-25 |
+| `stanford-star/relbench-v1` | `d8e976fd0a4b78877204bc8dfbcfc9a9f7f48600` | 2026-08-25 |
 | `stanford-star/plurel` | `ae2f0b04f71ec17aebf6cf1fa8259fa655994b58` | 2026-09-08 |
 | `stanford-star/relbench-raw` | `f1d7228af23a22b9ece756fe5dda4dda79b711dc` | 2026-08-25 |
 | `stanford-star/rt-j` | `360798f5335975fdcae73e3ed58cf03366dbc082` | 2026-09-14 |

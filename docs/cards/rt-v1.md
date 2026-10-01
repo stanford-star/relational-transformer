@@ -13,7 +13,7 @@ tags:
   - relational-transformer
   - legacy
 datasets:
-  - stanford-star/relbench
+  - stanford-star/relbench-v1
   - stanford-star/relbench-preprocessed
 metrics:
   - roc_auc
@@ -181,7 +181,7 @@ only, commercial use permitted.
 
 The licence covers the released weights. It does not extend to the training
 data, which carries its own terms:
-[`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench)
+[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1)
 is **CC BY-SA 4.0**, and its databases are built from third-party sources that
 keep their own licences. RT's source code is MIT.
 
@@ -189,7 +189,7 @@ keep their own licences. RT's source code is MIT.
 
 - Models: [rt-j](https://huggingface.co/stanford-star/rt-j) (current) ·
   [rt-plurel](https://huggingface.co/stanford-star/rt-plurel)
-- Datasets: [relbench](https://huggingface.co/datasets/stanford-star/relbench) ·
+- Datasets: [relbench](https://huggingface.co/datasets/stanford-star/relbench-v1) ·
   [relbench-preprocessed](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
 - Code: <https://github.com/stanford-star/relational-transformer>
 

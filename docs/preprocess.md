@@ -2,7 +2,7 @@
 
 RT trains and predicts on a custom on-disk format produced by the `rustler`
 preprocessor from **any dataset in relbench format**. A dataset is a local path, or a HuggingFace Hub spec `org/repo[/subdir]`
-(e.g. `stanford-star/relbench/rel-f1`).
+(e.g. `stanford-star/relbench-v1/rel-f1`).
 
 Preprocessing runs `download/resolve → rustler → text embeddings` and writes a
 self-contained `<out-dir>/<name>/` directory. Text embeddings use all visible
@@ -18,7 +18,7 @@ edit the call, run it:
 pixi run python examples/preprocess.py
 ```
 
-As written it calls `one(dataset="stanford-star/relbench/rel-f1",
+As written it calls `one(dataset="stanford-star/relbench-v1/rel-f1",
 out_dir="data/relbench-preprocessed", ...)` and writes
 `data/relbench-preprocessed/rel-f1/`, the rustler artifacts the RT dataloaders
 read.

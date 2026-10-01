@@ -71,7 +71,7 @@ Three layers, in order:
 | layer | repository | what it holds |
 |---|---|---|
 | raw upstream | **this repository** | the original vendor dumps, as zips |
-| RelBench format | [`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench), [`stanford-star/tgb`](https://huggingface.co/datasets/stanford-star/tgb) | parquet tables + `manifest.yaml` |
+| RelBench format | [`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1), [`stanford-star/tgb`](https://huggingface.co/datasets/stanford-star/tgb) | parquet tables + `manifest.yaml` |
 | RT format | [`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed) | `rustler` artifacts + text embeddings |
 
 You want this repository **only** if you are rebuilding a RelBench-format
@@ -121,7 +121,7 @@ So:
   packaging licence above does not grant you that right.
 - Per-source terms for the RelBench-format databases are catalogued in
   `STATS/databases.parquet` on
-  [`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench);
+  [`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1);
   TGB's are documented at <https://tgb.complexdatalab.com>.
 
 ## Citation

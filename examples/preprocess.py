@@ -3,7 +3,7 @@ from rt.preprocess import ls, many, one, upload
 
 def preprocess_one_dataset() -> None:
     one(
-        dataset="stanford-star/relbench/rel-f1",
+        dataset="stanford-star/relbench-v1/rel-f1",
         out_dir="data/relbench-preprocessed",
         embedder="all-MiniLM-L12-v2",
         batch_size=1024,

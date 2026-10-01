@@ -1,5 +1,5 @@
 ---
-# CC BY-SA 4.0 is inherited from stanford-star/relbench, whose sources include
+# CC BY-SA 4.0 is inherited from stanford-star/relbench-v1, whose sources include
 # the Stack Exchange dumps. The "Licence" section below says so in prose.
 license: cc-by-sa-4.0
 pretty_name: RelBench (preprocessed for Relational Transformer)
@@ -44,7 +44,7 @@ the `pre_dir` that reproduces the published RT-J numbers.
 
 ## Relation to the raw dataset
 
-Derived from [`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench),
+Derived from [`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1),
 the RelBench databases and task tables in RelBench format (parquet +
 `manifest.yaml`), which also carries the regression-target standard deviations
 that turn MAE into nMAE. That repository is the one to cite and the one to
@@ -86,7 +86,7 @@ checkpoint is the one thing still resolved from the Hub on demand, so
 
 ```python
 # examples/preprocess.py
-one(dataset="stanford-star/relbench/rel-f1", out_dir="data/relbench-preprocessed",
+one(dataset="stanford-star/relbench-v1/rel-f1", out_dir="data/relbench-preprocessed",
     embedder="all-MiniLM-L12-v2", ...)   # once per database
 ```
 
@@ -165,7 +165,7 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 ## Licence
 
 **CC BY-SA 4.0**, inherited from
-[`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench)
+[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1)
 and, through it, from upstream.
 
 All seven databases are declared CC BY-SA 4.0 in that repository's

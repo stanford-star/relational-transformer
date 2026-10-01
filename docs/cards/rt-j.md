@@ -18,7 +18,7 @@ datasets:
   - stanford-star/the-join-preprocessed
   - stanford-star/plurel
   - stanford-star/plurel-preprocessed
-  - stanford-star/relbench
+  - stanford-star/relbench-v1
   - stanford-star/relbench-preprocessed
 metrics:
   - roc_auc
@@ -358,7 +358,7 @@ RT's own source code is MIT; see the
   [the-join-preprocessed](https://huggingface.co/datasets/stanford-star/the-join-preprocessed) ·
   [plurel](https://huggingface.co/datasets/stanford-star/plurel) ·
   [plurel-preprocessed](https://huggingface.co/datasets/stanford-star/plurel-preprocessed) ·
-  [relbench](https://huggingface.co/datasets/stanford-star/relbench) ·
+  [relbench](https://huggingface.co/datasets/stanford-star/relbench-v1) ·
   [relbench-preprocessed](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
 - Models: [rt-plurel](https://huggingface.co/stanford-star/rt-plurel) ·
   [rt-v1](https://huggingface.co/stanford-star/rt-v1)

@@ -73,7 +73,7 @@ unset variable fails loudly rather than guessing
 |---|---|
 | `RT_CKPT` | a local directory holding the RT-J `config.json` + `model.safetensors` (mirror [`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j)) |
 | `RT_PRE_DIR` | preprocessed RelBench data ([`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)) |
-| `RT_RAW_DIR` | raw RelBench data ([`stanford-star/relbench`](https://huggingface.co/datasets/stanford-star/relbench)), baseline featurizers only |
+| `RT_RAW_DIR` | raw RelBench data ([`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1)), baseline featurizers only |
 | `RT_SHARE` | a writable directory for derived inputs: baseline features, FAISS indices, TabICL checkpoints, the semantics-ablated data copy |
 | `RT_OUT_ROOT` | a writable directory for per-task result JSONs |
 

@@ -16,7 +16,7 @@ tags:
   - relational-transformer
 datasets:
   - stanford-star/the-join
-  - stanford-star/relbench
+  - stanford-star/relbench-v1
   - stanford-star/plurel
 pipeline_tag: tabular-classification
 metrics:
@@ -62,6 +62,13 @@ from rt.model import RelationalTransformer
 
 model = RelationalTransformer.from_pretrained("stanford-star/rt-plurel")
 ```
+
+Identical dims to `rt-j` (12 blocks, `d_model` 512, 8 heads, `d_ff` 2048,
+`all-MiniLM-L12-v2` / `d_text` 384), so the
+[end-to-end zero-shot quickstart on the `rt-j` card](https://huggingface.co/stanford-star/rt-j#usage)
+runs unchanged with `"stanford-star/rt-j"` replaced by
+`"stanford-star/rt-plurel"` — download one preprocessed RelBench database,
+load these weights, predict.
 
 To evaluate it on RelBench, copy
 [`examples/eval.py`](https://github.com/stanford-star/relational-transformer/blob/main/examples/eval.py)
@@ -134,7 +141,7 @@ is **CC BY-SA 4.0** and keeps those terms if you redistribute it.
   ([preprocessed](https://huggingface.co/datasets/stanford-star/plurel-preprocessed)) ·
   [stanford-star/the-join](https://huggingface.co/datasets/stanford-star/the-join)
   ([preprocessed](https://huggingface.co/datasets/stanford-star/the-join-preprocessed))
-- Evaluation: [RelBench](https://huggingface.co/datasets/stanford-star/relbench)
+- Evaluation: [RelBench](https://huggingface.co/datasets/stanford-star/relbench-v1)
   ([preprocessed](https://huggingface.co/datasets/stanford-star/relbench-preprocessed))
 - Code: <https://github.com/stanford-star/relational-transformer>
 - Reference model: [stanford-star/rt-j](https://huggingface.co/stanford-star/rt-j)
