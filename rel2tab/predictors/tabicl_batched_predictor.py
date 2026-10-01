@@ -43,9 +43,17 @@ Set ``TABICL_BATCHED_PROFILE_PATH=/path/to/file.jsonl`` to log per-call
 ``(n_train, task_type, n_features)`` triples for offline analysis.
 """
 
+# --- tabicl module-path compatibility shim -----------------------------------
+# The attention patch + TabICL imports below use ``tabicl.model.*``. Some
+# installed tabicl builds (e.g. the 2.1.1 wheel pinned in pixi.lock) expose the
+# internals under ``tabicl._model`` instead (identical submodules: attention,
+# layers, ssmax, tabicl). Alias the public path to the private one when only the
+# latter exists so the patched imports resolve regardless of wheel layout.
+import importlib as _importlib
 import json
 import math
 import os
+import sys as _sys
 import threading
 from collections import defaultdict
 from contextlib import contextmanager
@@ -55,15 +63,6 @@ import numpy as np
 import torch
 
 from rel2tab.predictor import Predictor
-
-# --- tabicl module-path compatibility shim -----------------------------------
-# The attention patch + TabICL imports below use ``tabicl.model.*``. Some
-# installed tabicl builds (e.g. the 2.1.1 wheel pinned in pixi.lock) expose the
-# internals under ``tabicl._model`` instead (identical submodules: attention,
-# layers, ssmax, tabicl). Alias the public path to the private one when only the
-# latter exists so the patched imports resolve regardless of wheel layout.
-import importlib as _importlib  # noqa: E402
-import sys as _sys  # noqa: E402
 
 try:  # pragma: no cover - import-time environment shim
     _importlib.import_module("tabicl.model")
@@ -158,10 +157,9 @@ def _install_attention_patch():
     with _patch_lock:
         if _patch_installed:
             return
-        from torch.nn import functional as F
-
         from tabicl.model import attention as _attn_mod
         from tabicl.model.layers import MultiheadAttentionBlock
+        from torch.nn import functional as F
 
         orig_block_forward = MultiheadAttentionBlock.forward
         orig_sdpa = _attn_mod.sdpa_with_flattened_batch
@@ -567,7 +565,7 @@ class TabICLBatchedPredictor(Predictor):
         """
         device = y_train.device
         dtype = y_train.dtype
-        B, T = y_train.shape
+        _B, T = y_train.shape
 
         arange_T = torch.arange(T, device=device).unsqueeze(0)
         real_mask = arange_T < real_lens.unsqueeze(-1)

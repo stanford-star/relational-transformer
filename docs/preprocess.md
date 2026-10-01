@@ -11,40 +11,46 @@ multithreaded (rayon).
 
 ## Preprocess one database in RelBench format
 
+There is no CLI. Copy [`examples/preprocess.py`](../examples/preprocess.py),
+edit the call, run it:
+
 ```bash
-pixi run preprocess --dataset stanford-star/relbench/rel-f1 --out-dir ~/scratch/pre
+pixi run python examples/preprocess.py
 ```
 
-This writes `~/scratch/pre/rel-f1/` containing rustler artifacts,
-which are used by RT dataloaders.
+As written it calls `one(dataset="stanford-star/relbench/rel-f1",
+out_dir="data/relbench-preprocessed", ...)` and writes
+`data/relbench-preprocessed/rel-f1/`, the rustler artifacts the RT dataloaders
+read.
 
-Any dataset in relbench format works by swapping the `--dataset` argument — the
+Any dataset in relbench format works by swapping the `dataset` argument — the
 manifest is the sole source of relational metadata; the parquet files carry only
-native dtypes. Useful flags: `--skip-tasks` (ingest db tables only), `--no-embed`,
-`--embedding-model`, `--batch-size`, and `--upload-repo <hub repo>` (preprocess
-and push in one step).
+native dtypes. Other arguments worth knowing: `skip_tasks=True` (ingest db
+tables only), `embed=False`, `embedder`, `batch_size`, and `upload_repo="<hub
+repo>"` (preprocess and push in one step).
 
 ## Preprocess many databases efficiently
 
-To preprocess a whole Hub collection (e.g. the 650-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)):
+To preprocess a whole Hub collection (e.g. the 650-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)),
+call `many` instead of `one` — `preprocess_a_collection()` in the same example:
 
-```bash
-pixi run python scripts/preprocess.py list --repo stanford-star/the-join   # inspect specs
-pixi run preprocess-many \
-  --repo stanford-star/the-join --out-dir ~/scratch/the-join-pre \
-  --shard 0 --num-shards 1 --skip-existing
+```python
+ls(repo="stanford-star/the-join", revision=None)      # what is in the collection
+many(repo="stanford-star/the-join", out_dir="data/the-join-preprocessed",
+     shard=0, num_shards=1, skip_existing=True, ...)
 ```
 
-`--skip-existing` makes the pass resumable (datasets whose embeddings are already
-written are skipped). `--shard i --num-shards N` splits the collection across a
-preemptible Slurm array — see `scripts/slurm_preprocess.sh`.
+`skip_existing=True` makes the pass resumable (datasets whose embeddings are
+already written are skipped). `shard=i, num_shards=N` splits the collection
+across a job array (e.g. a preemptible slurm array with `--array=0-63` mapping
+the task id to `shard`).
 
-## Using preprocessed data (local or Hub — same interface)
+## Using preprocessed data
 
 Everywhere a `pre_dir` is taken (see [inference](inference.md) and
-[pretrain](pretrain.md)), pass **either** a local path **or** a Hub repo: a local
-path is used directly (and always wins, so iterating on freshly preprocessed data
-never triggers a download), a Hub repo is downloaded and cached on demand (only
-the files needed for the requested databases). So you never have to upload
-anything to use your own data, and you can consume a published collection without
-downloading it whole.
+[pretrain](train.md)) it is a **local directory**: what this preprocessor wrote,
+or a published collection you downloaded with `hf download --local-dir` (see
+[downloads.md](downloads.md)). Nothing is fetched on demand, so you never have
+to upload anything to use your own data, and a run's data is a path you can
+inspect. The layout is the same either way — one subdirectory per database — so
+your own output and a downloaded collection are interchangeable.

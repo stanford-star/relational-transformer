@@ -16,14 +16,16 @@ class RDBLearnFeaturizerConfig:
     """
 
     pre_dir: str
-    eval_recipe: str
+    db_task_list: str
+    splits: tuple[str, ...]
     max_depth: int
     max_train_samples: int
 
     def build(self, device):
         return RDBLearnFeaturizer(
             pre_dir=self.pre_dir,
-            eval_recipe=self.eval_recipe,
+            db_task_list=self.db_task_list,
+            splits=self.splits,
             max_depth=self.max_depth,
             max_train_samples=self.max_train_samples,
             db=None,
@@ -38,7 +40,7 @@ class RDBLearnFeaturizer(Featurizer):
     by node_idx.
     """
 
-    def __init__(self, pre_dir, eval_recipe, max_depth, max_train_samples, db):
+    def __init__(self, pre_dir, db_task_list, splits, max_depth, max_train_samples, db):
         import time
 
         import fastdfs
@@ -47,12 +49,12 @@ class RDBLearnFeaturizer(Featurizer):
         from rdblearn.config import RDBLearnConfig
         from rdblearn.datasets import RDBDataset
         from rdblearn.estimator import RDBLearnEstimator
-        from rt.recipes import get_tasks
         from sklearn.impute import SimpleImputer
         from sklearn.linear_model import LogisticRegression, Ridge
         from sklearn.pipeline import make_pipeline
 
         from rel2tab.featurizer import load_table_info
+        from rt.data import get_tasks
 
         # (db, table) -> (precomputed_features_tensor, min_offset)
         self._features: dict[tuple[str, str], tuple[torch.Tensor, int]] = {}
@@ -69,11 +71,11 @@ class RDBLearnFeaturizer(Featurizer):
             predict_batch_size=5000,
         )
 
-        all_tasks = get_tasks(eval_recipe, pre_dir)
+        all_tasks = get_tasks(pre_dir, db_task_list, splits)
         if db is not None:
             all_tasks = [t for t in all_tasks if db in t.db_name]
 
-        # Deduplicate eval tasks by (db_name, table_name).
+        # Deduplicate tasks by (db_name, table_name).
         seen: set[tuple[str, str]] = set()
         for task in all_tasks:
             key = (task.db_name, task.table_name)
@@ -91,7 +93,7 @@ class RDBLearnFeaturizer(Featurizer):
             # just for this call.
             # this allows up-to-date rows in the context window, which matters for rel-f1
             _orig_get_db = relbench.base.Dataset.get_db
-            relbench.base.Dataset.get_db = lambda self, *args, **kwargs: _orig_get_db(
+            relbench.base.Dataset.get_db = lambda self, *args, **kwargs: _orig_get_db(  # noqa: B023
                 self, upto_test_timestamp=False
             )
             dataset = RDBDataset.from_relbench(rdb_name)

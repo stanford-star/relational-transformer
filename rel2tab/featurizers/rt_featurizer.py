@@ -4,8 +4,8 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from rt.data import process_batch
 from rel2tab.featurizer import Featurizer
+from rt.data import process_batch
 
 
 @dataclass
@@ -17,7 +17,7 @@ class RTFeaturizerConfig:
     """
 
     # RT model params
-    embedding_model: str
+    embedder: str
     d_text: int
     num_blocks: int
     d_model: int
@@ -30,16 +30,17 @@ class RTFeaturizerConfig:
     # Sampler params
     ctx_size: int
     bfs_width: int
-    eval_recipe: str
+    db_task_list: str
+    splits: tuple[str, ...]
     pre_dir: str
     shuffle_seed: int
     context_seed: int
-    # See rt.config.TrainConfig.vector_db_path.
+    # See rt.train.main's vector_db_path.
     vector_db_path: str | None
 
     def build(self, device):
         return RTFeaturizer(
-            embedding_model=self.embedding_model,
+            embedder=self.embedder,
             d_text=self.d_text,
             num_blocks=self.num_blocks,
             d_model=self.d_model,
@@ -49,7 +50,8 @@ class RTFeaturizerConfig:
             materialize_attn_masks=self.materialize_attn_masks,
             load_ckpt_path=self.load_ckpt_path,
             device=device,
-            eval_recipe=self.eval_recipe,
+            db_task_list=self.db_task_list,
+            splits=self.splits,
             pre_dir=self.pre_dir,
             ctx_size=self.ctx_size,
             bfs_width=self.bfs_width,
@@ -69,7 +71,7 @@ class RTFeaturizer(Featurizer, nn.Module):
 
     def __init__(
         self,
-        embedding_model,
+        embedder,
         d_text,
         num_blocks,
         d_model,
@@ -79,7 +81,8 @@ class RTFeaturizer(Featurizer, nn.Module):
         materialize_attn_masks,
         load_ckpt_path,
         device,
-        eval_recipe,
+        db_task_list,
+        splits,
         pre_dir,
         ctx_size,
         bfs_width,
@@ -102,7 +105,7 @@ class RTFeaturizer(Featurizer, nn.Module):
             materialize_attn_masks=materialize_attn_masks,
         )
         if load_ckpt_path is not None:
-            from rt.checkpoints import load_model
+            from rt.model import load_model
 
             raw = load_model(Path(load_ckpt_path).expanduser())
             state_dict = {k.removeprefix("_orig_mod."): v for k, v in raw.items()}
@@ -111,50 +114,38 @@ class RTFeaturizer(Featurizer, nn.Module):
         self.rt_model.requires_grad_(False)
         self.rt_model.eval()
 
-        from rt.data import RustlerDataset
-        from rt.recipes import get_tasks
+        from rt.data import RustlerDataset, get_tasks
 
-        all_tasks = get_tasks(eval_recipe, pre_dir)
+        all_tasks = get_tasks(pre_dir, db_task_list, splits)
         if db is not None:
             all_tasks = [t for t in all_tasks if db in t.db_name]
 
         self._samplers = {}
         for task in all_tasks:
             ds = RustlerDataset(
-                tasks=[
-                    (
-                        task.db_name,
-                        task.table_name,
-                        task.target_column,
-                        task.split,
-                        task.leakage_columns,
-                    )
-                ],
+                tasks=[task],
                 pre_dir=pre_dir,
                 global_rank=0,
                 local_rank=0,
                 world_size=1,
-                local_ctx_sizes=[ctx_size],
-                bfs_widths=[bfs_width],
+                local_ctx_size_list=[ctx_size],
+                bfs_width_list=[bfs_width],
                 num_walks=0,
                 walk_length=0,
-                prefer_latest=False,
+                prefer_latest_list=[False],
                 mask_prob_max=0.0,
-                embedding_model=embedding_model,
+                embedder=embedder,
                 d_text=d_text,
                 shuffle_seed=shuffle_seed,
                 context_seed=context_seed,
                 items_per_task=0,
                 quiet=True,
-                bool_as_num=True,
                 ignore_data_errors=False,
-                skip_text_cols=False,
                 mmap_populate=False,
-                balance_labels=False,
+                legacy_boolean=False,
                 timeout_per_item=3600.0,
-                ablate_schema_semantics=False,
                 vector_db_path=vector_db_path,
-                train_only_fallback=False,
+                db_cutoff=None,
             )
             self._samplers[task] = ds.sampler
 

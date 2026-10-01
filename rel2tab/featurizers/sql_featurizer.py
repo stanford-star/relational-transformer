@@ -13,13 +13,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import duckdb
 import numpy as np
 import pandas as pd
 import torch
-
-import duckdb
-from relbench.datasets import get_dataset
-from relbench.tasks import get_task
 
 from rel2tab.featurizer import Featurizer, load_table_info
 from rel2tab.featurizers.sql_queries import SQL_REGISTRY
@@ -31,16 +28,20 @@ class SQLFeaturizerConfig:
 
     Args:
         pre_dir: Directory containing preprocessed table_info.json files.
-        eval_recipe: Recipe name to determine which tasks to load data for.
+        db_task_list: Path to the JSON db-task list naming the tasks to load
+            data for.
+        splits: Splits of those tasks to load.
     """
 
     pre_dir: str
-    eval_recipe: str
+    db_task_list: str
+    splits: tuple[str, ...]
 
     def build(self, device):
         return SQLFeaturizer(
             pre_dir=self.pre_dir,
-            eval_recipe=self.eval_recipe,
+            db_task_list=self.db_task_list,
+            splits=self.splits,
             db=None,
         )
 
@@ -77,8 +78,11 @@ class SQLFeaturizer(Featurizer):
     foreign-key entity, falling back to all train rows if no matches.
     """
 
-    def __init__(self, pre_dir, eval_recipe, db):
-        from rt.recipes import get_tasks
+    def __init__(self, pre_dir, db_task_list, splits, db):
+        from relbench.datasets import get_dataset
+        from relbench.tasks import get_task
+
+        from rt.data import get_tasks
 
         pre_dir = str(Path(pre_dir).expanduser())
 
@@ -88,7 +92,7 @@ class SQLFeaturizer(Featurizer):
         # (rt_db_name, rt_table_name) -> (features_tensor, min_offset)
         self._features: dict[tuple[str, str], tuple[torch.Tensor, int]] = {}
 
-        all_tasks = get_tasks(eval_recipe, pre_dir)
+        all_tasks = get_tasks(pre_dir, db_task_list, splits)
         if db is not None:
             all_tasks = [t for t in all_tasks if db in t.db_name]
 

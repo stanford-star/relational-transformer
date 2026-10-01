@@ -1,32 +1,38 @@
 [package]
 name = "rustler"
-version = "1.0.0"
+version = "1.8.0"
+license = "MIT"
+description = "Native data-processing engine for the Relational Transformer (rt.rustler)."
+repository = "https://github.com/stanford-star/relational-transformer"
 edition = "2024"
 
 [lib]
-name = "_rustler"
+name = "rustler"
 crate-type = ["cdylib"]
 
-# `pre`: build the standalone preprocessor (reads parquet via polars, parses
-#   relbench-3.0.0 manifest.yaml). Needed only to build the `rustler` binary.
-# `vecdb`: opt-in FAISS-similarity seed selection in the Sampler. Off by
-#   default so the Sampler cdylib and the preprocessor build without FAISS
-#   (no cmake/BLAS), keeping the preprocessing environment minimal.
+# One feature, and nothing anybody builds routinely needs to know about it:
+# `vecdb` is opt-in FAISS-similarity seed selection in the Sampler, and it is
+# opt-in because FAISS needs cmake and a BLAS that this environment does not
+# carry. Everything else -- the Sampler and the preprocessor alike -- is built
+# unconditionally, so there is exactly one build and it has everything in it.
 [features]
 default = []
-pre = ["dep:polars", "dep:serde_yaml"]
 vecdb = ["dep:faiss"]
 
 [dependencies]
-polars = {version = "*", features = ["parquet", "lazy", "dtype-categorical"], optional = true}
-serde_yaml = {version = "*", optional = true}
+polars = {version = "*", features = ["parquet", "lazy", "dtype-categorical"]}
+chrono = "0.4"
+serde_yaml = "*"
 serde_json = "*"
 glob = "*"
 itertools = "*"
 serde = { version = "*", features = ["derive"] }
 rand = "0.9.1"
 clap = { version = "*", features = ["derive"] }
-pyo3 = { version = "*", features = ["abi3-py312"] }
+# abi3-py311: one stable-ABI extension for every CPython from 3.11 up, so a
+# single wheel covers the whole supported range and needs no rebuild per minor
+# version. The floor is the package's requires-python.
+pyo3 = { version = "*", features = ["abi3-py311"] }
 memmap2 = "*"
 rkyv = { version = "*", features = ["pointer_width_64"] }
 numpy = { version = "*", features = ["half"] }

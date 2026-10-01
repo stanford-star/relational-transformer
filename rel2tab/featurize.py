@@ -6,8 +6,8 @@ Works with any :class:`~rel2tab.featurizer.Featurizer` that implements
 config, iterates over task tables, calls ``compute_features`` for every
 node, and writes the resulting vectors to disk.
 
-All unique databases in the eval recipe are processed in parallel (one
-process per db).
+All unique databases the db-task list resolves to are processed in parallel
+(one process per db).
 
 Usage::
 
@@ -15,7 +15,8 @@ Usage::
         --featurize-batch-size 4096 --out-subdir rdblearn_features \\
         --num-workers 6 \\
         featurizer:rdb-learn-featurizer-config \\
-        --featurizer.eval-recipe relbench_eval \\
+        --featurizer.db-task-list ~/scratch/pre/db-task-lists/forecast.json \\
+        --featurizer.splits test \\
         --featurizer.pre-dir ~/scratch/pre \\
         --featurizer.max-depth 2 \\
         --featurizer.max-train-samples 1000
@@ -52,7 +53,8 @@ def _build_featurizer(cfg, db, device):
     if isinstance(cfg, RDBLearnFeaturizerConfig):
         return RDBLearnFeaturizer(
             pre_dir=cfg.pre_dir,
-            eval_recipe=cfg.eval_recipe,
+            db_task_list=cfg.db_task_list,
+            splits=cfg.splits,
             max_depth=cfg.max_depth,
             max_train_samples=cfg.max_train_samples,
             db=db,
@@ -60,12 +62,13 @@ def _build_featurizer(cfg, db, device):
     elif isinstance(cfg, SQLFeaturizerConfig):
         return SQLFeaturizer(
             pre_dir=cfg.pre_dir,
-            eval_recipe=cfg.eval_recipe,
+            db_task_list=cfg.db_task_list,
+            splits=cfg.splits,
             db=db,
         )
     elif isinstance(cfg, RTFeaturizerConfig):
         return RTFeaturizer(
-            embedding_model=cfg.embedding_model,
+            embedder=cfg.embedder,
             d_text=cfg.d_text,
             num_blocks=cfg.num_blocks,
             d_model=cfg.d_model,
@@ -75,7 +78,8 @@ def _build_featurizer(cfg, db, device):
             materialize_attn_masks=cfg.materialize_attn_masks,
             load_ckpt_path=cfg.load_ckpt_path,
             device=device,
-            eval_recipe=cfg.eval_recipe,
+            db_task_list=cfg.db_task_list,
+            splits=cfg.splits,
             pre_dir=cfg.pre_dir,
             ctx_size=cfg.ctx_size,
             bfs_width=cfg.bfs_width,
@@ -88,13 +92,12 @@ def _build_featurizer(cfg, db, device):
 
 def _featurize_db(featurizer_cfg, db, out_subdir, featurize_batch_size, local_rank):
     """Process all tables for a single db. Runs in a worker process."""
-    from rt.recipes import get_tasks
-
     from rel2tab.featurizer import (
         get_table_splits,
         load_table_info,
         validate_contiguous,
     )
+    from rt.data import get_tasks
 
     device = (
         f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else "cpu"
@@ -105,7 +108,7 @@ def _featurize_db(featurizer_cfg, db, out_subdir, featurize_batch_size, local_ra
     featurizer = _build_featurizer(featurizer_cfg, db, device)
 
     pre_dir = featurizer_cfg.pre_dir
-    tasks = get_tasks(featurizer_cfg.eval_recipe, pre_dir)
+    tasks = get_tasks(pre_dir, featurizer_cfg.db_task_list, featurizer_cfg.splits)
     tasks = [t for t in tasks if db in t.db_name]
     if not tasks:
         if local_rank == 0:
@@ -181,7 +184,7 @@ def _worker(args):
 
 
 def main(cfg: FeaturizeConfig):
-    from rt.recipes import get_tasks
+    from rt.data import get_tasks
 
     if dist.is_initialized():
         global_rank = dist.get_rank()
@@ -194,8 +197,10 @@ def main(cfg: FeaturizeConfig):
         flush=True,
     )
 
-    tasks = get_tasks(cfg.featurizer.eval_recipe, cfg.featurizer.pre_dir)
-    unique_dbs = sorted(set(t.db_name for t in tasks))
+    tasks = get_tasks(
+        cfg.featurizer.pre_dir, cfg.featurizer.db_task_list, cfg.featurizer.splits
+    )
+    unique_dbs = sorted({t.db_name for t in tasks})
 
     if local_rank == 0:
         print(f"Found {len(unique_dbs)} databases: {unique_dbs}")

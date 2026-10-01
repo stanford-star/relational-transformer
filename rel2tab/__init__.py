@@ -1,45 +1,45 @@
+from rel2tab.config import FeaturizerConfig, PredictorConfig, Rel2TabModelConfig
 from rel2tab.featurizer import Featurizer
-from rel2tab.predictor import Predictor
-from rel2tab.model import Rel2TabModel
-from rel2tab.config import Rel2TabModelConfig, FeaturizerConfig, PredictorConfig
 from rel2tab.featurizers import (
-    GlobalFeaturizer,
-    GlobalFeaturizerConfig,
     EntityFeaturizer,
     EntityFeaturizerConfig,
-    RTFeaturizer,
-    RTFeaturizerConfig,
+    GlobalFeaturizer,
+    GlobalFeaturizerConfig,
     RDBLearnFeaturizer,
     RDBLearnFeaturizerConfig,
+    RTFeaturizer,
+    RTFeaturizerConfig,
 )
+from rel2tab.model import Rel2TabModel
+from rel2tab.predictor import Predictor
 from rel2tab.predictors import (
-    MeanPredictor,
-    MeanPredictorConfig,
     LinearPredictor,
     LinearPredictorConfig,
+    MeanPredictor,
+    MeanPredictorConfig,
     TabPredictor,
     TabPredictorConfig,
 )
 
 __all__ = [
-    "Featurizer",
-    "Predictor",
-    "Rel2TabModel",
-    "Rel2TabModelConfig",
-    "FeaturizerConfig",
-    "PredictorConfig",
-    "GlobalFeaturizer",
-    "GlobalFeaturizerConfig",
     "EntityFeaturizer",
     "EntityFeaturizerConfig",
-    "RTFeaturizer",
-    "RTFeaturizerConfig",
-    "RDBLearnFeaturizer",
-    "RDBLearnFeaturizerConfig",
-    "MeanPredictor",
-    "MeanPredictorConfig",
+    "Featurizer",
+    "FeaturizerConfig",
+    "GlobalFeaturizer",
+    "GlobalFeaturizerConfig",
     "LinearPredictor",
     "LinearPredictorConfig",
+    "MeanPredictor",
+    "MeanPredictorConfig",
+    "Predictor",
+    "PredictorConfig",
+    "RDBLearnFeaturizer",
+    "RDBLearnFeaturizerConfig",
+    "RTFeaturizer",
+    "RTFeaturizerConfig",
+    "Rel2TabModel",
+    "Rel2TabModelConfig",
     "TabPredictor",
     "TabPredictorConfig",
 ]

@@ -1,0 +1,711 @@
+{
+ "arm": "nosem",
+ "arm_dir": "abl/nosem",
+ "ctx_sizes": [
+  256,
+  512,
+  1024,
+  2048,
+  4096,
+  8192
+ ],
+ "group": "abl",
+ "n_tasks": 21,
+ "rows": [
+  {
+   "avg_auc": 0.6791147768237891,
+   "avg_mae": 0.36435795823733014,
+   "ctx_size": 256,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 5.4774169921875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7161074179217404
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 6.1121826171875,
+     "metric_name": "mae",
+     "metric_value": 0.08966584503650665
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 3.96630859375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6413688718749367
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 3.9739990234375,
+     "metric_name": "mae",
+     "metric_value": 0.3138788044452667
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 0.9218061674008811,
+     "metric_name": "mae",
+     "metric_value": 0.48970672488212585
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 1.57568359375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5591620866550753
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 2.119873046875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.576633938346298
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 3.33197139938713,
+     "metric_name": "mae",
+     "metric_value": 0.4826054573059082
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 3.429519918283963,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6627082541765972
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 2.630081300813008,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6746991978609626
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 3.3233618233618234,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7333430927633826
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 2.655263157894737,
+     "metric_name": "mae",
+     "metric_value": 0.47425970435142517
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 3.2410468319559227,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8346245296822742
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 39.21728515625,
+     "metric_name": "mae",
+     "metric_value": 0.13792315125465393
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 3.29833984375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6016115529287616
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 16.2601318359375,
+     "metric_name": "mae",
+     "metric_value": 0.16544994711875916
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 35.777099609375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.780648125949013
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 14.332275390625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8546010396283815
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 1.7132568359375,
+     "metric_name": "mae",
+     "metric_value": 0.9555226564407349
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 0.8750806972240155,
+     "metric_name": "mae",
+     "metric_value": 0.17020933330059052
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 0.8909090909090909,
+     "metric_name": "roc_auc",
+     "metric_value": 0.513869214098047
+    }
+   }
+  },
+  {
+   "avg_auc": 0.6938546999496981,
+   "avg_mae": 0.35245920055442387,
+   "ctx_size": 512,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 10.989990234375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7185050343057057
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 12.7073974609375,
+     "metric_name": "mae",
+     "metric_value": 0.08709246665239334
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 8.01611328125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.642777052587477
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 7.9957275390625,
+     "metric_name": "mae",
+     "metric_value": 0.30392324924468994
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 2.556167400881057,
+     "metric_name": "mae",
+     "metric_value": 0.47657281160354614
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 3.7081298828125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5477851763730615
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 4.5924072265625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5943231345433593
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 6.5541368743615935,
+     "metric_name": "mae",
+     "metric_value": 0.45456451177597046
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 6.655771195097038,
+     "metric_name": "roc_auc",
+     "metric_value": 0.695646667357489
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 5.443089430894309,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7538770053475936
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 7.6581196581196584,
+     "metric_name": "roc_auc",
+     "metric_value": 0.755233494363929
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 6.264473684210526,
+     "metric_name": "mae",
+     "metric_value": 0.4495297968387604
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 7.5550964187327825,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8583755748327759
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 63.74462890625,
+     "metric_name": "mae",
+     "metric_value": 0.12377665191888809
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 5.476806640625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6105912307351902
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 31.6563720703125,
+     "metric_name": "mae",
+     "metric_value": 0.16253602504730225
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 61.912109375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.760786846196085
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 25.4547119140625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8463570715336306
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 4.442138671875,
+     "metric_name": "mae",
+     "metric_value": 0.943070650100708
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 2.0100064557779214,
+     "metric_name": "mae",
+     "metric_value": 0.17106664180755615
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 2.0024242424242424,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5419981112200792
+    }
+   }
+  },
+  {
+   "avg_auc": 0.6997103589284136,
+   "avg_mae": 0.35032230201694703,
+   "ctx_size": 1024,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 21.998291015625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7198257878025596
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 25.7637939453125,
+     "metric_name": "mae",
+     "metric_value": 0.08704928308725357
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 15.5301513671875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6422345851355241
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 15.4755859375,
+     "metric_name": "mae",
+     "metric_value": 0.29976069927215576
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 5.328193832599119,
+     "metric_name": "mae",
+     "metric_value": 0.469989538192749
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 7.681640625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5519047644680818
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 9.08642578125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5910523768366466
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 12.098569969356486,
+     "metric_name": "mae",
+     "metric_value": 0.4611232578754425
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 12.073033707865168,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7325918505981371
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 10.987804878048781,
+     "metric_name": "roc_auc",
+     "metric_value": 0.754846256684492
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 16.195156695156694,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7532084126287024
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 13.226315789473684,
+     "metric_name": "mae",
+     "metric_value": 0.4472005069255829
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 16.261707988980717,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8649469586120401
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 109.4368896484375,
+     "metric_name": "mae",
+     "metric_value": 0.12421631813049316
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 10.651611328125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6123458070583029
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 62.302001953125,
+     "metric_name": "mae",
+     "metric_value": 0.16030414402484894
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 112.8970947265625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.775526678061268
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 46.1181640625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8398791206358343
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 9.8240966796875,
+     "metric_name": "mae",
+     "metric_value": 0.9319331049919128
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 4.032924467398321,
+     "metric_name": "mae",
+     "metric_value": 0.17132386565208435
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 4.026666666666666,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5581617086193745
+    }
+   }
+  },
+  {
+   "avg_auc": 0.7032359014636776,
+   "avg_mae": 0.3495235625240538,
+   "ctx_size": 2048,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 44.9857177734375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7278725935889394
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 52.050537109375,
+     "metric_name": "mae",
+     "metric_value": 0.0876818597316742
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 30.75732421875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6408827391419745
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 30.7427978515625,
+     "metric_name": "mae",
+     "metric_value": 0.2973046898841858
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 10.59691629955947,
+     "metric_name": "mae",
+     "metric_value": 0.4649788737297058
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 15.8349609375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5567951940830377
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 17.8623046875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.582393200806684
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 24.051072522982636,
+     "metric_name": "mae",
+     "metric_value": 0.468036949634552
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 23.737487231869256,
+     "metric_name": "roc_auc",
+     "metric_value": 0.758118890539187
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 20.288617886178862,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7599933155080214
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 34.88034188034188,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7731518079344167
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 28.2,
+     "metric_name": "mae",
+     "metric_value": 0.4380228817462921
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 34.888429752066116,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8752547554347826
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 193.421630859375,
+     "metric_name": "mae",
+     "metric_value": 0.12921112775802612
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 22.0406494140625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6097350583369501
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 123.7308349609375,
+     "metric_name": "mae",
+     "metric_value": 0.15823423862457275
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 216.8974609375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7708711971807385
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 87.3839111328125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8366031048069614
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 20.941650390625,
+     "metric_name": "mae",
+     "metric_value": 0.9327282905578613
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 8.15687540348612,
+     "metric_name": "mae",
+     "metric_value": 0.16951315104961395
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 8.191515151515151,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5471589602024385
+    }
+   }
+  },
+  {
+   "avg_auc": 0.7040114229560234,
+   "avg_mae": 0.34515921771526337,
+   "ctx_size": 4096,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 91.283203125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7351783508687978
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 103.85888671875,
+     "metric_name": "mae",
+     "metric_value": 0.08838650584220886
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 62.2884521484375,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6415414964349018
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 62.17138671875,
+     "metric_name": "mae",
+     "metric_value": 0.2950737476348877
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 19.604625550660792,
+     "metric_name": "mae",
+     "metric_value": 0.4638251066207886
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 31.0360107421875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5545994800049524
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 34.954345703125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5877212906943244
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 43.152196118488256,
+     "metric_name": "mae",
+     "metric_value": 0.468226820230484
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 43.064862104187945,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7558645066952205
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 38.39430894308943,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7328542780748662
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 78.62108262108262,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7980969111403894
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 64.43684210526315,
+     "metric_name": "mae",
+     "metric_value": 0.4079805612564087
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 76.69972451790633,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8929177989130435
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 356.488525390625,
+     "metric_name": "mae",
+     "metric_value": 0.13377399742603302
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 46.8358154296875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6148109261575907
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 248.5556640625,
+     "metric_name": "mae",
+     "metric_value": 0.1570109874010086
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 431.408935546875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7671489392966799
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 173.22216796875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8194541184645017
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 43.5828857421875,
+     "metric_name": "mae",
+     "metric_value": 0.9251139163970947
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 16.50806972240155,
+     "metric_name": "mae",
+     "metric_value": 0.16704131662845612
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 16.62060606060606,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5479489787270109
+    }
+   }
+  },
+  {
+   "avg_auc": 0.7080754010971871,
+   "avg_mae": 0.34183209637800854,
+   "ctx_size": 8192,
+   "per_task": {
+    "rel-amazon/item-churn": {
+     "mean_labels": 180.9462890625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7490085618763703
+    },
+    "rel-amazon/item-ltv": {
+     "mean_labels": 203.459228515625,
+     "metric_name": "mae",
+     "metric_value": 0.08881163597106934
+    },
+    "rel-amazon/user-churn": {
+     "mean_labels": 127.467529296875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.642840222377636
+    },
+    "rel-amazon/user-ltv": {
+     "mean_labels": 127.380126953125,
+     "metric_name": "mae",
+     "metric_value": 0.29435914754867554
+    },
+    "rel-avito/ad-ctr": {
+     "mean_labels": 38.007709251101325,
+     "metric_name": "mae",
+     "metric_value": 0.4658891558647156
+    },
+    "rel-avito/user-clicks": {
+     "mean_labels": 61.2725830078125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5732859272975868
+    },
+    "rel-avito/user-visits": {
+     "mean_labels": 70.2088623046875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5952391817919908
+    },
+    "rel-event/user-attendance": {
+     "mean_labels": 88.40653728294178,
+     "metric_name": "mae",
+     "metric_value": 0.46191513538360596
+    },
+    "rel-event/user-ignore": {
+     "mean_labels": 83.68896833503575,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7340736646978228
+    },
+    "rel-event/user-repeat": {
+     "mean_labels": 71.04878048780488,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7115641711229945
+    },
+    "rel-f1/driver-dnf": {
+     "mean_labels": 336.2735042735043,
+     "metric_name": "roc_auc",
+     "metric_value": 0.8271556141121361
+    },
+    "rel-f1/driver-position": {
+     "mean_labels": 269.1578947368421,
+     "metric_name": "mae",
+     "metric_value": 0.3878304660320282
+    },
+    "rel-f1/driver-top3": {
+     "mean_labels": 335.2396694214876,
+     "metric_name": "roc_auc",
+     "metric_value": 0.9191772052675585
+    },
+    "rel-hm/item-sales": {
+     "mean_labels": 676.1522216796875,
+     "metric_name": "mae",
+     "metric_value": 0.1361936330795288
+    },
+    "rel-hm/user-churn": {
+     "mean_labels": 100.145263671875,
+     "metric_name": "roc_auc",
+     "metric_value": 0.6205754763546001
+    },
+    "rel-stack/post-votes": {
+     "mean_labels": 504.7803955078125,
+     "metric_name": "mae",
+     "metric_value": 0.1562335193157196
+    },
+    "rel-stack/user-badge": {
+     "mean_labels": 893.149658203125,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7730431319169997
+    },
+    "rel-stack/user-engagement": {
+     "mean_labels": 358.51806640625,
+     "metric_name": "roc_auc",
+     "metric_value": 0.7945294906706495
+    },
+    "rel-trial/site-success": {
+     "mean_labels": 89.2391357421875,
+     "metric_name": "mae",
+     "metric_value": 0.9204441905021667
+    },
+    "rel-trial/study-adverse": {
+     "mean_labels": 33.661071659134926,
+     "metric_name": "mae",
+     "metric_value": 0.16481198370456696
+    },
+    "rel-trial/study-outcome": {
+     "mean_labels": 33.660606060606064,
+     "metric_name": "roc_auc",
+     "metric_value": 0.5564121656799002
+    }
+   }
+  }
+ ],
+ "task_types": {
+  "rel-amazon/item-churn": "clf",
+  "rel-amazon/item-ltv": "reg",
+  "rel-amazon/user-churn": "clf",
+  "rel-amazon/user-ltv": "reg",
+  "rel-avito/ad-ctr": "reg",
+  "rel-avito/user-clicks": "clf",
+  "rel-avito/user-visits": "clf",
+  "rel-event/user-attendance": "reg",
+  "rel-event/user-ignore": "clf",
+  "rel-event/user-repeat": "clf",
+  "rel-f1/driver-dnf": "clf",
+  "rel-f1/driver-position": "reg",
+  "rel-f1/driver-top3": "clf",
+  "rel-hm/item-sales": "reg",
+  "rel-hm/user-churn": "clf",
+  "rel-stack/post-votes": "reg",
+  "rel-stack/user-badge": "clf",
+  "rel-stack/user-engagement": "clf",
+  "rel-trial/site-success": "reg",
+  "rel-trial/study-adverse": "reg",
+  "rel-trial/study-outcome": "clf"
+ }
+}

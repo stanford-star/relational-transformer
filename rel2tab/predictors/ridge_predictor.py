@@ -29,7 +29,7 @@ class RidgePredictor(Predictor):
         self.alpha_reg = alpha_reg
 
     def predict(self, train_features, train_labels, test_features, task_type):
-        from sklearn.linear_model import Ridge, LogisticRegression
+        from sklearn.linear_model import LogisticRegression, Ridge
 
         if train_features is None or len(train_labels) < 2:
             return 0.5 if task_type == "clf" else 0.0

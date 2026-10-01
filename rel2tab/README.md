@@ -54,6 +54,7 @@ from rel2tab.featurizer import Featurizer
 @dataclass
 class MyFeaturizerConfig:
     """Declare any hyperparameters as fields here."""
+
     some_param: int = 42
 
     def build(self, device):
@@ -101,7 +102,12 @@ Then register it:
 
 2. **`rel2tab/config.py`** — add `MyFeaturizerConfig` to the union:
    ```python
-   FeaturizerConfig = GlobalFeaturizerConfig | EntityFeaturizerConfig | RTFeaturizerConfig | MyFeaturizerConfig
+   FeaturizerConfig = (
+       GlobalFeaturizerConfig
+       | EntityFeaturizerConfig
+       | RTFeaturizerConfig
+       | MyFeaturizerConfig
+   )
    ```
 
 That's it. `Rel2TabModelConfig.build(device)` will call

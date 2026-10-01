@@ -1,13 +1,9 @@
-"""Public API: RelationalTransformer.from_pretrained + load_rt_model."""
-
-from __future__ import annotations
-
 import json
 
 import torch
 
 from rt import RelationalTransformer
-from rt.checkpoints import (
+from rt.model import (
     CONFIG_FILE,
     MODEL_FILE,
     load_rt_model,
@@ -19,41 +15,27 @@ def test_from_pretrained_local(tiny_checkpoint):
     ckpt, src = tiny_checkpoint
     model = RelationalTransformer.from_pretrained(ckpt, device="cpu")
     assert isinstance(model, RelationalTransformer)
-    assert model.config["embedding_model"] == "test-embed"  # config attached
+    assert model.config["embedder"] == "test-embed"
     s1, s2 = src.state_dict(), model.state_dict()
     assert s1.keys() == s2.keys()
-    assert all(torch.equal(s1[k], s2[k]) for k in s1)  # weights round-trip
+    assert all(torch.equal(s1[k], s2[k]) for k in s1)
 
 
 def test_load_rt_model_backcompat(tiny_checkpoint):
     ckpt, _ = tiny_checkpoint
     model, config = load_rt_model(str(ckpt))
     assert isinstance(model, RelationalTransformer)
-    assert config["embedding_model"] == "test-embed"
-
-
-def test_from_pretrained_subfolder(tmp_path, tiny_dims):
-    src = RelationalTransformer(**tiny_dims, compile=False, materialize_attn_masks=True)
-    (tmp_path / "classification").mkdir()
-    save_model(src.state_dict(), tmp_path / "classification" / MODEL_FILE)
-    (tmp_path / "classification" / CONFIG_FILE).write_text(
-        json.dumps({"model": tiny_dims, "embedding_model": "sub"})
-    )
-    model = RelationalTransformer.from_pretrained(tmp_path, subfolder="classification")
-    assert model.config["embedding_model"] == "sub"
+    assert config["embedder"] == "test-embed"
 
 
 def test_from_pretrained_model_kwargs(tmp_path, tiny_dims):
-    # config.json without dims -> dims supplied via keyword args
     src = RelationalTransformer(**tiny_dims, compile=False, materialize_attn_masks=True)
     save_model(src.state_dict(), tmp_path / MODEL_FILE)
-    (tmp_path / CONFIG_FILE).write_text(json.dumps({"embedding_model": "x"}))
+    (tmp_path / CONFIG_FILE).write_text(json.dumps({"embedder": "x"}))
     model = RelationalTransformer.from_pretrained(tmp_path, **tiny_dims)
-    assert model.config["embedding_model"] == "x"
+    assert model.config["embedder"] == "x"
 
 
 def test_compile_true_builds(tiny_dims):
-    # Regression: __init__ must still torch.compile forward when compile=True
-    # (an earlier refactor accidentally orphaned that line).
     m = RelationalTransformer(**tiny_dims, compile=True, materialize_attn_masks=True)
     assert callable(m.forward)

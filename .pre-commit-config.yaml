@@ -23,15 +23,15 @@ repos:
       - id: rustfmt
         name: rustfmt
         language: system
-        entry: scripts/cargo-hook.sh fmt
-        args: [--manifest-path, rustler/Cargo.toml, --]
+        entry: pixi run cargo fmt
+        args: [--manifest-path, rustler/Cargo.toml]
         types: [rust]
         pass_filenames: false
 
       - id: cargo-check
         name: cargo check
         language: system
-        entry: scripts/cargo-hook.sh check
+        entry: pixi run cargo check
         args: [--manifest-path, rustler/Cargo.toml]
         types: [rust]
         pass_filenames: false
@@ -39,7 +39,7 @@ repos:
       - id: cargo-clippy
         name: cargo clippy
         language: system
-        entry: scripts/cargo-hook.sh clippy
+        entry: pixi run cargo clippy
         args: [--manifest-path, rustler/Cargo.toml, --, -D, warnings]
         types: [rust]
         pass_filenames: false

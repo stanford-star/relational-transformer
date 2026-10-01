@@ -1,16 +1,11 @@
-//! Preprocess a relbench-3.0.0 dataset into rustler's on-disk format.
-//!
-//! Input is a self-describing dataset directory (a `manifest.yaml` next to
-//! `db/<table>.parquet`, and optionally `tasks/<task>/{train,val,test}.parquet`).
-//! The manifest is the sole source of relational metadata (primary keys, the
-//! foreign-key graph, time columns); the parquet files carry only native column
-//! dtypes. Output is written to `<out_dir>/<dataset name>/`.
-
 use crate::common::{Adj, Edge, Node, Offsets, SemType, TableInfo, TableType};
+use chrono::NaiveDate;
 use clap::Parser;
 use glob::glob;
 use indicatif::{ProgressBar, ProgressStyle};
 use polars::prelude::*;
+use rand::SeedableRng;
+use rand::rngs::StdRng;
 use rkyv::rancor::Error;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -23,7 +18,6 @@ use std::time::Instant;
 
 const PBAR_TEMPLATE: &str = "{percent}% {bar} {decimal_bytes}/{decimal_total_bytes} [{elapsed_precise}<{eta_precise}, {decimal_bytes_per_sec}]";
 
-/// Version of the preprocessed on-disk format, recorded in `meta.json`.
 const PRE_FORMAT_VERSION: u32 = 1;
 
 #[derive(Debug, Clone)]
@@ -43,30 +37,42 @@ struct Table {
     node_idx_offset: i64,
 }
 
-// ---------------------------------------------------------------------------
-// relbench-3.0.0 manifest schema (only the fields rustler needs). Unknown
-// fields are ignored, so this stays forward-compatible with the full schema.
-// ---------------------------------------------------------------------------
-
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct TableSpec {
     #[serde(default)]
     pkey: Option<String>,
     #[serde(default)]
     time_col: Option<String>,
     #[serde(default)]
-    fkeys: HashMap<String, String>, // fkey_col -> parent_table
+    fkeys: HashMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct DatasetManifest {
     name: String,
     #[serde(default)]
     tables: HashMap<String, TableSpec>,
+
+    #[serde(default)]
+    #[allow(dead_code)]
+    manifest_version: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    description: Option<serde_yaml::Value>,
+    #[serde(default)]
+    val_timestamp: Option<String>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    test_timestamp: Option<serde_yaml::Value>,
 }
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct TaskManifest {
+    #[serde(default)]
+    kind: Option<String>,
     #[serde(default)]
     entity_table: Option<String>,
     #[serde(default)]
@@ -85,11 +91,34 @@ struct TaskManifest {
     dst_entity_table: Option<String>,
     #[serde(default)]
     dst_entity_col: Option<String>,
+
+    #[serde(default)]
+    remove_columns: Vec<(String, String)>,
+
+    #[serde(default)]
+    #[allow(dead_code)]
+    name: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    manifest_version: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    description: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    timedelta: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    num_eval_timestamps: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    eval_k: Option<serde_yaml::Value>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    sql: Option<serde_yaml::Value>,
 }
 
 impl TaskManifest {
-    /// Foreign keys of a task label table: its entity column(s) point into the
-    /// database entity table(s) (src/dst for link-prediction tasks).
     fn fkeys(&self) -> HashMap<String, String> {
         let mut m = HashMap::new();
         for (col, table) in [
@@ -112,8 +141,6 @@ fn load_yaml<T: serde::de::DeserializeOwned>(path: &Path) -> T {
         .unwrap_or_else(|e| panic!("failed to parse YAML {}: {}", path.display(), e))
 }
 
-/// Read an integer value (a foreign key / row index) as i64, accepting any
-/// width. relbench-3.0.0 stores reindexed keys as whatever int type fits.
 fn anyvalue_to_i64(v: &AnyValue) -> Option<i64> {
     match v {
         AnyValue::Int8(x) => Some(*x as i64),
@@ -124,18 +151,13 @@ fn anyvalue_to_i64(v: &AnyValue) -> Option<i64> {
         AnyValue::UInt16(x) => Some(*x as i64),
         AnyValue::UInt32(x) => Some(*x as i64),
         AnyValue::UInt64(x) => Some(*x as i64),
-        // Nullable-int keys upcast to float by pandas; NaN means "missing".
+
         AnyValue::Float32(x) => (!x.is_nan()).then_some(*x as i64),
         AnyValue::Float64(x) => (!x.is_nan()).then_some(*x as i64),
         _ => None,
     }
 }
 
-/// Read the timestamp (seconds since epoch, as i32) at row `r` of a table's
-/// designated time column. Returns None for null cells, and also when the time
-/// column is not a Datetime (a few datasets designate a non-temporal column,
-/// e.g. an integer `year`); such edges simply carry no timestamp rather than
-/// aborting the whole dataset.
 fn read_timestamp(df: &DataFrame, tcol_name: &str, r: usize) -> Option<i32> {
     let col = df.column(tcol_name).ok()?;
     let dt = col.datetime().ok()?;
@@ -143,9 +165,6 @@ fn read_timestamp(df: &DataFrame, tcol_name: &str, r: usize) -> Option<i32> {
         .map(|v| (v / 1_000_000_000).clamp(i32::MIN as i64, i32::MAX as i64) as i32)
 }
 
-/// Parent row indices referenced by a single foreign-key cell. Handles scalar
-/// keys and list-valued keys (a row that links to several parents, e.g. a
-/// many-to-many relation); null/NaN entries are skipped.
 fn fk_parent_idxs(v: &AnyValue) -> Vec<i64> {
     match v {
         AnyValue::Null => Vec::new(),
@@ -154,10 +173,6 @@ fn fk_parent_idxs(v: &AnyValue) -> Vec<i64> {
     }
 }
 
-/// Normalize a freshly-read table to a uniform set of dtypes before
-/// featurization: dates and non-nanosecond datetimes -> Datetime(ns), and
-/// categoricals -> strings. Other dtypes are handled downstream (numbers,
-/// bools, strings, binary).
 fn normalize_df(df: DataFrame) -> DataFrame {
     let casts: Vec<Expr> = df
         .iter()
@@ -169,9 +184,11 @@ fn normalize_df(df: DataFrame) -> DataFrame {
                         .cast(DataType::Datetime(TimeUnit::Nanoseconds, None))
                         .alias(name.as_str()),
                 ),
-                DataType::Categorical(_, _) => {
-                    Some(col(name.as_str()).cast(DataType::String).alias(name.as_str()))
-                }
+                DataType::Categorical(_, _) => Some(
+                    col(name.as_str())
+                        .cast(DataType::String)
+                        .alias(name.as_str()),
+                ),
                 _ => None,
             }
         })
@@ -185,28 +202,153 @@ fn normalize_df(df: DataFrame) -> DataFrame {
         .expect("failed to normalize column dtypes")
 }
 
+const IDENTIFIER_COL: &str = "identifier";
+
+const IDENTIFIABILITY_MIN: f64 = 0.5;
+
+const IDENTIFIABILITY_SAMPLE: usize = 1_000_000;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum IdentifierPolicy {
+    None,
+
+    Empty,
+
+    EmptyOrTime,
+
+    Threshold,
+}
+
+impl IdentifierPolicy {
+    fn from_env() -> Self {
+        match std::env::var("RT_IDENTIFIER_POLICY").as_deref() {
+            Ok("none") => Self::None,
+            Ok("empty") => Self::Empty,
+            Ok("empty_or_time") => Self::EmptyOrTime,
+            Ok("threshold") | Err(_) => Self::Threshold,
+            Ok(other) => panic!(
+                "unknown RT_IDENTIFIER_POLICY {other:?}; \
+                 expected none|empty|empty_or_time|threshold"
+            ),
+        }
+    }
+}
+
+fn ensure_emittable(
+    df: DataFrame,
+    table_name: &str,
+    table_type: &TableType,
+    pcol_name: &Option<String>,
+    fcol_name_to_ptable_name: &HashMap<String, String>,
+    tcol_name: &Option<String>,
+) -> DataFrame {
+    if !matches!(table_type, TableType::Db) {
+        return df;
+    }
+    let is_structural = |name: &str| -> bool {
+        pcol_name.as_deref() == Some(name)
+            || fcol_name_to_ptable_name.contains_key(name)
+            || tcol_name.as_deref() == Some(name)
+    };
+
+    let constant: Vec<String> = df
+        .iter()
+        .filter(|s| !is_structural(s.name().as_str()))
+        .filter(|s| s.n_unique().map(|n| n <= 1).unwrap_or(false))
+        .map(|s| s.name().to_string())
+        .collect();
+    let mut df = if constant.is_empty() {
+        df
+    } else {
+        println!(
+            "  {}: dropping {} constant column(s): {:?}",
+            table_name,
+            constant.len(),
+            constant
+        );
+        df.drop_many(&constant)
+    };
+
+    let emitted: Vec<String> = df
+        .iter()
+        .filter(|s| {
+            let n = s.name().as_str();
+            pcol_name.as_deref() != Some(n) && !fcol_name_to_ptable_name.contains_key(n)
+        })
+        .map(|s| s.name().to_string())
+        .collect();
+
+    let identifiability = if emitted.is_empty() {
+        0.0
+    } else {
+        let n_sample = df.height().min(IDENTIFIABILITY_SAMPLE);
+        if n_sample == 0 {
+            1.0
+        } else {
+            let sample = df
+                .select(emitted.iter().map(|s| s.as_str()))
+                .expect("failed to select emitted columns")
+                .head(Some(n_sample));
+            let distinct = sample
+                .unique_stable(None, UniqueKeepStrategy::First, None)
+                .map(|d| d.height())
+                .unwrap_or(n_sample);
+            distinct as f64 / n_sample as f64
+        }
+    };
+
+    let policy = IdentifierPolicy::from_env();
+    let only_time = !emitted.is_empty()
+        && emitted.len() == 1
+        && tcol_name.as_deref() == Some(emitted[0].as_str());
+    let needs_identifier = match policy {
+        IdentifierPolicy::None => false,
+        IdentifierPolicy::Empty => emitted.is_empty(),
+        IdentifierPolicy::EmptyOrTime => emitted.is_empty() || only_time,
+        IdentifierPolicy::Threshold => identifiability < IDENTIFIABILITY_MIN,
+    };
+
+    if needs_identifier {
+        let n = df.height();
+        let mut hasher = DefaultHasher::new();
+        std::hash::Hash::hash(table_name, &mut hasher);
+        let mut rng = StdRng::seed_from_u64(std::hash::Hasher::finish(&hasher));
+        let vals: Vec<f64> = (0..n)
+            .map(|_| {
+                let u1: f64 = rand::Rng::random_range(&mut rng, f64::MIN_POSITIVE..1.0);
+                let u2: f64 = rand::Rng::random_range(&mut rng, 0.0..1.0);
+                (-2.0 * u1.ln()).sqrt() * (std::f64::consts::TAU * u2).cos()
+            })
+            .collect();
+        println!(
+            "  {}: policy={:?} identifiability={:.4} emitted={:?} -- adding synthetic \
+             `{}` ~ N(0,1) so its {} rows can be told apart",
+            table_name, policy, identifiability, emitted, IDENTIFIER_COL, n
+        );
+        df.with_column(Series::new(IDENTIFIER_COL.into(), vals))
+            .expect("failed to add identifier column");
+    }
+    df
+}
+
 #[derive(Parser)]
 pub struct Cli {
-    /// Local dataset directory in relbench-3.0.0 layout: a `manifest.yaml`
-    /// next to `db/<table>.parquet` (and optionally `tasks/<task>/`).
     #[arg(long)]
     pub dataset_dir: String,
-    /// Output root. Preprocessed data is written to `<out_dir>/<dataset name>`.
+
     #[arg(long)]
     pub out_dir: String,
-    /// Ingest only the database tables; skip `tasks/`.
+
     #[arg(long, default_value_t = false)]
     pub skip_tasks: bool,
-    /// Keep database tables out of the node vector (task nodes only).
+
     #[arg(long, default_value_t = false)]
     pub skip_db: bool,
-    /// Provenance recorded in `meta.json` (e.g. the source HF dataset spec).
+
     #[arg(long)]
     pub source: Option<String>,
 }
 
-/// One parquet file to ingest, with relational metadata resolved from the
-/// (dataset or task) manifest.
 struct ReadSpec {
     path: PathBuf,
     table_name: String,
@@ -222,9 +364,6 @@ pub fn main(cli: Cli) {
     let name = manifest.name.clone();
     println!("preprocessing dataset {:?} from {:?}", name, dataset_dir);
 
-    // Assemble the work list: database tables first, then task label tables.
-    // The order fixes node_idx_offset assignment, so we sort within each group
-    // for reproducible output.
     let mut specs: Vec<ReadSpec> = Vec::new();
 
     let mut db_specs: Vec<ReadSpec> = Vec::new();
@@ -232,7 +371,10 @@ pub fn main(cli: Cli) {
         let path = entry.unwrap();
         let stem = path.file_stem().unwrap().to_str().unwrap().to_string();
         let spec = manifest.tables.get(&stem).cloned().unwrap_or_else(|| {
-            eprintln!("warning: table {:?} not in manifest; treating as relation-free", stem);
+            eprintln!(
+                "warning: table {:?} not in manifest; treating as relation-free",
+                stem
+            );
             TableSpec::default()
         });
         db_specs.push(ReadSpec {
@@ -249,8 +391,7 @@ pub fn main(cli: Cli) {
     specs.extend(db_specs);
 
     let mut num_task_tables = 0usize;
-    // Per-task metadata (target column + type) recorded in meta.json so the
-    // pretraining/eval task lists can be built straight from preprocessed data.
+
     let mut tasks_meta: Vec<serde_json::Value> = Vec::new();
     if !cli.skip_tasks {
         let mut task_specs: Vec<ReadSpec> = Vec::new();
@@ -261,6 +402,10 @@ pub fn main(cli: Cli) {
                 continue;
             }
             let tm: TaskManifest = load_yaml(&tm_path);
+
+            if tm.task_type.as_deref() == Some("recommendation") {
+                continue;
+            }
             let task_name = task_dir.file_name().unwrap().to_str().unwrap().to_string();
             let fkeys = tm.fkeys();
             let mut splits: Vec<&str> = Vec::new();
@@ -282,14 +427,22 @@ pub fn main(cli: Cli) {
                     });
                 }
             }
-            tasks_meta.push(serde_json::json!({
+            let mut task_meta = serde_json::json!({
                 "name": task_name,
+
+
+                "kind": tm.kind,
                 "target_col": tm.target_col,
                 "task_type": tm.task_type,
                 "entity_table": tm.entity_table,
                 "time_col": tm.time_col,
                 "splits": splits,
-            }));
+            });
+
+            if !tm.remove_columns.is_empty() {
+                task_meta["remove_columns"] = serde_json::json!(tm.remove_columns);
+            }
+            tasks_meta.push(task_meta);
         }
         task_specs.sort_by(|a, b| a.path.cmp(&b.path));
         num_task_tables = task_specs.len();
@@ -318,6 +471,15 @@ pub fn main(cli: Cli) {
         let pcol_name = spec.pcol_name;
         let fcol_name_to_ptable_name = spec.fcol_name_to_ptable_name;
         let tcol_name = spec.tcol_name;
+
+        let df = ensure_emittable(
+            df,
+            &table_name,
+            &table_type,
+            &pcol_name,
+            &fcol_name_to_ptable_name,
+            &tcol_name,
+        );
 
         println!(
             "read table {} of type {:?} with shape {:?}",
@@ -353,18 +515,53 @@ pub fn main(cli: Cli) {
 
     println!("computing column stats...");
     let tic = Instant::now();
+    let stats_cutoff: Option<i64> = manifest.val_timestamp.as_deref().map(|s| {
+        NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            .unwrap_or_else(|e| panic!("failed to parse val_timestamp {:?}: {}", s, e))
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            .and_utc()
+            .timestamp_nanos_opt()
+            .unwrap()
+    });
     let mut dt_cnt: usize = 0;
     let mut dt_mean: f64 = 0.0;
     let mut dt_m2: f64 = 0.0;
 
-    for table in table_map.values_mut() {
-        for col in table.df.iter() {
+    for ((_, table_type), table) in table_map.iter_mut() {
+        if matches!(table_type, TableType::Val | TableType::Test) {
+            continue;
+        }
+        let stats_df = match (table_type, stats_cutoff, &table.tcol_name) {
+            (TableType::Db, Some(cutoff), Some(tcol_name)) => {
+                let tcol = table.df.column(tcol_name).unwrap();
+                assert!(
+                    *tcol.dtype() == DataType::Datetime(TimeUnit::Nanoseconds, None),
+                    "time column {} of {} has dtype {:?}",
+                    tcol_name,
+                    table.table_name,
+                    tcol.dtype()
+                );
+                let mask = tcol.datetime().unwrap().physical().lt_eq(cutoff);
+                let stats_df = table.df.filter(&mask).unwrap();
+                println!(
+                    "  {}: column stats from {}/{} rows up to val_timestamp",
+                    table.table_name,
+                    stats_df.height(),
+                    table.df.height()
+                );
+                stats_df
+            }
+            _ => table.df.clone(),
+        };
+        for col in stats_df.iter() {
             let col = col.rechunk();
             match col.dtype() {
                 DataType::Boolean => {
                     let col_float = col.cast(&DataType::Float64).unwrap().drop_nulls();
                     let col_mean = col_float.mean().unwrap_or(0.0);
-                    let col_std = col_float.std(1).unwrap_or(0.0);
+                    let col_std = col_float.std(1).unwrap_or(1.0);
+                    let col_std = if col_std == 0.0 { 1.0 } else { col_std };
                     table.col_stats.push(ColStat {
                         mean: col_mean,
                         std: col_std,
@@ -381,7 +578,6 @@ pub fn main(cli: Cli) {
                 | DataType::Float64
                 | DataType::Float32
                 | DataType::Duration(_) => {
-                    // Duration -> raw integer count of time units, then numeric.
                     let col = if matches!(col.dtype(), DataType::Duration(_)) {
                         col.cast(&DataType::Int64).unwrap()
                     } else {
@@ -395,8 +591,6 @@ pub fn main(cli: Cli) {
                     table.col_stats.push(ColStat { mean, std });
                 }
                 DataType::Datetime(u, _) => {
-                    // Accumulate a single global mean/std over all datetime
-                    // cells (Welford), so datetimes share one normalizer.
                     let col = if *u != TimeUnit::Nanoseconds {
                         col.cast(&DataType::Datetime(TimeUnit::Nanoseconds, None))
                             .unwrap()
@@ -482,14 +676,12 @@ pub fn main(cli: Cli) {
         for (col, col_stat) in table.df.iter().zip(&table.col_stats) {
             let col = col.rechunk();
 
-            // Convert categoricals to strings
             let col = if matches!(col.dtype(), DataType::Categorical(_, _)) {
                 col.cast(&DataType::String).unwrap()
             } else {
                 col
             };
 
-            // Convert datetime columns to nanoseconds if needed
             let col = if let DataType::Datetime(unit, tz) = col.dtype() {
                 if *unit != TimeUnit::Nanoseconds {
                     col.cast(&DataType::Datetime(TimeUnit::Nanoseconds, tz.clone()))
@@ -565,10 +757,9 @@ pub fn main(cli: Cli) {
                             .expect("parent node index overflow");
                         node.f2p_nbr_idxs.push(pnode_idx);
 
-                        let ptimestamp = ptable
-                            .tcol_name
-                            .as_ref()
-                            .and_then(|tcol_name| read_timestamp(&ptable.df, tcol_name, pval as usize));
+                        let ptimestamp = ptable.tcol_name.as_ref().and_then(|tcol_name| {
+                            read_timestamp(&ptable.df, tcol_name, pval as usize)
+                        });
 
                         let f2p_edge = Edge {
                             node_idx: pnode_idx,
@@ -601,7 +792,7 @@ pub fn main(cli: Cli) {
                 node.table_name_idx = table_name_idx;
 
                 let val = match val {
-                    AnyValue::Boolean(val) => AnyValue::Boolean(val),
+                    AnyValue::Boolean(val) => AnyValue::Float64(if val { 1.0 } else { 0.0 }),
                     AnyValue::Int8(val) => AnyValue::Float64(val as f64),
                     AnyValue::Int16(val) => AnyValue::Float64(val as f64),
                     AnyValue::Int32(val) => AnyValue::Float64(val as f64),
@@ -611,8 +802,7 @@ pub fn main(cli: Cli) {
                     AnyValue::UInt32(val) => AnyValue::Float64(val as f64),
                     AnyValue::UInt64(val) => AnyValue::Float64(val as f64),
                     AnyValue::Float32(val) => AnyValue::Float64(val as f64),
-                    // Duration columns (e.g. lap/pit times): treat the raw
-                    // integer count of time units as a numeric value.
+
                     AnyValue::Duration(val, _) => AnyValue::Float64(val as f64),
                     AnyValue::Binary(val) =>
                     {
@@ -623,17 +813,6 @@ pub fn main(cli: Cli) {
                 };
                 match val {
                     AnyValue::Null => {}
-                    AnyValue::Boolean(val) => {
-                        let val_float = if val { 1.0 } else { 0.0 };
-                        let val_float = (val_float - col_stat.mean) / col_stat.std;
-                        node.boolean_values.push(val_float as f32);
-                        node.number_values.push(0.0);
-                        node.text_values.push(0);
-                        node.datetime_values.push(0.0);
-                        node.sem_types.push(SemType::Boolean);
-                        node.col_name_idxs.push(col_name_idx);
-                        node.class_value_idx.push(-1);
-                    }
                     AnyValue::Float64(val) => {
                         if val.is_nan() {
                             continue;
@@ -664,9 +843,7 @@ pub fn main(cli: Cli) {
                         node.col_name_idxs.push(col_name_idx);
                         node.class_value_idx.push(-1);
                     }
-                    // List/array columns (e.g. RelBench rel-amazon product.category)
-                    // are flattened to their textual representation and treated as
-                    // a single Text value.
+
                     AnyValue::String(val) => {
                         let l = text_to_idx.len() as i32;
                         let text_idx = *text_to_idx.entry(val.to_string()).or_insert_with(|| l);
@@ -717,7 +894,6 @@ pub fn main(cli: Cli) {
     let mut writer = BufWriter::new(file);
     serde_json::to_writer(&mut writer, &text_vec).unwrap();
 
-    // Column name -> index mapping collected during node processing.
     let column_index: HashMap<String, i32> = column_name_to_idx.into_iter().collect();
     let file = fs::File::create(format!("{}/column_index.json", pre_path)).unwrap();
     let mut writer = BufWriter::new(file);
@@ -783,9 +959,9 @@ pub fn main(cli: Cli) {
     writer.write_all(&bytes).unwrap();
     println!("done in {:?}.", tic.elapsed());
 
-    // Self-describing metadata for the preprocessed artifact. The embedding
-    // step appends `text_embeddings` (model -> file) to this file.
-    let source = cli.source.unwrap_or_else(|| dataset_dir.display().to_string());
+    let source = cli
+        .source
+        .unwrap_or_else(|| dataset_dir.display().to_string());
     let meta = serde_json::json!({
         "name": name,
         "format_version": PRE_FORMAT_VERSION,

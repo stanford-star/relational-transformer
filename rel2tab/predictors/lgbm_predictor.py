@@ -41,14 +41,14 @@ class LGBMPredictor(Predictor):
         min_child_samples,
         reg_lambda,
     ):
-        self.params = dict(
-            n_estimators=n_estimators,
-            num_leaves=num_leaves,
-            learning_rate=learning_rate,
-            min_child_samples=min_child_samples,
-            reg_lambda=reg_lambda,
-            verbose=-1,
-        )
+        self.params = {
+            "n_estimators": n_estimators,
+            "num_leaves": num_leaves,
+            "learning_rate": learning_rate,
+            "min_child_samples": min_child_samples,
+            "reg_lambda": reg_lambda,
+            "verbose": -1,
+        }
 
     def predict(self, train_features, train_labels, test_features, task_type):
         from lightgbm import LGBMClassifier, LGBMRegressor

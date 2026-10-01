@@ -1,20 +1,20 @@
 from dataclasses import dataclass
 
 from rel2tab.featurizers import (
-    GlobalFeaturizerConfig,
     EntityFeaturizerConfig,
-    RTFeaturizerConfig,
-    RDBLearnFeaturizerConfig,
+    GlobalFeaturizerConfig,
     PrecomputedFeaturizerConfig,
+    RDBLearnFeaturizerConfig,
+    RTFeaturizerConfig,
 )
 from rel2tab.predictors import (
-    MeanPredictorConfig,
-    LinearPredictorConfig,
-    TabPredictorConfig,
-    TabICLBatchedPredictorConfig,
     IdentityPredictorConfig,
-    RidgePredictorConfig,
     LGBMPredictorConfig,
+    LinearPredictorConfig,
+    MeanPredictorConfig,
+    RidgePredictorConfig,
+    TabICLBatchedPredictorConfig,
+    TabPredictorConfig,
     XGBoostPredictorConfig,
 )
 
@@ -41,14 +41,14 @@ PredictorConfig = (
 class Rel2TabModelConfig:
     """Config for Rel2TabModel.
 
-    Fully independent of rt.config.ModelConfig.  Use ``build(device)`` to
+    Fully independent of the RT model config.  Use ``build(device)`` to
     construct a ready-to-use Rel2TabModel.
     """
 
     featurizer: FeaturizerConfig
     predictor: PredictorConfig
     featurize_batch_size: int
-    embedding_model: str
+    embedder: str
     d_text: int
 
     def build(self, device):

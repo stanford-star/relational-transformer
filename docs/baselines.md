@@ -7,8 +7,11 @@ task's in-context training labels (and optional features) are fed to a tabular
 predictor, and the result is scored with RelBench's own leaderboard evaluator.
 
 ```bash
-pixi run baseline --featurizer entity --predictor ridge \
-  --pre-dir stanford-star/relbench-preprocessed --out-dir baseline_out
+pip install "relational-transformer[baselines]"
+python scripts/baseline.py --featurizer entity --predictor ridge \
+  --pre-dir data/relbench-preprocessed \
+  --db-task-list data/relbench-preprocessed/db-task-lists/forecast.json \
+  --out-dir baseline_out
 ```
 
 - **Featurizers** (`--featurizer`): `global`, `entity`, `rt` (RT embeddings —
@@ -19,4 +22,4 @@ The `global`/`entity` featurizers with the `mean`/`linear`/`ridge` predictors
 need no GPU (only the `rt` featurizer runs a model). `--out-dir` is a valid
 RelBench submission directory, scored and re-validatable exactly like RT's eval
 output. The context flags (`--ctx-size`, `--local-ctx-size`, `--bfs-width`, …)
-match `eval` — see [context engineering](inference.md#context-engineering).
+match `examples/eval.py` — see [context engineering](inference.md#context-engineering).

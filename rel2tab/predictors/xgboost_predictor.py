@@ -59,19 +59,19 @@ class XGBoostHP:
     early_stopping_frac: float
 
     def xgb_params(self, n_jobs):
-        return dict(
-            n_estimators=self.n_estimators,
-            max_depth=self.max_depth,
-            learning_rate=self.learning_rate,
-            min_child_weight=self.min_child_weight,
-            subsample=self.subsample,
-            colsample_bytree=self.colsample_bytree,
-            reg_lambda=self.reg_lambda,
-            reg_alpha=self.reg_alpha,
-            tree_method="hist",
-            n_jobs=n_jobs,
-            verbosity=0,
-        )
+        return {
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "learning_rate": self.learning_rate,
+            "min_child_weight": self.min_child_weight,
+            "subsample": self.subsample,
+            "colsample_bytree": self.colsample_bytree,
+            "reg_lambda": self.reg_lambda,
+            "reg_alpha": self.reg_alpha,
+            "tree_method": "hist",
+            "n_jobs": n_jobs,
+            "verbosity": 0,
+        }
 
 
 @dataclass
@@ -150,7 +150,7 @@ class XGBoostPredictor(Predictor):
         n = len(y)
         # Need enough rows on both sides for a meaningful holdout; also require
         # both classes present in train+val for clf.
-        n_val = int(round(frac * n)) if frac > 0 else 0
+        n_val = round(frac * n) if frac > 0 else 0
         if n_val < 1 or (n - n_val) < 2:
             model.set_params(early_stopping_rounds=None)
             model.fit(X, y)
@@ -161,7 +161,7 @@ class XGBoostPredictor(Predictor):
             idx_val = []
             for cls in (0, 1):
                 cls_idx = np.where(y == cls)[0]
-                k = max(1, int(round(frac * len(cls_idx))))
+                k = max(1, round(frac * len(cls_idx)))
                 k = min(k, len(cls_idx) - 1) if len(cls_idx) > 1 else 0
                 if k > 0:
                     idx_val.extend(rng.choice(cls_idx, size=k, replace=False).tolist())

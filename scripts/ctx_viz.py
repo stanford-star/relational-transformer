@@ -30,11 +30,16 @@ from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-from rt.data import MAX_F2P_NBRS, RustlerDataset, get_column_index
-from rt.pre import resolve_pre_dir, resolve_repo
-from rt.tasks import Task
+from rt.data import (
+    RustlerDataset,
+    Task,
+    get_column_index,
+    resolve_pre_dir,
+    resolve_repo,
+)
+from rt.data.datasets import MAX_F2P_NBRS
 
-SEM_TYPE_NAMES = ["number", "text", "datetime", "boolean"]
+SEM_TYPE_NAMES = ["number", "text", "datetime"]
 INT_MIN = np.iinfo(np.int32).min  # rustler uses i32::MIN as missing-timestamp sentinel
 
 DEFAULT_PRE_ROOT = Path("pre")
@@ -70,7 +75,7 @@ def _load_column_index(db_dir: str) -> dict:
 # ranges, subsamples items). We rebuild only when something structural
 # changes; mask_prob_max and context_seed are mutated on the cached object.
 
-_DATASET_CACHE: "OrderedDict[tuple, RustlerDataset]" = OrderedDict()
+_DATASET_CACHE: OrderedDict[tuple, RustlerDataset] = OrderedDict()
 _DATASET_CACHE_LOCK = threading.Lock()
 _DATASET_CACHE_MAX = 4
 
@@ -89,13 +94,9 @@ def _get_or_build_dataset(
     num_walks: int,
     walk_length: int,
     prefer_latest: bool,
-    embedding_model: str,
+    embedder: str,
     d_text: int,
     items_per_task: int,
-    bool_as_num: bool,
-    skip_text_cols: bool,
-    balance_labels: bool,
-    ablate_schema_semantics: bool,
     shuffle_seed: int,
 ) -> RustlerDataset:
     key = (
@@ -111,13 +112,9 @@ def _get_or_build_dataset(
         num_walks,
         walk_length,
         prefer_latest,
-        embedding_model,
+        embedder,
         d_text,
         items_per_task,
-        bool_as_num,
-        skip_text_cols,
-        balance_labels,
-        ablate_schema_semantics,
         shuffle_seed,
     )
     with _DATASET_CACHE_LOCK:
@@ -125,9 +122,9 @@ def _get_or_build_dataset(
             _DATASET_CACHE.move_to_end(key)
             return _DATASET_CACHE[key]
 
-    # local_ctx_sizes must contain values <= ctx_cap; we pass exactly one.
-    local_ctx_sizes = [min(local_ctx_size, ctx_cap)]
-    bfs_widths = [bfs_width]
+    # local_ctx_size_list must contain values <= ctx_cap; we pass exactly one.
+    local_ctx_size_list = [min(local_ctx_size, ctx_cap)]
+    bfs_width_list = [bfs_width]
 
     ds = RustlerDataset(
         tasks=[
@@ -145,27 +142,24 @@ def _get_or_build_dataset(
         global_rank=0,
         local_rank=0,
         world_size=1,
-        local_ctx_sizes=local_ctx_sizes,
-        bfs_widths=bfs_widths,
+        local_ctx_size_list=local_ctx_size_list,
+        bfs_width_list=bfs_width_list,
         num_walks=num_walks,
         walk_length=walk_length,
-        prefer_latest=[prefer_latest],
+        prefer_latest_list=[prefer_latest],
         mask_prob_max=0.0,  # mutated per-request via set_mask_prob_max_py
-        embedding_model=embedding_model,
+        embedder=embedder,
         d_text=d_text,
         shuffle_seed=shuffle_seed,
         context_seed=0,  # context_seed is folded into step at request time
         items_per_task=items_per_task,
         quiet=True,
-        bool_as_num=bool_as_num,
         ignore_data_errors=False,
-        skip_text_cols=skip_text_cols,
         mmap_populate=False,
-        balance_labels=[balance_labels],
+        legacy_boolean=False,
         timeout_per_item=3600.0,
-        ablate_schema_semantics=ablate_schema_semantics,
         vector_db_path=None,
-        train_only_fallback=False,
+        db_cutoff=None,
     )
 
     with _DATASET_CACHE_LOCK:
@@ -184,7 +178,7 @@ def _get_or_build_dataset(
 def _decode_value(sem_type: str, t: dict, text_vocab: list[str]) -> object:
     """Pull the human-readable value out of a token, in normalized form.
 
-    The rustler-side number/datetime/boolean values are z-score normalized
+    The rustler-side number/datetime values are z-score normalized
     per column at preprocess time, so we display the raw normalized value;
     text cells we resolve back to the original string via text.json.
     """
@@ -199,9 +193,6 @@ def _decode_value(sem_type: str, t: dict, text_vocab: list[str]) -> object:
     if sem_type == "datetime":
         v = float(t["datetime_value"])
         return None if np.isnan(v) else v
-    if sem_type == "boolean":
-        v = float(t["boolean_value"])
-        return None if np.isnan(v) else v
     return None
 
 
@@ -209,8 +200,6 @@ def _format_value(sem_type: str, val: object) -> str:
     if val is None:
         return "—"
     if sem_type == "number":
-        return f"{val:+.4g}"
-    if sem_type == "boolean":
         return f"{val:+.4g}"
     if sem_type == "datetime":
         return f"{val:+.4g}"
@@ -273,7 +262,6 @@ def _build_context_payload(
         "f2p_nbr_idxs": batch["f2p_nbr_idxs"][0].tolist(),
         "number_values": batch["number_values"][0].squeeze(-1).float().tolist(),
         "datetime_values": batch["datetime_values"][0].squeeze(-1).float().tolist(),
-        "boolean_values": batch["boolean_values"][0].squeeze(-1).float().tolist(),
         "seed_node_idxs": batch["seed_node_idxs"][0].tolist(),
         "bfs_depths": batch["bfs_depths"][0].tolist(),
         "batch_mask": batch["batch_mask"].tolist(),
@@ -378,7 +366,6 @@ def _build_context_payload(
             "class_value_idx": int(fields["class_value_idxs"][i]),
             "number_value": float(fields["number_values"][i]),
             "datetime_value": float(fields["datetime_values"][i]),
-            "boolean_value": float(fields["boolean_values"][i]),
             "f2p_nbr_idxs": f2p_list,
             "timestamp": ts_display,
             "seed_node_idx": seed_idx if seed_idx != -1 else None,
@@ -400,7 +387,7 @@ def _build_context_payload(
         tokens.append(token)
 
     # Group cells by node for the row-view.
-    by_node: "OrderedDict[int, list[int]]" = OrderedDict()
+    by_node: OrderedDict[int, list[int]] = OrderedDict()
     for t in tokens:
         if t["is_padding"]:
             continue
@@ -434,7 +421,7 @@ def _build_context_payload(
     # Per-seed aggregate. Used by the radial-shell graph layout: the target
     # seed sits at center, other seeds sit on a ring around it, and each
     # seed's BFS expansion sits in concentric shells around that seed.
-    by_seed: "OrderedDict[int, list[int]]" = OrderedDict()
+    by_seed: OrderedDict[int, list[int]] = OrderedDict()
     for n in nodes_meta:
         s = n["seed_node_idx"]
         if s is None:
@@ -471,7 +458,7 @@ def _build_context_payload(
     seeds_meta.sort(key=lambda s: (not s["is_target_seed"], -s["node_count"]))
 
     # Group cells by column key (table+col) for the column-view.
-    by_col: "OrderedDict[tuple[str, str], list[int]]" = OrderedDict()
+    by_col: OrderedDict[tuple[str, str], list[int]] = OrderedDict()
     for t in tokens:
         if t["is_padding"]:
             continue
@@ -667,7 +654,7 @@ def _resolve_db_dir(
     db: str,
     *,
     metadata_only: bool,
-    embedding_model: str = "all-MiniLM-L12-v2",
+    embedder: str = "all-MiniLM-L12-v2",
 ) -> Path:
     """Return a LOCAL directory for `db`, downloading from HF on demand.
 
@@ -680,7 +667,7 @@ def _resolve_db_dir(
     local_root = resolve_pre_dir(
         root_arg,
         [db],
-        embedding_model,
+        embedder,
         include_text=not metadata_only,
         metadata_only=metadata_only,
     )
@@ -699,7 +686,7 @@ def _list_tables(db_dir: Path, split: str) -> list[dict]:
         item = {
             "name": base,
             "splits": sorted(ttypes.keys()),
-            "is_task_table": any(t != "Db" for t in ttypes.keys()),
+            "is_task_table": any(t != "Db" for t in ttypes),
             "num_nodes_by_split": {
                 t: int(meta["num_nodes"]) for t, meta in ttypes.items()
             },
@@ -734,14 +721,14 @@ class CtxVizHandler(BaseHTTPRequestHandler):
     server_version = "ctx-viz/0.1"
 
     # Suppress per-request stderr logging (override of default).
-    def log_message(self, format, *args):  # noqa: A002
+    def log_message(self, format, *args):
         if self.server.quiet:
             return
         sys.stderr.write(f"[{self.log_date_time_string()}] {format % args}\n")
 
     # ---- routing ----
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         try:
             url = urlparse(self.path)
             if url.path == "/":
@@ -781,10 +768,10 @@ class CtxVizHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": True})
             else:
                 self.send_error(HTTPStatus.NOT_FOUND, f"unknown path: {url.path}")
-        except BaseException as e:  # incl. pyo3 PanicException
+        except BaseException as e:  # noqa: BLE001  # incl. pyo3 PanicException
             self._send_error(e)
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self):
         try:
             url = urlparse(self.path)
             length = int(self.headers.get("Content-Length", "0"))
@@ -795,7 +782,7 @@ class CtxVizHandler(BaseHTTPRequestHandler):
                 self._send_json(payload)
             else:
                 self.send_error(HTTPStatus.NOT_FOUND, f"unknown path: {url.path}")
-        except BaseException as e:  # incl. pyo3 PanicException
+        except BaseException as e:  # noqa: BLE001  # incl. pyo3 PanicException
             self._send_error(e)
 
     # ---- handlers ----
@@ -813,13 +800,9 @@ class CtxVizHandler(BaseHTTPRequestHandler):
         num_walks = int(req.get("num_walks", 0))
         walk_length = int(req.get("walk_length", 4))
         prefer_latest = bool(req.get("prefer_latest", False))
-        embedding_model = req.get("embedding_model", "all-MiniLM-L12-v2")
+        embedder = req.get("embedder", "all-MiniLM-L12-v2")
         d_text = int(req.get("d_text", 384))
         items_per_task = int(req.get("items_per_task", -1))
-        bool_as_num = bool(req.get("bool_as_num", False))
-        skip_text_cols = bool(req.get("skip_text_cols", False))
-        balance_labels = bool(req.get("balance_labels", False))
-        ablate_schema_semantics = bool(req.get("ablate_schema_semantics", False))
         shuffle_seed = int(req.get("shuffle_seed", 0))
         context_seed = int(req.get("context_seed", 0))
         mask_prob_max = float(req.get("mask_prob_max", 0.0))
@@ -830,7 +813,7 @@ class CtxVizHandler(BaseHTTPRequestHandler):
             item_idx = None
 
         db_dir = _resolve_db_dir(
-            root_arg, db_name, metadata_only=False, embedding_model=embedding_model
+            root_arg, db_name, metadata_only=False, embedder=embedder
         )
         if not db_dir.exists():
             raise FileNotFoundError(f"db dir does not exist: {db_dir}")
@@ -849,13 +832,9 @@ class CtxVizHandler(BaseHTTPRequestHandler):
             num_walks=num_walks,
             walk_length=walk_length,
             prefer_latest=prefer_latest,
-            embedding_model=embedding_model,
+            embedder=embedder,
             d_text=d_text,
             items_per_task=items_per_task,
-            bool_as_num=bool_as_num,
-            skip_text_cols=skip_text_cols,
-            balance_labels=balance_labels,
-            ablate_schema_semantics=ablate_schema_semantics,
             shuffle_seed=shuffle_seed,
         )
 
@@ -1629,18 +1608,6 @@ INDEX_HTML = r"""<!doctype html>
         <input type="checkbox" id="f-prefer-latest" />
         <span>prefer_latest</span>
       </label>
-      <label class="row flex">
-        <input type="checkbox" id="f-skip-text" />
-        <span>skip_text_cols</span>
-      </label>
-      <label class="row flex">
-        <input type="checkbox" id="f-balance-labels" />
-        <span>balance_labels</span>
-      </label>
-      <label class="row flex">
-        <input type="checkbox" id="f-bool-as-num" />
-        <span>bool_as_num</span>
-      </label>
     </fieldset>
 
     <fieldset>
@@ -1664,7 +1631,7 @@ INDEX_HTML = r"""<!doctype html>
 
     <fieldset>
       <legend>Embedding</legend>
-      <label class="row"><span>embedding_model</span>
+      <label class="row"><span>embedder</span>
         <input type="text" id="f-emb" value="all-MiniLM-L12-v2" />
       </label>
       <label class="row"><span>d_text</span>
@@ -1953,14 +1920,11 @@ async function build() {
       num_walks: parseInt($("f-walks").value),
       walk_length: parseInt($("f-walklen").value),
       prefer_latest: $("f-prefer-latest").checked,
-      skip_text_cols: $("f-skip-text").checked,
-      balance_labels: $("f-balance-labels").checked,
-      bool_as_num: $("f-bool-as-num").checked,
       items_per_task: parseInt($("f-ipt").value),
       shuffle_seed: parseInt($("f-shuffle").value),
       context_seed: parseInt($("f-ctxseed").value),
       mask_prob_max: parseFloat($("f-mask").value),
-      embedding_model: $("f-emb").value,
+      embedder: $("f-emb").value,
       d_text: parseInt($("f-dtext").value),
       item_idx: $("f-item").value,
     };
@@ -2035,7 +1999,7 @@ function renderStats() {
     ["Edges", s.num_edges],
     ["Masked", `1+${s.masked_feature_count}`],
     ["Task tok", s.task_token_count],
-    ["Sem", `n=${s.sem_counts.number} t=${s.sem_counts.text} d=${s.sem_counts.datetime} b=${s.sem_counts.boolean}`],
+    ["Sem", `n=${s.sem_counts.number} t=${s.sem_counts.text} d=${s.sem_counts.datetime}`],
   ];
   const wrap = $("stats");
   wrap.innerHTML = "";
@@ -2099,7 +2063,6 @@ function showPopover(token, evt) {
     ["value", token.value_str],
     ["value (raw)", token.sem_type === "number" ? token.number_value
                   : token.sem_type === "datetime" ? token.datetime_value
-                  : token.sem_type === "boolean" ? token.boolean_value
                   : `text_idx=${token.class_value_idx}`],
     ["is_target", token.is_target],
     ["is_task_node", token.is_task_node],
@@ -2307,7 +2270,7 @@ function renderColumns() {
     block.appendChild(head);
 
     // Pills (or histogram if numeric).
-    if (c.sem_types.includes("number") || c.sem_types.includes("datetime") || c.sem_types.includes("boolean")) {
+    if (c.sem_types.includes("number") || c.sem_types.includes("datetime")) {
       const cv = ce("div");
       cv.className = "col-numdist";
       block.appendChild(cv);
@@ -2344,7 +2307,6 @@ function drawNumDist(container, tokens, _allTokens) {
   const vals = tokens.map(t => {
     if (t.sem_type === "number") return t.number_value;
     if (t.sem_type === "datetime") return t.datetime_value;
-    if (t.sem_type === "boolean") return t.boolean_value;
     return null;
   }).filter(v => v !== null && Number.isFinite(v));
   if (!vals.length) return;
@@ -2357,7 +2319,6 @@ function drawNumDist(container, tokens, _allTokens) {
     let v;
     if (t.sem_type === "number") v = t.number_value;
     else if (t.sem_type === "datetime") v = t.datetime_value;
-    else if (t.sem_type === "boolean") v = t.boolean_value;
     else continue;
     if (!Number.isFinite(v)) continue;
     const cx = x(v);

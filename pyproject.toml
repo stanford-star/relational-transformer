@@ -4,98 +4,233 @@ build-backend = "maturin"
 
 [project]
 name = "relational-transformer"
-version = "1.1.0"
-description = "Relational Transformer (RT): a foundation model for relational data, bundling a native Rust data-processing engine (rt._rustler)."
+version = "1.9.0"
+description = "Relational Transformer (RT): a foundation model for relational data, bundling a native Rust data-processing engine (rt.rustler)."
 readme = "README.md"
-requires-python = ">=3.12"
+license = { file = "LICENSE" }
+# 3.11, not 3.12: nothing in `src/` uses 3.12-only syntax or stdlib, and a
+# consumer that pins 3.11 (relarena does, `~=3.11.0`) cannot resolve this
+# package at all if the floor is 3.12. Development still happens on 3.12 --
+# that is what `[tool.pixi.dependencies]` asks for. The `<3.14` ceiling is the
+# forkserver/pickling problem described at `[tool.pixi.dependencies].python`.
+requires-python = ">=3.11,<3.14"
+# Runtime only: what an `import rt.<something>` actually reaches for. Anything
+# used by the repo's own tooling, experiments or plots belongs in `dev` below,
+# so installing this package as a *library* (relarena does) does not drag a
+# plotting stack and a pre-commit install into the consumer's environment.
 dependencies = [
-    "torch",
-    "safetensors",
-    "huggingface-hub",
-    "sentence-transformers",
-    "numpy",
     "einops",
+    # `<2`: hub 2.0 dropped what every sentence-transformers 3+ release caps at
+    # (`huggingface-hub<2`), so an unbounded floor makes a resolver take hub
+    # 2.0 and then backtrack sentence-transformers to 2.2.2 -> transformers
+    # 4.12.2 -> tokenizers 0.10.3, which has no wheel and fails to build
+    # ("can't find Rust compiler"). A clean `pip install` of the published
+    # distribution cannot complete without this cap. 1.x is what this
+    # environment resolves and what `rt.model.checkpoints` is written against.
+    "huggingface-hub<2",
     "ml_dtypes",
+    "numpy",
     "orjson",
-    "lazy_loader",
-    "tqdm",
+    "pandas",
+    "polars",
+    "pyarrow",
     "pyyaml",
+    "safetensors",
+    # mean_absolute_error / roc_auc_score in rt.eval only. The former `<1.6`
+    # cap was inherited from a relbench pin, not from anything here.
+    "scikit-learn",
+    "sentence-transformers",
+    "torch",
+    # Imported at module scope by rt.train._train and rt.eval._eval, so it is a
+    # hard runtime dependency even for a run with `wandb_disabled=True`.
+    "wandb",
 ]
 
 [project.optional-dependencies]
-# `eval` (rt.eval_utils) also needs relbench, a git dependency that can't be
-# declared here (PyPI forbids URL deps) -- install it manually:
-#   pip install "git+https://github.com/snap-stanford/relbench.git@<rev>"
-eval = ["scikit-learn<1.6.0"]
-test = ["pytest", "polars"]
+# What the tree needs to test and lint itself, and nothing else: the suite, the
+# linter the suite is checked with, the pre-commit hooks and the build backend.
+# None of it is imported from `src/rt`.
+dev = [
+    "maturin>=1.7,<2",
+    "pre-commit",
+    "pytest",
+    "ruff",
+]
+# The rel2tab baselines under `rel2tab/`: the tabular predictors, the SQL
+# featurizer's query engine, and the FAISS indices the sampler's opt-in vecdb
+# cargo feature reads. Heavy, and no shipped module under `src/rt` imports any
+# of it, so it is never installed by default.
+baselines = [
+    # EXAONE Tabular v1.0. Its pins (numpy >=2.3.5, scikit-learn >=1.7.2,
+    # torch >=2.6) are all satisfied here, so unlike rdblearn it solves in
+    # place.
+    "exaonetabular @ git+https://github.com/LGAI-Research/EXAONE-Tabular@8638e07d09fad154249bd75ba4786181491f7025",
+    "duckdb",
+    "faiss-cpu",
+    "lightgbm",
+    # Google's TabFM v1.0. The pytorch extra, not jax: its pytorch backend
+    # needs only torch, while the jax extra would pull jax/jaxlib/flax/optax/
+    # orbax and a cpu-pinned torch into an environment built around torch+cu130.
+    "tabfm[pytorch] @ git+https://github.com/google-research/tabfm@fbb665569425fd2f490c6576b3af967876fe11ff",
+    # TabICL v2, the in-context tabular predictor.
+    "tabicl>=2.1.1,<3",
+    # Prior Labs' TabPFN-3.5. v9 is the first release whose default
+    # ModelVersion is V3_5, so the floor is what picks the checkpoint the base
+    # estimators load.
+    "tabpfn>=9,<10",
+    "tqdm",
+    # The CLI of rel2tab.featurize.
+    "tyro",
+]
+# Cluster submission and plotting: the workflow around a research run rather
+# than the library or its tests. Never installed by default.
+research = [
+    # Submits jobs and is the job-side entry point (roach.slurm.run); pin and
+    # the submitting environment must agree (see its README).
+    "roach @ git+https://github.com/rishabh-ranjan/roach@main",
+    "matplotlib",
+    "tqdm",
+    "wandb-workspaces",
+]
 
 [tool.maturin]
 python-source = "src"
 manifest-path = "rustler/Cargo.toml"
-module-name = "rt._rustler"
-# `pre` bundles the polars preprocess pyfunction; FAISS (`vecdb`) stays source-only.
-features = ["pyo3/extension-module", "pre"]
-exclude = ["**/*.txt"]
+module-name = "rt.rustler"
+# The whole crate, FAISS aside (`vecdb` needs cmake and a BLAS; see rustler/Cargo.toml).
+features = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The repo root, so a top-level package such as `examples.*` or `rel2tab.*`
+# imports the same way in a test as it does in a job (roach targets are module
+# paths relative to the checkout).
+pythonpath = ["."]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
+# conda-forge's rust package writes an activation script that bakes the
+# environment's own prefix into the linker setting:
+#
+#   CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=<prefix>/bin/x86_64-conda-linux-gnu-cc
+#
+# Cargo hashes the per-target linker into every unit's fingerprint, including
+# registry crates that never invoke a linker, so a checkout at a new path
+# rebuilds the entire dependency tree however little changed. Pinning the bare
+# name -- the same binary, resolved through PATH, which puts this environment's
+# bin first -- makes the fingerprint independent of where the environment lives.
+# Measured: a second checkout of the same commit went from 3m39s to 15s.
+[tool.pixi.activation]
+# Sourced on every activation (`pixi run`, `pixi shell`): rebuilds rt.rustler
+# in place whenever anything under rustler/ changed since the last build, so
+# the imported extension can never be stale.
+scripts = ["rustler/develop.sh"]
+
+[tool.pixi.activation.env]
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER = "x86_64-conda-linux-gnu-cc"
+
 [tool.pixi.dependencies]
-# 3.12 only: strictfire imports the stdlib `pipes` module, removed in 3.13
-# (PEP 594); a fresh solve on newer Python breaks at import. Tested on 3.12.
+# Only the sampler's opt-in `vecdb` cargo feature needs these (faiss-rs builds
+# FAISS from source and links -lblas -llapack by their netlib names):
+# `maturin develop --release --features vecdb`.
+cmake = "*"
+gxx = "*"
+libblas = "*"
+liblapack = "*"
+openblas = "*"
+# 3.12, not ">=3.12": on 3.14 the default multiprocessing start method on Linux
+# is forkserver rather than fork, and a forkserver child is built by *pickling*
+# the work over to it. rustler's Sampler is a pyo3 object and does not pickle,
+# so every DataLoader with workers dies with
+#
+#   TypeError: cannot pickle 'builtins.Sampler' object
+#
+# rt assumes fork throughout: rt/_env.py sets the worker thread budget in the
+# parent for the children to inherit at fork. Pinning the interpreter is the
+# smaller change than making every dataset picklable, and it also puts this
+# environment inside relarena's own `requires-python`.
 python = "3.12.*"
 rust = "*"
 maturin = "*"
 uv = "*"
-matplotlib = ">=3.11.0,<4"
 
 [tool.pixi.pypi-dependencies]
-relational-transformer = { path = ".", editable = true }
-torch = "*"
-safetensors = "*"
-sentence-transformers = "*"
-huggingface-hub = "*"
+# This checkout, editable: `pixi install` builds the compiled extension
+# (rt.rustler) into `src/rt/`, and rustler/develop.sh (see
+# [tool.pixi.activation]) rebuilds it on activation whenever rustler/ changed.
+relational-transformer = { path = ".", editable = true, extras = [
+    "dev",
+    "baselines",
+    "research",
+] }
+# RelBench 3 (stanford-star/relbench, `main`): `rt.eval.relbench` scores
+# submissions through `relbench.submit` and `rt.data.datasets` resolves split
+# timestamps through its `load_dataset`. Pinned to the released v3 commit; bump
+# deliberately. The relarena branch pins `==2.1.2` instead (the package version
+# is relarena's data version); that pin belongs to that branch, not to `main`.
+relbench = { git = "https://github.com/stanford-star/relbench", rev = "bac62c99cf1a60fbfd7c61c5fd7cb183453b7997" }
+
+# Baseline featurization runs against the classic relbench 2.x API
+# (`relbench.datasets` / `relbench.tasks`), which the fork above does not carry,
+# so it gets its own environment and the two pins never meet. `rdblearn` itself
+# cannot be solved here -- its pins conflict with autogluon's -- and is fetched
+# by the `install-rdblearn` task below.
+[tool.pixi.feature.featurize.dependencies]
+python = "3.12.*"
+uv = "*"
+# fastdfs -> woodwork imports pkg_resources, which setuptools >= 81 dropped.
+setuptools = "<81"
+
+[tool.pixi.feature.featurize.pypi-dependencies]
+# Jobs enter through `python -m roach.slurm.run` whatever environment they run in.
+roach = { git = "https://github.com/rishabh-ranjan/roach", branch = "main" }
+relbench = "==2.1.2"
+fastdfs = "*"
+duckdb = "*"
 numpy = "*"
-ml_dtypes = "*"
-orjson = "*"
-strictfire = "*"
-fire = "*"
-tyro = "*"
-maturin_import_hook = "*"
-einops = "*"
-scikit-learn = "<1.6.0"
 pandas = "*"
 pyarrow = "*"
-polars = "*"
-pytest = "*"
-lazy_loader = "*"
+scikit-learn = "*"
+torch = "*"
 tqdm = "*"
-wandb = "*"
-xgboost = "*"
-# pinned until the relbench-hf branch (HF Hub data loading) lands in a relbench release
-relbench = { git = "https://github.com/snap-stanford/relbench.git", rev = "6e4a3a3d271f981b7f61e2ecbb6fd1c0f1cd3eeb" }
 
-[tool.pixi.tasks]
-# Standalone preprocessor binary (polars + manifest reader; no FAISS).
-build-pre = "cargo build --release --features pre --manifest-path rustler/Cargo.toml"
-# Build + editable-install the rt package and the rt._rustler extension from the
-# root maturin project (FAISS-free). The opt-in FAISS vector-db Sampler is built
-# manually: `maturin develop --release --features vecdb` (needs cmake + a BLAS).
-build-sampler = "maturin develop --uv --release"
-# Preprocess one dataset: download (HF or local) -> rustler -> embeddings.
-preprocess = { cmd = "python scripts/preprocess.py one", depends-on = ["build-sampler"] }
-# Preprocess many datasets from a HuggingFace collection repo.
-preprocess-many = { cmd = "python scripts/preprocess.py many", depends-on = ["build-sampler"] }
-# Upload an already-preprocessed dataset directory to a HuggingFace repo.
-upload = "python scripts/preprocess.py upload"
-# Context visualizer (serves an HTTP UI over preprocessed data).
-ctx-viz = { cmd = "python scripts/ctx_viz.py", depends-on = ["build-sampler"] }
-pretrain = { cmd = "torchrun --standalone --nproc-per-node=auto scripts/pretrain.py", depends-on = ["build-sampler"] }
-# eval is single-process (one GPU) so per-item rows stay in task-table order.
-eval = { cmd = "python scripts/eval.py", depends-on = ["build-sampler"] }
-baseline = { cmd = "python scripts/baseline.py", depends-on = ["build-sampler"] }
-test = { cmd = "pytest", depends-on = ["build-sampler"] }
+[tool.pixi.feature.featurize.tasks]
+# rdblearn's pins conflict with autogluon's, so it is installed --no-deps on
+# top of the solved environment; the commit hash pins what the solver cannot.
+# Run once per checkout (jobs run it via `setup=`).
+install-rdblearn = "uv pip install --python \"$CONDA_PREFIX/bin/python\" --no-deps git+https://github.com/ValterH/rdblearn@89bba03b1bacd5eaa884d1dc415703baed59f7f8 autogluon-features autogluon-common"
+
+# The RelBench GNN featurizer needs
+# relbench's `example` extra -- pytorch_frame and torch_geometric -- plus pyg-lib,
+# whose neighbor sampler is the only one that supports heterogeneous *temporal*
+# sampling; torch-sparse's has no time argument, and without it the loader cannot
+# honour a cutoff. pyg-lib ships prebuilt wheels against exact torch versions and
+# the newest is pt29, so torch is pinned to 2.9.0 here against the default
+# environment's 2.14: this is why it is its own environment rather than more
+# entries in `baselines`. cu130 to match the driver the default environment already
+# uses, and it covers b200 (sm_100) as well as the amperes.
+[tool.pixi.feature.gnn.dependencies]
+python = "3.12.*"
+
+[tool.pixi.feature.gnn.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
+find-links = [{ url = "https://data.pyg.org/whl/torch-2.9.0+cu130.html" }]
+index-strategy = "unsafe-best-match"
+
+[tool.pixi.feature.gnn.pypi-dependencies]
+# Jobs enter through `python -m roach.slurm.run` whatever environment they run in.
+roach = { git = "https://github.com/rishabh-ranjan/roach", branch = "main" }
+# The same commit as the default environment: `relbench.modeling` and the local
+# `load_dataset(path)` path both come from here, and the two pins must not drift.
+relbench = { git = "https://github.com/stanford-star/relbench", rev = "bac62c99cf1a60fbfd7c61c5fd7cb183453b7997", extras = ["example"] }
+torch = "==2.9.0"
+pyg-lib = "*"
+numpy = "*"
+pandas = "*"
+pyarrow = "*"
+
+[tool.pixi.environments]
+featurize = { features = ["featurize"], no-default-feature = true }
+gnn = { features = ["gnn"], no-default-feature = true }

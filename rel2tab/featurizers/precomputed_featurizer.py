@@ -16,13 +16,15 @@ class PrecomputedFeaturizerConfig:
     """
 
     pre_dir: str
-    eval_recipe: str
+    db_task_list: str
+    splits: tuple[str, ...]
     features_subdir: str
 
     def build(self, device):
         return PrecomputedFeaturizer(
             pre_dir=self.pre_dir,
-            eval_recipe=self.eval_recipe,
+            db_task_list=self.db_task_list,
+            splits=self.splits,
             features_subdir=self.features_subdir,
         )
 
@@ -31,18 +33,18 @@ class PrecomputedFeaturizer(Featurizer):
     """Load pre-computed feature vectors saved by ``rel2tab.featurize``.
 
     At init, eagerly loads ``{table}_vectors.bin`` and ``{table}_meta.json``
-    for every (db, table) pair referenced by the eval recipe.  At eval time,
+    for every (db, table) pair the db-task list resolves to.  At eval time,
     ``compute_features`` does a fast index lookup.
     """
 
-    def __init__(self, pre_dir, eval_recipe, features_subdir):
-        from rt.recipes import get_tasks
+    def __init__(self, pre_dir, db_task_list, splits, features_subdir):
+        from rt.data import get_tasks
 
         # (db, table) -> (features_tensor, min_offset)
         self._features: dict[tuple[str, str], tuple[torch.Tensor, int]] = {}
 
         seen: set[tuple[str, str]] = set()
-        for task in get_tasks(eval_recipe, pre_dir):
+        for task in get_tasks(pre_dir, db_task_list, splits):
             key = (task.db_name, task.table_name)
             if key in seen:
                 continue
