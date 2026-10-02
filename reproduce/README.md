@@ -23,7 +23,7 @@ featurized how, which seeds.
 | tuned+ensembled per-task table, RelBench leaderboard submission | [`leaderboard/`](leaderboard) |
 | per-task context grid feeding the three above | [`tune/`](tune) |
 | baseline features and the FAISS retrieval indices | [`baselines/`](baselines) |
-| pretraining-ablation figures (masking rate, task mix) | **not here** — see "What is not reproducible" |
+| pretraining-ablation figures (masking rate, task mix) | [`pretrain_abl/`](pretrain_abl) — series only; the runs themselves are not reproducible here |
 
 ## Two expensive stages you can skip
 
@@ -45,7 +45,8 @@ grid.
 
 [`series/`](series) holds the reduced data behind each figure and table, as
 committed JSON: one file per arm, with the aggregate metric at every context
-size (or ensemble size) and the per-task value underneath it. These were
+size (or ensemble size, or pretraining step) and the per-task value underneath
+it. These were
 produced by the `reduce.py` / `collect.py` scripts here from the paper's runs,
 and they are what makes the numbers checkable without re-running anything.
 
@@ -163,7 +164,7 @@ the code rather than values read off our filesystem:
 - Scaling context sizes: RT 256–8192, baselines extended to 131072 cells ([`scaling/plan.py`](scaling/plan.py)).
 - Ensembling: 16 context seeds off base seed 0 over a fixed 8192-row test subsample.
 - Leaderboard: top-4 configurations × 4 context seeds on the full test split, predictions averaged per row.
-- Everywhere: `shuffle_seed=0`, `context_seed=0`, `db_cutoff=None` (per-row temporal masking is the only trim), `num_walks=10_000`, `walk_length=20`, the 21 RelBench forecasting tasks of `pre_dir/db-task-lists/forecast.json`.
+- Everywhere: `shuffle_seed=0`, `context_seed=0`, `db_cutoff=None` (per-row temporal masking is the only trim), `num_walks=10_000`, `walk_length=20`, the 21 RelBench forecasting tasks of `rt.data.get_mixture_path("relbench", "forecast")`.
 
 Metrics are computed on the sampler's normalized target scale, which for
 regression equals RelBench's NMAE and for classification is AUROC. Only
@@ -172,54 +173,11 @@ own evaluator.
 
 ## What agreement to expect
 
-**Not bit-exactness.** Two changes after the paper's runs mean a fresh run
-cannot be expected to match a published digit-for-digit:
-
-- **The context sampler's random stream changed.** The BFS child sampler used
-  to draw indices with replacement until it filled its quota; it now draws
-  without replacement. The distribution of contexts is unchanged — for rows
-  with fewer than `bfs_width` visible children the old loop already returned
-  essentially all of them — but which rows land in a context at a given seed is
-  not, so contexts and every feature computed from them differ.
-- **Input normalization changed.** Numeric and datetime cells are z-scored with
-  per-column statistics. Those statistics used to be computed over all rows of
-  every table, which let the validation and test periods set the scale that
-  training inputs were normalized with; they are now restricted to the train
-  period. The published preprocessed datasets still carry the old
-  normalization, so a reader who regenerates the data from raw is evaluating on
-  slightly different inputs than the paper did.
-
-**How much the normalization change is worth: a few tenths of a point.** We
-measured it directly — the released `stanford-star/rt-j` checkpoint at the
-released default context (`ctx=8192`, `lcs=256`, `bfs_width=32`,
-`prefer_latest=True`), one context seed, run twice with nothing but the
-preprocessed directory differing:
-
-| task | metric | old | new | new − old | rows |
-|---|---|--:|--:|--:|--:|
-| rel-f1/driver-dnf | AUROC ↑ | 82.843 | 82.537 | −0.306 | 702 |
-| rel-f1/driver-top3 | AUROC ↑ | 90.537 | 90.683 | +0.146 | 726 |
-| rel-event/user-repeat | AUROC ↑ | 79.101 | 79.088 | −0.013 | 246 |
-| rel-hm/user-churn | AUROC ↑ | 61.955 | 61.947 | −0.008 | 4096 |
-| rel-f1/driver-position | nMAE ↓ | 38.667 | 39.107 | +0.440 | 760 |
-| rel-trial/study-adverse | nMAE ↓ | 16.413 | 16.375 | −0.038 | 3098 |
-| rel-avito/ad-ctr | nMAE ↓ | 42.624 | 42.117 | −0.507 | 1816 |
-| **mean, 4 classification tasks** | AUROC ↑ | 78.609 | 78.564 | **−0.045** | |
-| **mean, 3 regression tasks** | nMAE ↓ | 32.568 | 32.533 | **−0.035** | |
-
-Every move is under 0.51 points, five of the seven are under 0.31, and the sign
-is mixed — it is noise-scale, not a systematic correction. The caveat matters as
-much as the number: this is one context seed over at most 4096 rows per task,
-far noisier than the paper's full-test four-seed ensembles, so it bounds the
-magnitude of the effect and does not correct any published figure. It also does
-not cover the two legacy checkpoints (`rt-v1`, `rt-plurel`), whose data lives in
-the `legacy/` tree and changes under the same fix.
-
-**So what a reader should expect:** running this code against the published
-preprocessed data, or against data regenerated from raw, lands within a few
-tenths of a point of the published numbers. A difference of that size is the
-expected outcome and not a sign that something is wrong; a difference of a
-point or more is.
+Context sampling is stochastic, so a fresh run of a stage will not match a
+published number digit-for-digit. Pin the dataset revision recorded in
+[`docs/downloads.md`](../docs/downloads.md) and the checkpoint, and expect
+agreement to a few tenths of a point. A difference of that size is the expected
+outcome; a difference of a point or more is not, and is worth reporting.
 
 ## What has actually been run
 
@@ -252,9 +210,12 @@ printing:
 
 ## What is not reproducible, and why
 
-- **The pretraining-ablation figures.** They compare checkpoints from five
-  multi-day multi-node pretraining runs that are not released; only the final
-  RT-J checkpoint is. The arms differed from the base run in exactly one knob —
+- **The pretraining-ablation runs.** The figures themselves are checkable:
+  [`series/pretrain_abl/`](series/pretrain_abl) holds each arm's validation
+  curve against pretraining step, and
+  [`pretrain_abl/export.py`](pretrain_abl/export.py) is what wrote it. The runs
+  behind it are not reproducible here: five multi-day multi-node pretrainings
+  that are not released; only the final RT-J checkpoint is. The arms differed from the base run in exactly one knob —
   multi-cell masking rate (0, 0.25, 0.75 against the base) and pretraining task
   mix (forecast-only, autocomplete-only against the base's full mix), each with
   10k-step early-stop patience, `lr=5e-4`, `swa_momentum=0.9995`,

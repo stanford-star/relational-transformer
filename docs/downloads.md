@@ -110,12 +110,7 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 
 Two further things fix a result besides the data: the checkpoint, and the
 `rustler` commit the data was preprocessed with and the contexts were sampled
-with. `8030aa8` (`rustler: column stats from the train period only`) restricted
-z-scoring statistics to the train period, which changes `relbench-preprocessed`
-and `plurel-preprocessed` but leaves `the-join-preprocessed` byte-identical —
-its manifests have `val_timestamp: null` and it has no val/test splits, so
-neither half of the change engages. Each card records the commit its tree was
-built at.
+with. Each card records the commit its tree was built at.
 
 Without `--local-dir` these land in the shared HuggingFace cache
 (`~/.cache/huggingface/hub`, or `$HF_HOME`), which is what you want for

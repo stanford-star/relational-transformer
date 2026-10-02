@@ -129,7 +129,7 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
 | [Baselines](docs/baselines.md) | rel2tab tabular baselines through the same eval path |
 | [Context visualization](docs/context-visualization.md) | Inspect the contexts sampled for each row |
-| [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, and what agreement to expect |
+| [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, and how to run it |
 | [Cards](docs/cards/README.md) | Model and dataset cards |
 
 ## Citation

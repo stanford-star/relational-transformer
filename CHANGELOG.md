@@ -2,6 +2,16 @@
 
 All notable changes to the `relational-transformer` package.
 
+## Unreleased
+
+### Fixed
+
+- A `db_cutoff` split timestamp is now read as naive wall-clock UTC
+  (`_epoch_utc`), matching the node timestamps preprocessing writes, and a
+  tz-aware timestamp from the dataset manifest asserts instead of silently
+  resolving to a shifted cutoff. Resolved cutoffs for the hosted RelBench
+  datasets are unchanged.
+
 ## 1.9.0
 
 The first release of the current line. `1.1.0` was the ICLR-submission
@@ -94,8 +104,7 @@ native data engine ships as a prebuilt stable-ABI extension.
 - **Sampler (`rustler`)**: BFS children are drawn without rejection sampling;
   `p2f` expansion is bounded at `2x bfs_width` draws with no scan fallback; a
   node with no `p2f` edges draws nothing instead of panicking; `prefer_latest`
-  orders Tier 2 as well as Tier 1; column statistics come from the train period
-  only; key-only tables are visible to the model; the identifier-column policy
+  orders Tier 2 as well as Tier 1; key-only tables are visible to the model; the identifier-column policy
   triggers on measured identifiability and is selectable; no boolean semantic
   type leaves the sampler (booleans are z-scored numbers end to end);
   `remove_columns` is scoped to the target's horizon and honored for every task
