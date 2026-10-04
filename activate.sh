@@ -13,7 +13,7 @@ if [ ! -e "$_rt_so" ] || [ -n "$(find "$_rt_root/rustler/src" \
     echo "rustler changed: maturin develop" >&2
     (
         cd "$_rt_root" &&
-        flock rustler/.develop.lock maturin develop --uv --release >&2
+        flock rustler/.build.lock maturin develop --uv --release >&2
     ) || return 1
 fi
 unset _rt_root _rt_so
