@@ -36,7 +36,7 @@ configurations, normalized MAE ranks regression.
 
 A job is `rt.eval:main` in tune-only mode (`splits=["val"]`), one per task,
 resumable per grid entry, writing `tuning.json` under
-`$RT_OUT_ROOT/no-entity/tune/tune--<db>--<table>/`.
+`$RT_OUT_ROOT/no-wandb-entity/tune/tune--<db>--<table>/`.
 
 `tuned_configs_rt-j.json` holds, per task: the best configuration and its
 validation score, the top-4 configurations, and the full 120-entry score table.

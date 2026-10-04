@@ -89,7 +89,7 @@ def main(
     run_name: str | None,
     targets: dict[str, float],
     project: str,
-    entity: str | None,
+    wandb_entity: str | None,
     out_root: str,
     wandb_disabled: bool,
 ) -> None:
@@ -109,7 +109,7 @@ def main(
     assert wandb_disabled or targets, "nothing to draw the curve against"
     csv_out_dir = (
         Path(out_root).expanduser()
-        / (entity or "no-entity")
+        / (wandb_entity or "no-wandb-entity")
         / project
         / run_id
         / "eval_out"
@@ -127,7 +127,7 @@ def main(
         csv_out_dir.parent.mkdir(parents=True, exist_ok=True)
         wandb.init(
             project=project,
-            entity=entity,
+            entity=wandb_entity,
             name=f"{run_name}-{attempt}" if run_name else attempt,
             id=f"{run_id}-{attempt}",
             group=run_id,

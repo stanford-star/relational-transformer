@@ -31,7 +31,7 @@ repo>"` (preprocess and push in one step).
 
 ## Preprocess many databases efficiently
 
-To preprocess a whole Hub collection (e.g. the 650-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)),
+To preprocess a whole Hub collection (e.g. the 639-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)),
 call `many` instead of `one` — `preprocess_a_collection()` in the same example:
 
 ```python

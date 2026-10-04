@@ -159,7 +159,7 @@ treat as API.
 ### `resume.pt`
 
 `rt.train.main` writes `resume.pt` into the **run directory**,
-`<out_root>/<entity or "no-entity">/<project>/<run_id>/`, and reads it back from
+`<out_root>/<wandb_entity or "no-wandb-entity">/<project>/<run_id>/`, and reads it back from
 exactly there. Consequences a caller must plan for:
 
 - **The run directory is the resume key.** A run relaunched with the same

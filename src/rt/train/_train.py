@@ -48,8 +48,8 @@ def setup_dist(num_workers: int = 0):
     return device, 0, 0, 1, False
 
 
-def run_subdir(entity: str | None, project: str, run_id: str) -> Path:
-    return Path(entity or "no-entity", project, run_id)
+def run_subdir(wandb_entity: str | None, project: str, run_id: str) -> Path:
+    return Path(wandb_entity or "no-wandb-entity", project, run_id)
 
 
 def seed_everything(seed):
@@ -181,7 +181,7 @@ def main(
     run_id: str,
     targets: dict[str, float],
     project: str,
-    entity: str | None,
+    wandb_entity: str | None,
     run_name: str | None,
     wandb_disabled: bool,
     out_root: str,
@@ -227,11 +227,13 @@ def main(
             if job
             else f"{int(time.time())}"
         )
-        wandb_dir = Path(out_root).expanduser() / run_subdir(entity, project, run_id)
+        wandb_dir = Path(out_root).expanduser() / run_subdir(
+            wandb_entity, project, run_id
+        )
         wandb_dir.mkdir(parents=True, exist_ok=True)
         wandb.init(
             project=project,
-            entity=entity,
+            entity=wandb_entity,
             name=f"{run_name}-{attempt}" if run_name else attempt,
             id=f"{run_id}-{attempt}",
             group=run_id,
@@ -247,7 +249,7 @@ def main(
         wandb.define_metric("*", step_metric="step")
 
     seed_everything(seed + rank)
-    out_dir = Path(out_root).expanduser() / run_subdir(entity, project, run_id)
+    out_dir = Path(out_root).expanduser() / run_subdir(wandb_entity, project, run_id)
     if is_main:
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / "params.json").write_text(

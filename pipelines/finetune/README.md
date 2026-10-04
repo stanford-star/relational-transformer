@@ -100,8 +100,8 @@ Where the outputs land, under `$RT_OUT_ROOT`:
 
 | path | what |
 |---|---|
-| `no-entity/finetune/<model>-<db>-<task>-{inner,tune,outer,test}/` | one directory per stage: `resume.pt`, the selected and final checkpoints, `selection.json`, `tuning.json` |
-| `no-entity/finetune/<model>-<db>-<task>-test/eval_out/<db>__<task>.csv` | that task's leaderboard prediction table |
+| `no-wandb-entity/finetune/<model>-<db>-<task>-{inner,tune,outer,test}/` | one directory per stage: `resume.pt`, the selected and final checkpoints, `selection.json`, `tuning.json` |
+| `no-wandb-entity/finetune/<model>-<db>-<task>-test/eval_out/<db>__<task>.csv` | that task's leaderboard prediction table |
 | `leaderboard/finetune/<model>/` | the 21 prediction tables `collect.py` gathers |
 | `leaderboard/finetune/<model>-{classification,regression}.zip` | the submission packages, written only once all 21 tables validate |
 

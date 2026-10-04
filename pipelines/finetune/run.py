@@ -21,7 +21,7 @@ def lcs_bw_pl_grid() -> list[tuple[int, int, bool]]:
 
 
 def stage_dir(out_root: str, project: str, stage_id: str) -> Path:
-    return Path(out_root).expanduser() / "no-entity" / project / stage_id
+    return Path(out_root).expanduser() / "no-wandb-entity" / project / stage_id
 
 
 def rows(pre_dir: str, db: str, task: str, split: str) -> int:
@@ -143,7 +143,7 @@ def train_args(
         "run_id": run_id,
         "targets": {},
         "project": project,
-        "entity": None,
+        "wandb_entity": None,
         "run_name": run_name,
         "wandb_disabled": True,
         "out_root": out_root,
@@ -201,7 +201,7 @@ def eval_args(
         "run_name": run_name,
         "targets": {},
         "project": project,
-        "entity": None,
+        "wandb_entity": None,
         "out_root": out_root,
         "wandb_disabled": True,
     }

@@ -22,7 +22,7 @@ def test_smoke(tmp_path):
         total_steps=3,
         compile=False,
     )
-    out = tmp_path / "no-entity" / "smoke" / run_id
+    out = tmp_path / "no-wandb-entity" / "smoke" / run_id
     assert (out / "params.json").is_file(), "the run's arguments are its record"
     assert (out / "resume.pt").is_file(), (
         "a finished run must leave a resumable checkpoint"

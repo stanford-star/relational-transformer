@@ -70,7 +70,7 @@ def train(pre_dir: str, eval_pre_dir: str, out_root: str, run_id: str) -> None:
         run_id=run_id,
         targets={},
         project="rt-train",
-        entity=None,
+        wandb_entity=None,
         run_name=None,
         wandb_disabled=True,
         out_root=out_root,

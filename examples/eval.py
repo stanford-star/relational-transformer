@@ -36,7 +36,7 @@ def evaluate(pre_dir: str, out_root: str, checkpoint: str, run_id: str) -> None:
         run_name=None,
         targets={},
         project="rt-eval",
-        entity=None,
+        wandb_entity=None,
         out_root=out_root,
         wandb_disabled=True,
     )

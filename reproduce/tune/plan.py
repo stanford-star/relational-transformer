@@ -27,7 +27,7 @@ def grid_stem_prefix(grid_stem: str) -> str:
 def grid_path(grid_stem: str, db: str, table: str) -> Path:
     grid_stem_prefix(grid_stem)
     stem = grid_stem.format(db=db, table=table)
-    return Path(config.out_root()) / "no-entity" / "tune" / stem / "tuning.json"
+    return Path(config.out_root()) / "no-wandb-entity" / "tune" / stem / "tuning.json"
 
 
 def load_configs(
@@ -92,7 +92,7 @@ def jobs(*, ckpt: str, grid_stem: str, task_list: list[tuple[str, str]]) -> list
                     "run_name": run_id,
                     "targets": {},
                     "project": "tune",
-                    "entity": None,
+                    "wandb_entity": None,
                     "out_root": out_root,
                     "wandb_disabled": True,
                 },

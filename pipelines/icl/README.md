@@ -97,7 +97,7 @@ handed carries this model's grids.
 
 | | |
 |---|---|
-| a stage-1 grid | `$RT_OUT_ROOT/no-entity/tune/<grid stem>/tuning.json` |
+| a stage-1 grid | `$RT_OUT_ROOT/no-wandb-entity/tune/<grid stem>/tuning.json` |
 | a stage-2 unit | `$RT_OUT_ROOT/<leaderboard dir>/cfg<rank>/<db>__<table>.json` with its `.state.npz` |
 | prediction CSVs | `$RT_SHARE/<leaderboard dir>/preds/<db>__<table>.csv` |
 | submission zips | `$RT_SHARE/<leaderboard dir>/<model>-icl-{classification,regression}.zip` |

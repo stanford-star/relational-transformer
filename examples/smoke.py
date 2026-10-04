@@ -71,7 +71,7 @@ def smoke(
         run_id=run_id,
         targets={},
         project="smoke",
-        entity=None,
+        wandb_entity=None,
         run_name=None,
         wandb_disabled=True,
         out_root=out_root,
