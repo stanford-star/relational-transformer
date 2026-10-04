@@ -8,7 +8,7 @@ writes per-item prediction CSVs.
 
     python scripts/baseline.py --featurizer entity --predictor ridge \\
         --pre-dir data/relbench-preprocessed \\
-        --db-task-list data/relbench-preprocessed/db-task-lists/forecast.json
+        --db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')"
 
 Featurizers: ``global`` (all in-context rows), ``entity`` (same-entity rows),
 ``rt`` (RelationalTransformer embeddings; needs --rt-ckpt). Predictors:
@@ -100,8 +100,8 @@ def main() -> None:
     ap.add_argument(
         "--db-task-list",
         required=True,
-        help="JSON db-task list; the released lists ship as "
-        "<pre_dir>/db-task-lists/<name>.json",
+        help="JSON db-task list; the curated lists are vendored in the "
+        "package, at rt.data.get_mixture_path(collection, name)",
     )
     ap.add_argument("--splits", nargs="+", default=["test"])
     ap.add_argument("--task-type", default="both", choices=["clf", "reg", "both"])

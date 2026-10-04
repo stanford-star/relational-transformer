@@ -23,6 +23,15 @@ def _resolve_cutoff(db_cutoff, db_name: str, pre_dir: str) -> int | None:
     return _split_timestamps(db_name, pre_dir)[db_cutoff]
 
 
+def _epoch_utc(ts) -> int:
+    assert ts.tzinfo is None, (
+        f"relbench returned a tz-aware split timestamp {ts!r}; rt reads split "
+        f"timestamps as naive wall-clock UTC, matching the node timestamps "
+        f"written by preprocessing, and has no rule for an offset"
+    )
+    return int(ts.tz_localize("UTC").timestamp())
+
+
 @cache
 def _split_timestamps(db_name: str, pre_dir: str) -> dict[str, int]:
     try:
@@ -42,8 +51,8 @@ def _split_timestamps(db_name: str, pre_dir: str) -> dict[str, int]:
         )
     dataset = relbench.load_dataset(source)
     return {
-        "val": int(dataset.val_timestamp.timestamp()),
-        "test": int(dataset.test_timestamp.timestamp()),
+        "val": _epoch_utc(dataset.val_timestamp),
+        "test": _epoch_utc(dataset.test_timestamp),
     }
 
 

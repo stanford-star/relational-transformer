@@ -6,15 +6,24 @@ results: the tuned arm of the ensembling figure, the default-vs-tuned appendix
 table ([`../valtest`](../valtest)), and the top-4-configurations leaderboard
 ensemble ([`../leaderboard`](../leaderboard)).
 
-**[`tuned_configs.json`](tuned_configs.json) is committed.** It is the output
+**[`tuned_configs_rt-j.json`](tuned_configs_rt-j.json) is committed.** It is the output
 of this stage for the paper's RT-J checkpoint, and every downstream stage reads
 it from here, so you do not need to run the grid at all. Re-run it only to tune
 a different checkpoint.
 
 ```bash
 python -m reproduce.tune.plan       # 21 jobs, one GPU each; the critical path
-python -m reproduce.tune.collect    # -> tuned_configs.json
+python -m reproduce.tune.collect    # -> tuned_configs_rt-j.json
 ```
+
+A second checkpoint's grid is the same code with a different `ckpt` and a
+different `grid_stem`: [`tuned_configs_rt-plurel.json`](tuned_configs_rt-plurel.json)
+is RT-PluRel's, produced that way, and
+[`pipelines/icl`](../../pipelines/icl) is the entry point that runs this stage
+and the leaderboard ensemble for either checkpoint. The two files are not
+interchangeable — a context configuration is only valid for the checkpoint it
+was tuned on — so each records the grid stem it was ranked from and every
+consumer asserts it.
 
 ## Protocol
 
@@ -29,7 +38,7 @@ A job is `rt.eval:main` in tune-only mode (`splits=["val"]`), one per task,
 resumable per grid entry, writing `tuning.json` under
 `$RT_OUT_ROOT/no-entity/tune/tune--<db>--<table>/`.
 
-`tuned_configs.json` holds, per task: the best configuration and its
+`tuned_configs_rt-j.json` holds, per task: the best configuration and its
 validation score, the top-4 configurations, and the full 120-entry score table.
 `collect.py` asserts the grid is complete and that `best_cfg` really is the top
 score before writing.

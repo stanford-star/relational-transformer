@@ -6,12 +6,15 @@ from reproduce.tasks import tasks
 from reproduce.tune.plan import VAL_ENSEMBLE_SIZE, grid_path
 
 N_CFGS = 120
+N_TOP = 4
 
 
-def main() -> None:
+def main(
+    *, grid_stem: str, task_list: list[tuple[str, str]], configs_path: str
+) -> None:
     out = {}
-    for db, table in tasks():
-        path = grid_path(db, table)
+    for db, table in task_list:
+        path = grid_path(grid_stem, db, table)
         assert path.exists(), f"missing {path}; the grid is not finished"
         rec = json.loads(path.read_text())[f"{db}/{table}"]
         scores = rec["val_scores"]
@@ -22,7 +25,7 @@ def main() -> None:
         reverse = rec["task_type"] == "clf"
         top = sorted(
             scores.items(), key=lambda kv: (-kv[1] if reverse else kv[1], kv[0])
-        )[:4]
+        )[:N_TOP]
         assert list(ast.literal_eval(top[0][0])) == list(rec["best_cfg"]), (
             f"{db}/{table}: best_cfg {rec['best_cfg']} is not the top score {top[0]}"
         )
@@ -34,9 +37,9 @@ def main() -> None:
             "top_cfgs": [list(ast.literal_eval(c)) for c, _ in top],
             "top_values": [v for _, v in top],
             "val_scores": scores,
-            "grid": f"tune--{db}--{table}/tuning.json",
+            "grid": f"{grid_stem.format(db=db, table=table)}/tuning.json",
         }
-    dest = Path(__file__).with_name("tuned_configs.json")
+    dest = Path(configs_path)
     dest.write_text(json.dumps(out, indent=1, sort_keys=True) + "\n")
     print(f"wrote {dest} ({len(out)} tasks)")
     for k, v in sorted(out.items()):
@@ -44,4 +47,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from pipelines.icl.models import MODELS
+
+    model = MODELS["rt-j"]
+    main(
+        grid_stem=model.grid_stem,
+        task_list=tasks(),
+        configs_path=model.configs_path,
+    )

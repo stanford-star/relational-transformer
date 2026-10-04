@@ -20,7 +20,7 @@ featurized how, which seeds.
 | retriever and schema-semantics ablations | [`scaling/`](scaling) — `abl` arms |
 | test-time-compute ensembling figure + per-task appendix | [`enscurve/`](enscurve) |
 | default-vs-tuned context appendix table | [`valtest/`](valtest) |
-| tuned+ensembled per-task table, RelBench leaderboard submission | [`leaderboard/`](leaderboard) |
+| tuned+ensembled per-task table, RelBench leaderboard submission | [`leaderboard/`](leaderboard); [`pipelines/icl`](../pipelines/icl) runs the same two stages for any released checkpoint |
 | per-task context grid feeding the three above | [`tune/`](tune) |
 | baseline features and the FAISS retrieval indices | [`baselines/`](baselines) |
 | pretraining-ablation figures (masking rate, task mix) | [`pretrain_abl/`](pretrain_abl) — series only; the runs themselves are not reproducible here |
@@ -29,7 +29,7 @@ featurized how, which seeds.
 
 Both are committed, so you do not have to re-run them:
 
-- **[`tune/tuned_configs.json`](tune/tuned_configs.json)** — the 120-point
+- **[`tune/tuned_configs_rt-j.json`](tune/tuned_configs_rt-j.json)** — the 120-point
   context grid's result for each of the 21 tasks: the winning
   `(ctx, local_ctx_size, bfs_width, prefer_latest)`, the top four
   configurations, and the full validation score table. The grid behind it is
@@ -37,7 +37,7 @@ Both are committed, so you do not have to re-run them:
 - **[`valtest/results.json`](valtest/results.json)** — the default-vs-tuned
   appendix table.
 
-Every later stage reads `tuned_configs.json` from this directory, so
+Every later stage reads `tuned_configs_rt-j.json` from this directory, so
 `enscurve` (tuned variant), `valtest` and `leaderboard` all run without the
 grid.
 
@@ -61,7 +61,7 @@ is the same data those plots were drawn from.
 | **Hardware** | one GPU per job. The paper's runs used 80 GB A100s and H100s; a smaller card needs a smaller `tokens_per_gpu` (the plans pass `2**18`), which costs time rather than changing a result. The LightGBM arms are CPU-only by construction (`plan.METHOD_DEVICE`); CPU is not an option for the RT jobs — see "Running a stage" below. |
 | **Disk, downloaded** | ~51 GB preprocessed RelBench data for RT-J (`RT_PRE_DIR`; the `legacy/` subdirectory is another ~57 GB and is needed only for the two legacy checkpoints), ~19 GB raw RelBench data (`RT_RAW_DIR`, baseline featurizers only), 164 MB for the RT-J checkpoint. |
 | **Disk, derived** | `RT_SHARE` grows to roughly 240 GB once every stage's inputs exist, dominated by the FAISS retrieval indices (~141 GB) and the baseline feature tables (~51 GB). Per-task result JSONs in `RT_OUT_ROOT` are kilobytes. |
-| **Time** | the committed `series/`, `tune/tuned_configs.json` and `valtest/results.json` cost nothing. Re-running a stage's evaluations costs hundreds of GPU-hours; the 120-point context grid in `tune/` is roughly 200 GPU-hours on its own; re-pretraining is thousands. A single job is minutes to a few hours — one task of the subsampled RT arm, six context sizes up to 8192 over 8192 subsampled rows, took 2 min 23 s on one A100. |
+| **Time** | the committed `series/`, `tune/tuned_configs_rt-j.json` and `valtest/results.json` cost nothing. Re-running a stage's evaluations costs hundreds of GPU-hours; the 120-point context grid in `tune/` is roughly 200 GPU-hours on its own; re-pretraining is thousands. A single job is minutes to a few hours — one task of the subsampled RT arm, six context sizes up to 8192 over 8192 subsampled rows, took 2 min 23 s on one A100. |
 | **Software** | `pixi install` at the repository root, and nothing else. No `module load`, no cluster, no Weights & Biases account; `reproduce/` imports only `rt` and public packages. |
 
 ## Configuration
@@ -98,10 +98,15 @@ To see a stage's job list without running anything:
 python -c "from reproduce.enscurve.plan import jobs; from reproduce.launch import describe; describe(jobs())"
 ```
 
-`reproduce.scaling.plan.jobs` is the one that takes an argument — the arm names
-to enumerate, `sorted(reproduce.scaling.plan.arms())` for all 24. A plan lists
-only the jobs whose output is missing, so it prints `0 jobs` once a stage is
-finished.
+`reproduce.scaling.plan.jobs` takes the arm names to enumerate,
+`sorted(reproduce.scaling.plan.arms())` for all 24.
+`reproduce.tune.plan.jobs` and `reproduce.leaderboard.plan.jobs` take the
+checkpoint, the task list and the tuned-configurations file they work on, so
+that the same code serves a second checkpoint; each module's `__main__` spells
+out the paper's RT-J values, and
+[`pipelines/icl`](../pipelines/icl) is the entry point that runs those two
+stages for a checkpoint of your choice. A plan lists only the jobs whose output
+is missing, so it prints `0 jobs` once a stage is finished.
 
 That is the honest default, not a scheduler. The paper's runs were submitted in
 parallel to a Slurm cluster, and the partitions, QoS names, accounts, node
@@ -195,8 +200,10 @@ printing:
   `enscurve/reduce.py` does the same for both ensemble curves — re-run from a
   clean checkout, with nothing in `series/` changing. `tune/collect.py` and
   `valtest/collect.py` reproduce the two committed intermediates byte-for-byte,
-  and `leaderboard/reduce.py` scores all 21 tasks
-  through RelBench's own evaluator. Every `plan.py` enumerates its job list
+  and `leaderboard/reduce.py` scores all 21 tasks of an in-context ensemble
+  through RelBench's own evaluator — measured on the RT-PluRel arm of
+  [`pipelines/icl`](../pipelines/icl), whose units carry the `checkpoint`
+  field `reduce.py` asserts. Every `plan.py` enumerates its job list
   (408 scaling jobs over 24 arms, 84 leaderboard, 42 enscurve, 21 tune, 35
   baselines when none of their outputs exist), and an unset environment
   variable fails loudly.
@@ -238,7 +245,7 @@ printing:
 ## If you only want to check one number
 
 Evaluate `stanford-star/rt-j` on the task in question at the context
-configuration [`tune/tuned_configs.json`](tune/tuned_configs.json) lists for
+configuration [`tune/tuned_configs_rt-j.json`](tune/tuned_configs_rt-j.json) lists for
 it. [`examples/eval.py`](../examples/eval.py) is that run with the arguments
 spelled out, and the quickstart in the top-level
 [`README.md`](../README.md) is the smallest version of it.

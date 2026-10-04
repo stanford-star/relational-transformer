@@ -1,9 +1,10 @@
-import json
 from pathlib import Path
 
+from pipelines.icl.models import MODELS
 from reproduce import config
 from reproduce.launch import Job, describe, run_sequential
 from reproduce.tasks import tasks
+from reproduce.tune.plan import load_configs
 
 DEFAULT_CFG = (8192, 256, 32, True)
 N_SEEDS = 16
@@ -12,8 +13,8 @@ VARIANTS = ("default", "tuned")
 
 
 def tuned_configs() -> dict:
-    path = Path(__file__).parents[1] / "tune" / "tuned_configs.json"
-    return json.loads(path.read_text())
+    model = MODELS["rt-j"]
+    return load_configs(model.configs_path, model.grid_stem, tasks())
 
 
 def cfg(variant: str, db: str, table: str) -> tuple[int, int, int, bool]:

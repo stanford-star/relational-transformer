@@ -24,10 +24,9 @@ def featurize_db(
         table_offset_and_len,
     )
     from reproduce.baselines.sql_queries import SQL_REGISTRY
+    from rt.data import resolve_db_task_list
 
-    tables = sorted(
-        {t for d, t in json.loads(Path(db_task_list).read_text()) if d == db}
-    )
+    tables = sorted({t for d, t in resolve_db_task_list(db_task_list) if d == db})
     assert tables, f"no tasks for {db} in {db_task_list}"
 
     con = duckdb.connect()

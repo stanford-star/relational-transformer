@@ -170,7 +170,7 @@ list — copy the example and edit the lines you want. To run one task instead o
 the 21-task list, replace
 
 ```python
-        db_task_list=f"{pre_dir}/db-task-lists/forecast.json",
+        db_task_list=str(get_mixture_path("relbench", "forecast")),
 ```
 
 with
@@ -206,9 +206,9 @@ shapes rather than one:
 
 | knob | values resampled from |
 |---|---|
-| context size | 1024, 2048, 4096, 8192 |
-| local context size | 256, 512, 1024, 2048, 4096, 8192 |
-| BFS width | 16, 64, 256 |
+| context size | 512, 1024, 2048, 4096, 8192 |
+| local context size | 128, 256, 512, 1024, 2048, 4096, 8192 |
+| BFS width | 8, 16, 32, 64, 128, 256 |
 | recency preference (`prefer_latest`) | false, true |
 
 **Only the target cell is masked** (`mask_prob_max = 0`): there is no auxiliary
@@ -231,7 +231,7 @@ The released weights are the **SWA (EMA) weights at step 9,000 of phase 2**,
 selected by **mean validation AUROC (74.36)** over the RelBench forecast tasks
 on their `val` splits. In-loop validation during pretraining ran on
 [`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
-with `db-task-lists/forecast.json` (the 21-task benchmark). Classification
+with the `relbench/forecast` mixture (the 21-task benchmark). Classification
 AUROC is the selection metric; the same single checkpoint serves regression.
 
 ## Evaluation
@@ -246,7 +246,7 @@ classification, 9 regression), **full official test splits**, ensembled over the
 | nMAE (9 regression tasks, MAE / train-split std) | **32.35** |
 
 The per-task tuned configurations are published as
-[`reproduce/tune/tuned_configs.json`](https://github.com/stanford-star/relational-transformer/blob/main/reproduce/tune/tuned_configs.json):
+[`reproduce/tune/tuned_configs_rt-j.json`](https://github.com/stanford-star/relational-transformer/blob/main/reproduce/tune/tuned_configs_rt-j.json):
 one entry per task, each carrying `top_cfgs` — the four
 `(ctx_size, local_ctx_size, bfs_width, prefer_latest)` tuples that are ensembled
 — alongside `best_cfg` and the full validation grid they were selected from.
@@ -263,48 +263,9 @@ released default: `ctx_size` 8192, `local_ctx_size` 256, `bfs_width` 32,
 
 Results depend on the preprocessed data and the sampler, both of which have
 moved since. Pin the dataset revisions recorded in
-[`docs/downloads.md`](https://github.com/stanford-star/relational-transformer/blob/main/docs/downloads.md);
-`the-join-preprocessed` in particular was re-trimmed, so an unpinned download is
-not the data this model was trained on. Every number above predates two merged
-`rustler` changes — a BFS-child sampling change (contexts are not bit-identical
-after it) and a fix restricting z-scoring statistics to the train period.
-
-### Known caveat: input normalization in the published preprocessed data
-
-The published preprocessed datasets still carry the older input normalization,
-in which the z-scoring statistics for numeric columns were computed over the
-whole table rather than over the train period only. That is a **temporal leak
-in the inputs** (not in the labels), and it is present in the data used for the
-numbers above.
-
-We measured its size. These weights were evaluated twice at the released
-default context (`ctx_size` 8192, `local_ctx_size` 256, `bfs_width` 32,
-`prefer_latest` true), one context seed, same commit and same seed on both
-arms, with **only `pre_dir` differing** — the published data, versus data
-regenerated under the fix.
-
-| task | metric | published | regenerated | difference | rows |
-|---|---|---|---|---|---|
-| `rel-f1/driver-dnf` | AUROC ↑ | 82.843 | 82.537 | −0.306 | 702 |
-| `rel-f1/driver-top3` | AUROC ↑ | 90.537 | 90.683 | +0.146 | 726 |
-| `rel-event/user-repeat` | AUROC ↑ | 79.101 | 79.088 | −0.013 | 246 |
-| `rel-hm/user-churn` | AUROC ↑ | 61.955 | 61.947 | −0.008 | 4096 |
-| `rel-f1/driver-position` | nMAE ↓ | 38.667 | 39.107 | +0.440 | 760 |
-| `rel-trial/study-adverse` | nMAE ↓ | 16.413 | 16.375 | −0.038 | 3098 |
-| `rel-avito/ad-ctr` | nMAE ↓ | 42.624 | 42.117 | −0.507 | 1816 |
-| **mean AUROC** (4 tasks) | | 78.609 | 78.564 | **−0.045** | |
-| **mean nMAE** (3 tasks) | | 32.568 | 32.533 | **−0.035** | |
-
-No task moves by more than 0.51; five of the seven move by less than 0.31 and
-two by less than 0.02. The sign is **mixed** and the differences largely cancel
-— which is what you expect from a leak in input normalization rather than in
-labels.
-
-Treat this as a **bound on the magnitude, not a correction**: it is one context
-seed over at most 4,096 evaluation rows per task, so it is not precise enough to
-restate any published figure. We report it so a reader knows the effect was
-checked and found small, and so anyone regenerating the data under the fix is
-not surprised by small per-task movement.
+[`docs/downloads.md`](https://github.com/stanford-star/relational-transformer/blob/main/docs/downloads.md)
+— for RelBench, revision `1016626ddb30c027b92458bf866903850cc205e1`. An
+unpinned download is not the data this model was trained on.
 
 ## Intended use
 
@@ -321,8 +282,10 @@ not surprised by small per-task movement.
 - Input must be in RelBench format and preprocessed by `rustler`; nothing is
   fetched on demand, so a `pre_dir` is always a local directory.
 - Text is consumed only through frozen `all-MiniLM-L12-v2` embeddings — long or
-  nuanced text is heavily compressed, and a different embedder requires
-  re-preprocessing and does not match this checkpoint.
+  nuanced text is heavily compressed, and a different embedder does not match
+  this checkpoint. The preprocessed repositories ship embeddings and no
+  readable strings, so switching embedder means re-running preprocessing from
+  the raw collection, not re-embedding the preprocessed tree.
 - Accuracy depends strongly on the context configuration; the leaderboard
   numbers above use per-task tuned configurations and ensembling, and a single
   default-context forward pass scores lower.

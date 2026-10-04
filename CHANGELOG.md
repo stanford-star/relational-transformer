@@ -4,6 +4,28 @@ All notable changes to the `relational-transformer` package.
 
 ## Unreleased
 
+### Added
+
+- **`pipelines/icl/`** — the in-context leaderboard pipeline: a per-task
+  context search over the 120-point grid on validation, then the top-4
+  configurations x 4 context seeds on the full official test split, averaged
+  per row and packaged with `relbench.submit`. It is a thin entry point over
+  `reproduce/tune` and `reproduce/leaderboard`, which now take the checkpoint,
+  the task list and the tuned-configurations file as arguments, and it runs
+  either released in-context checkpoint or your own preprocessed data.
+  RT-PluRel's tuned configurations are published alongside RT-J's as
+  `reproduce/tune/tuned_configs_rt-plurel.json`.
+
+### Changed
+
+- `reproduce/tune/tuned_configs.json` is now `tuned_configs_rt-j.json`, so that
+  it cannot be confused with another checkpoint's configurations. Each file
+  records the grid stem it was ranked from, and every consumer asserts it.
+- A leaderboard ensemble unit records the checkpoint it was produced from, and
+  `reproduce/leaderboard/reduce.py` asserts it with no default, so units and
+  configurations belonging to two different checkpoints can no longer be
+  averaged together.
+
 ### Fixed
 
 - A `db_cutoff` split timestamp is now read as naive wall-clock UTC

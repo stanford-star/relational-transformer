@@ -36,15 +36,16 @@ Transformer dataloaders read.
 | | |
 |---|---|
 | Databases | 2,000 synthetic (`plurel-3000` … `plurel-4999`) |
-| Files | 16,005 |
-| Size | 43,218,968,510 bytes (~40.2 GiB) |
+| Files | 16,002 |
+| Size | 43,207,210,158 bytes (~40.2 GiB) |
 | Text embedder | `sentence-transformers/all-MiniLM-L12-v2` (384-d) |
 
 Per-file-kind totals: `nodes.rkyv` ~35.2 GiB, `p2f_adj.rkyv` ~4.1 GiB,
 `offsets.rkyv` ~0.8 GiB, `text_emb_all-MiniLM-L12-v2.bin` ~0.1 GiB (synthetic
 databases carry little text).
 
-The curated pretraining mixture is `db-task-lists/rt-plurel-train.json`:
+The curated pretraining mixture is `plurel/rt-plurel-train.json`, vendored in
+the `rt` package:
 **86,211 (db, task) pairs over 1,900 of the 2,000 databases** — the filtered
 subset RT-J's phase 1 and RT-PluRel actually train on. The remaining 100
 databases are present but excluded by the filter.
@@ -64,17 +65,30 @@ revision is a different collection.
 ## File layout
 
 ```
-db-task-lists/
-  all.json
-  forecast.json
-  autocomplete.json
-  rt-plurel-train.json   # the curated 86,211-task / 1,900-db training mixture
 plurel-<n>/              # one per synthetic database, n = 3000..4999
   meta.json  table_info.json  column_index.json
   nodes.rkyv  offsets.rkyv  p2f_adj.rkyv
   text_emb_all-MiniLM-L12-v2.bin
   text.json
 ```
+
+The task lists are **not** in this repository. The curated (db, task) mixtures
+are vendored in the `rt` package instead, so a list can no longer drift from
+the data or the code that reads it:
+
+```python
+from rt.data import get_mixture_path, list_mixtures
+
+list_mixtures()                                    # every (collection, name)
+path = get_mixture_path("plurel", "rt-plurel-train")
+```
+
+Pass that path as `db_task_list`.
+
+For this collection the vendored lists are `rt-plurel-train` (86,211 pairs over
+1,900 databases — the mixture RT-J phase 1 and RT-PluRel train on), `all` and
+`autocomplete` (116,088 over 1,973 each; every task here is an autocompletion
+task, so `forecast` is empty).
 
 `pre_dir` is always a **local directory**; download with
 `hf download --local-dir`, nothing is fetched on demand.
@@ -91,7 +105,7 @@ There is no CLI: copy
 [`examples/preprocess.py`](https://github.com/stanford-star/relational-transformer/blob/main/examples/preprocess.py),
 edit the call, `pixi run python examples/preprocess.py`.
 
-`db-task-lists/rt-plurel-train.json` ships with the data, so you do not have to
+The `rt-plurel-train` mixture is vendored in the package, so you do not have to
 rebuild it, but the filter that produced it is worth knowing because it is what
 separates the 1,900 trained-on databases from the 2,000 present. Taking
 `plurel-3000` … `plurel-4999` in order, a **database** is dropped if any of its
@@ -101,31 +115,23 @@ tables has more than 5 foreign keys, and the first 1,900 survivors are kept. A
 column, and it has at least 2 distinct values — then, for a classification task
 (the `bool` columns), at least 2 classes and a majority class no larger than
 99%; for a regression task, a standard deviation of at least 1e-4. That yields
-the 86,211 pairs in the shipped list.
-
-**Preprocessing commit.** The 2026-09-12 content was written by `rustler` at
-repository commit **`970167c`** (2026-09-09, `rustler: no boolean sem type in
-sampler output; bools are z-scored numbers end to end`), the last
-preprocessing-code commit before that rebuild.
-
-`rustler` z-scores numeric and datetime cells. Since PR #4 (`rustler: column
-stats from the train period only`, commit `8030aa8`) the statistics come from
-the train period alone; PluRel manifests carry a real `val_timestamp`, so that
-change does affect this collection. The tree published at this revision
-predates `8030aa8`; a regenerated one is on its way and will be uploaded here,
-with the preprocessing commit above updated to match. Pin the revision below
-for the published numbers.
+the 86,211 pairs in the vendored list.
 
 ## Revisions
 
 The RT-J paper's results were produced against revision
-**`9d70172425b44053f1270b19094ba6dcf7d66464`** (2026-09-12). Pin it:
+**`9d70172425b44053f1270b19094ba6dcf7d66464`** (2026-09-12). Hub revisions are
+immutable, so pin it to reproduce published numbers:
 
 ```bash
 pixi run hf download stanford-star/plurel-preprocessed --repo-type dataset \
   --revision 9d70172425b44053f1270b19094ba6dcf7d66464 \
   --local-dir data/plurel-preprocessed
 ```
+
+The current data landed at revision
+**`e18c60c9feff5d26d3440cae2d8d92b8adb2a620`** (2026-10-01); later revisions
+change only this card.
 
 ## Licence
 
@@ -142,15 +148,10 @@ is published as CC BY-SA 4.0. The upstream collection keeps its own CC BY-SA
 4.0 terms when you redistribute *it*; CC BY 4.0 here applies to this
 preprocessed build.
 
-The preprocessed builds of real-world data,
 [`the-join-preprocessed`](https://huggingface.co/datasets/stanford-star/the-join-preprocessed)
 and
-[`relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed),
-are CC BY 4.0 as well, but for a different reason: their sources *are*
-third-party and share-alike, so those repositories ship no verbatim source
-content — only embeddings of it — and omit the `text.json` string table
-entirely. Here that was never necessary, so `text.json` ships and you can
-re-embed this tree with a different text embedder without regenerating it.
+[`relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)
+are CC BY 4.0 as well.
 
 ## Citation
 

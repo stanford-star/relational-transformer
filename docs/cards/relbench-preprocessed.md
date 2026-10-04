@@ -1,7 +1,4 @@
 ---
-# CC BY 4.0 covers these artifacts because they contain no verbatim upstream
-# content: the source strings are not shipped, only embeddings of them. The
-# "Licence" section below says what that does and does not cover.
 license: cc-by-4.0
 pretty_name: RelBench (preprocessed for Relational Transformer)
 tags:
@@ -39,8 +36,8 @@ the `pre_dir` that reproduces the published RT-J numbers.
 |---|---|
 | Databases | 7 (`rel-amazon`, `rel-avito`, `rel-event`, `rel-f1`, `rel-hm`, `rel-stack`, `rel-trial`) |
 | Tasks | 34 total — 21 forecasting (the RelBench entity benchmark), 13 autocompletion |
-| Files | 103 |
-| Size | 208,537,747,984 bytes (~194.2 GiB) |
+| Files | 293 |
+| Size | 244,050,090,877 bytes (~227.3 GiB) |
 | Text embedder | `sentence-transformers/all-MiniLM-L12-v2` (384-d) |
 
 ## Relation to the raw dataset
@@ -54,30 +51,31 @@ re-preprocess from; this one is a build artifact.
 ## File layout
 
 ```
-db-task-lists/
-  all.json            # 34 (db, task) pairs
-  forecast.json       # the 21-task RelBench entity benchmark -- the default eval list
-  autocomplete.json   # 13 cell-autocompletion tasks
 <db>/                 # one per database
   meta.json  table_info.json  column_index.json
   nodes.rkyv  offsets.rkyv  p2f_adj.rkyv
   text_emb_all-MiniLM-L12-v2.bin
+  text.json
 legacy/<db>/          # the same artifacts for the legacy RT-v1 code path
+legacy/_transformed/  # RelBench-format parquet the RT-v1 transform emits
 ```
 
-Two things `rustler` writes during preprocessing are **not shipped**, because
-nothing reads them afterwards and shipping them would put verbatim source
-content in this repository. `text.json`, the deduplicated table of source
-strings the embedder consumes, is one: a string cell in `nodes.rkyv` is an
-index, and training and inference gather the embedding at that index straight
-out of `text_emb_*.bin`. `legacy/_transformed/`, the RelBench-format parquet the
-RT-v1 transform emits on its way into `rustler`, is the other; it is an
-intermediate, the legacy path reads `legacy/<db>/`, and
-`rt.preprocess.legacy` regenerates it from
-[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1)
-whenever it is actually wanted. The consequence for you: to use a different
-text embedder, re-run preprocessing from the raw repository rather than
-re-embedding this tree.
+The task lists are **not** in this repository. The curated (db, task) mixtures
+are vendored in the `rt` package instead, so a list can no longer drift from
+the data or the code that reads it:
+
+```python
+from rt.data import get_mixture_path, list_mixtures
+
+list_mixtures()                                    # every (collection, name)
+path = get_mixture_path("relbench", "forecast")
+```
+
+Pass that path as `db_task_list`.
+
+For this collection the vendored lists are `all` (34 pairs over the 7
+databases), `forecast` (21 — the RelBench entity benchmark, the default
+evaluation list) and `autocomplete` (13).
 
 ## How to load it
 
@@ -107,26 +105,12 @@ There is no CLI: copy
 [`examples/preprocess.py`](https://github.com/stanford-star/relational-transformer/blob/main/examples/preprocess.py),
 edit the call, `pixi run python examples/preprocess.py`.
 
-**Preprocessing commit.** Written by `rustler` at repository commit
-**`cc562b6`** (2026-08-07, the last preprocessing-code commit before the
-2026-08-08 upload).
-
-### Column statistics
-
-`rustler` z-scores numeric and datetime cells. Since PR #4 (`rustler: column
-stats from the train period only`, commit `8030aa8`) the statistics come from
-the train period alone, where previously they were taken over the whole table.
-34 of the 50 database tables here are time-indexed and so take narrower
-statistics under that change.
-
-The tree published at this revision predates `8030aa8`; a regenerated one is on
-its way and will be uploaded here, with the preprocessing commit above updated
-to match. Pin the revision below for the published numbers.
-
 ## Revisions
 
 The RT-J paper's results were produced against revision
-**`1016626ddb30c027b92458bf866903850cc205e1`** (2026-08-08). Pin it:
+**`1016626ddb30c027b92458bf866903850cc205e1`** (2026-08-08), which predates the
+rebuild. Hub revisions are immutable, so that pin still resolves to exactly the
+data the paper used; pin it to reproduce published numbers:
 
 ```bash
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
@@ -134,40 +118,17 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --local-dir data/relbench-preprocessed
 ```
 
+The rebuilt tree landed at revision
+**`ff29544d3622294d579a05afcdda21b0906283b2`** (2026-10-01); later revisions
+change only this card.
+
 ## Licence
 
 **CC BY 4.0** — attribution only, commercial use permitted.
 
-The raw collection,
-[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1),
-is **CC BY-SA 4.0** and stays that way: all seven databases are declared
-share-alike there, and at least `rel-stack` inherits that genuinely rather than
-by choice, being built from the
-[Stack Exchange data dumps](https://archive.org/details/stackexchange), whose
-user-contributed content is CC BY-SA 4.0.
-
-This repository can be more permissive because **it contains no verbatim
-upstream content.** Per database it holds, and only holds:
-
-| | |
-|---|---|
-| `text_emb_*.bin` | one 384-d `bf16` MiniLM embedding per distinct source string |
-| `nodes.rkyv` | numeric and datetime cells z-scored, text cells as an embedding index, raw row timestamps |
-| `offsets.rkyv`, `p2f_adj.rkyv` | row offsets and the foreign-key graph |
-| `meta.json`, `table_info.json`, `column_index.json` | table and column names, row counts, semantic types |
-
-Neither the string cell values nor the RelBench-format parquet are here — see
-**File layout** for what is left out and why. No string or free-text column can
-be read back out, the z-scoring statistics are not serialized so numeric scale
-is unrecoverable, and primary-key columns are dropped. What remains is a lossy
-derived representation plus schema metadata — the same basis on which the
-released checkpoints are CC BY 4.0.
-
-So CC BY 4.0 covers **these artifacts**, not the underlying databases and not
-the benchmark. To work with the source data, go to
-[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1)
-and follow its terms. Attribution for the databases belongs to RelBench and to
-each upstream source: cite RelBench, not only this repository.
+Cite the RT-J paper below, and RelBench for the benchmark. The raw collection
+is
+[`stanford-star/relbench-v1`](https://huggingface.co/datasets/stanford-star/relbench-v1).
 
 ## Citation
 

@@ -41,5 +41,5 @@ local/
 # maturin develop builds the extension in-place into the source tree
 src/rt/rustler*.so
 dist/
-rustler/.build.lock
+rustler/.develop.lock
 %h/

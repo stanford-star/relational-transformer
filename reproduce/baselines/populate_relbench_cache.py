@@ -1,9 +1,7 @@
-import json
 import os
-from pathlib import Path
 
-from reproduce import config
 from reproduce.baselines.featurize_rdblearn import rdb_dataset
+from rt.data import get_mixture
 
 
 def main() -> None:
@@ -11,9 +9,7 @@ def main() -> None:
     from relbench.datasets import get_dataset
     from relbench.tasks import get_task, get_task_names
 
-    pairs = json.loads(
-        (Path(config.pre_dir()) / "db-task-lists" / "forecast.json").read_text()
-    )
+    pairs = get_mixture("relbench", "forecast")
     for db in sorted({db for db, _ in pairs}):
         ds = get_dataset(db, download=True)
         rb_db = ds.get_db(upto_test_timestamp=False)

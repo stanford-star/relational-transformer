@@ -3,6 +3,8 @@ import json
 import shutil
 from pathlib import Path
 
+from rt.data import get_mixture
+
 
 def derange(indices: list[int], seed_material: str) -> dict[int, int]:
     import numpy as np
@@ -31,9 +33,7 @@ def main(*, pre_dir: str, out_dir: str, embedder: str, d_text: int, seed: int) -
     out = Path(out_dir).expanduser()
     out.mkdir(parents=True, exist_ok=True)
 
-    relink(out / "db-task-lists", pre / "db-task-lists")
-
-    pairs = json.loads((pre / "db-task-lists" / "forecast.json").read_text())
+    pairs = get_mixture("relbench", "forecast")
     for db in sorted({db for db, _ in pairs}):
         src = pre / db
         dst = out / db

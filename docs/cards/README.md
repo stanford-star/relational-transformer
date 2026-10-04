@@ -13,22 +13,21 @@ of the repository it is named after, front matter included.
 | [`rt-plurel.md`](rt-plurel.md) | [`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel) | CC BY 4.0 (`paper/` stays MIT) |
 | [`rt-v1.md`](rt-v1.md) | [`stanford-star/rt-v1`](https://huggingface.co/stanford-star/rt-v1) | CC BY 4.0 |
 
-Released weights are permissive: the share-alike obligations of the upstream
-data do not reach a model trained on it, and each card scopes its licence to
-the weights explicitly.
+Each model card scopes its licence to the weights.
 
 ## Datasets
 
 | file | Hub repository | licence |
 |---|---|---|
-| [`the-join-preprocessed.md`](the-join-preprocessed.md) | [`stanford-star/the-join-preprocessed`](https://huggingface.co/datasets/stanford-star/the-join-preprocessed) | CC BY-SA 4.0 |
-| [`relbench-preprocessed.md`](relbench-preprocessed.md) | [`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed) | CC BY-SA 4.0 |
+| [`the-join-preprocessed.md`](the-join-preprocessed.md) | [`stanford-star/the-join-preprocessed`](https://huggingface.co/datasets/stanford-star/the-join-preprocessed) | CC BY 4.0 |
+| [`relbench-preprocessed.md`](relbench-preprocessed.md) | [`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed) | CC BY 4.0 |
 | [`plurel-preprocessed.md`](plurel-preprocessed.md) | [`stanford-star/plurel-preprocessed`](https://huggingface.co/datasets/stanford-star/plurel-preprocessed) | CC BY 4.0 |
 | [`relbench-raw.md`](relbench-raw.md) | [`stanford-star/relbench-raw`](https://huggingface.co/datasets/stanford-star/relbench-raw) | CC BY 4.0, packaging only |
+| [`tgb.md`](tgb.md) | [`stanford-star/tgb`](https://huggingface.co/datasets/stanford-star/tgb) | CC BY 4.0 |
+| [`dbinfer.md`](dbinfer.md) | [`stanford-star/dbinfer`](https://huggingface.co/datasets/stanford-star/dbinfer) | CC BY 4.0 |
 
-Share-alike where the data is third-party and inherits it, CC BY 4.0 where the
-data is ours or where the licence covers only the packaging; each card explains
-which case it is in.
+Everything is CC BY 4.0; `relbench-raw` scopes it to the packaging of the
+mirrored archives.
 
 ## Changing a card
 

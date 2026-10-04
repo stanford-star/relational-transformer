@@ -1,18 +1,16 @@
-import json
 from pathlib import Path
 
 import pandas as pd
 
 from reproduce import config
+from rt.data import get_mixture
 
 
 def main() -> None:
     from relbench.datasets import get_dataset
     from relbench.tasks import get_task
 
-    pairs = json.loads(
-        (Path(config.pre_dir()) / "db-task-lists" / "forecast.json").read_text()
-    )
+    pairs = get_mixture("relbench", "forecast")
 
     for db in sorted({d for d, _ in pairs}):
         rb_db = get_dataset(db, download=True).get_db(upto_test_timestamp=False)

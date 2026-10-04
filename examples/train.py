@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from rt.data import get_mixture_path
 from rt.train import main
 
 
@@ -14,17 +15,17 @@ def train(pre_dir: str, eval_pre_dir: str, out_root: str, run_id: str) -> None:
         compile=True,
         materialize_attn_masks=True,
         loss_fn="huber",
-        load_ckpt_path=None,
-        db_task_list=f"{pre_dir}/db-task-lists/rt-j.json",
+        load_ckpt_path="stanford-star/rt-plurel",
+        db_task_list=str(get_mixture_path("the-join", "rt-j")),
         train_splits=["train"],
         pre_dir=pre_dir,
         stage_dir=None,
         tokens_per_gpu=2**17,
         num_workers=16,
         prefetch_factor=2,
-        ctx_size_list=[1024, 2048, 4096, 8192],
-        local_ctx_size_list=[256, 512, 1024, 2048, 4096, 8192],
-        bfs_width_list=[16, 64, 256],
+        ctx_size_list=[512, 1024, 2048, 4096, 8192],
+        local_ctx_size_list=[128, 256, 512, 1024, 2048, 4096, 8192],
+        bfs_width_list=[8, 16, 32, 64, 128, 256],
         prefer_latest_list=[False, True],
         num_walks=10_000,
         walk_length=20,
@@ -51,7 +52,7 @@ def train(pre_dir: str, eval_pre_dir: str, out_root: str, run_id: str) -> None:
         db_cutoff=None,
         resume_save_mins=20.0,
         eval_splits=["val"],
-        eval_db_task_list=f"{eval_pre_dir}/db-task-lists/forecast.json",
+        eval_db_task_list=str(get_mixture_path("relbench", "forecast")),
         eval_pre_dir=eval_pre_dir,
         eval_tokens_per_gpu=2**17,
         eval_num_workers=1,

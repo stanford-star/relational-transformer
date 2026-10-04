@@ -18,5 +18,5 @@ python -m reproduce.valtest.collect   # -> results.json
 ```
 
 `collect.py` asserts each curve's configuration and protocol — the default
-tuple, or the task's `best_cfg` from `../tune/tuned_configs.json`, and
+tuple, or the task's `best_cfg` from `../tune/tuned_configs_rt-j.json`, and
 `items_per_task=8192`, `n_seeds=16` — before reading it.

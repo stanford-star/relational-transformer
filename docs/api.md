@@ -53,13 +53,28 @@ dims raise rather than defaulting — so a bare `.safetensors` with no sibling
 
 Resolves `(db, task)` pairs against `<pre_dir>/<db>/meta.json` and returns opaque
 `Task` objects to hand to an evaluator. `db_task_list` is either a list of
-pairs or a path to a JSON file of pairs (the released lists ship with the
-preprocessed data as `<pre_dir>/db-task-lists/<name>.json`). `splits` is the
+pairs or a path to a JSON file of pairs (the curated lists are vendored in the
+package; see `rt.data.get_mixture` below). `splits` is the
 tuple of split names to resolve. A pair naming a task that `meta.json` does not
 carry is **skipped, not an error**; a task whose `meta.json` entry is stale
 raises.
 
 `Task` is a pass-through token. Its fields are internal.
+
+### `rt.data.get_mixture(collection, name) -> list[tuple[str, str]]`
+
+The curated `(db, task)` mixtures, vendored in the package rather than fetched
+with the data. `collection` is the preprocessed collection the mixture belongs
+to (`the-join`, `relbench`, `plurel`) and `name` the mixture within it; an
+unknown pair asserts. `rt.data.get_mixture_path(collection, name)` returns the
+vendored JSON file's path instead of its contents, for an argument that wants a
+path, and `rt.data.list_mixtures()` returns every `(collection, name)` pair.
+
+| collection | mixtures |
+| --- | --- |
+| `the-join` | `rt-j` (the RT-J pretraining mixture, 13243 pairs), `all` (same set), `forecast` (4098), `autocomplete` (9145) |
+| `relbench` | `forecast` (the 21-task benchmark), `autocomplete` (13), `all` (34) |
+| `plurel` | `rt-plurel-train` (86211 pairs over 1900 dbs), `all` (116088), `autocomplete` (116088), `forecast` (empty) |
 
 ### `rt.eval.build_evaluator(tasks, pre_dir, *, ...)`
 
@@ -239,7 +254,6 @@ interchangeable. Per database, the files a reader may rely on:
 <pre_dir>/<db>/p2f_adj.rkyv
 <pre_dir>/<db>/text.json                   the text strings, in order
 <pre_dir>/<db>/text_emb_<embedder>.bin     their embeddings
-<pre_dir>/db-task-lists/<name>.json        released task lists (optional)
 ```
 
 `CORE_FILES` and `METADATA_FILES` in `rt.data` name the first set

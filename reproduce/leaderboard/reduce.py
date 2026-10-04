@@ -4,12 +4,13 @@ from pathlib import Path
 import numpy as np
 
 from reproduce import config
-from reproduce.enscurve.plan import tuned_configs
-from reproduce.leaderboard.plan import N_CFGS, N_SEEDS
+from reproduce.leaderboard.plan import FULL, N_CFGS, N_SEEDS
+from reproduce.tasks import tasks
+from reproduce.tune.plan import load_configs
 
 
-def unit(db: str, table: str, rank: int) -> Path:
-    return Path(config.out_root()) / "leaderboard" / f"cfg{rank}" / f"{db}__{table}"
+def unit(out_subdir: str, db: str, table: str, rank: int) -> Path:
+    return Path(config.out_root()) / out_subdir / f"cfg{rank}" / f"{db}__{table}"
 
 
 def load_unit(path: Path, cfg: list, ckpt: str) -> np.lib.npyio.NpzFile:
@@ -25,29 +26,43 @@ def load_unit(path: Path, cfg: list, ckpt: str) -> np.lib.npyio.NpzFile:
     ]
     assert got == list(cfg), f"{path}: config {got} != tuned {cfg}"
     assert cfg_rec["n_seeds"] == N_SEEDS, f"{path}: {cfg_rec['n_seeds']} seeds"
-    assert cfg_rec.get("checkpoint", ckpt) == ckpt, f"{path}: checkpoint {cfg_rec}"
+    assert Path(cfg_rec["checkpoint"]).expanduser() == Path(ckpt).expanduser(), (
+        f"{path}: produced from {cfg_rec['checkpoint']}, not {ckpt}"
+    )
     assert cfg_rec["shuffle_seed"] == 0 and cfg_rec["context_seed"] == 0
     assert cfg_rec["db_cutoff"] is None
+    assert cfg_rec["split"] == "test" and cfg_rec["items_per_task"] == FULL
     st = np.load(state_path)
     assert int(st["seeds"]) == N_SEEDS, f"{path}: {int(st['seeds'])}/{N_SEEDS} seeds"
     return st
 
 
-def main() -> None:
+def main(
+    *,
+    ckpt: str,
+    configs_path: str,
+    grid_stem: str,
+    task_list: list[tuple[str, str]],
+    out_subdir: str,
+    csv_dir: str,
+    results_path: str,
+    zip_path: str,
+) -> None:
     from rt.data import get_tasks
     from rt.eval.relbench import _emit_and_score
 
-    pre_dir, ckpt = config.pre_dir(), config.ckpt()
-    csv_dir = Path(config.share()) / "leaderboard" / "preds"
-    cfgs = tuned_configs()
-    assert len(cfgs) == 21, f"{len(cfgs)} tuned configs, expected 21"
+    pre_dir = config.pre_dir()
+    csv_out = Path(csv_dir)
+    cfgs = load_configs(configs_path, grid_stem, task_list)
     results = {}
     for task_key, rec in sorted(cfgs.items()):
         db, table = task_key.split("/")
         (task,) = get_tasks(pre_dir, [(db, table)], ("test",))
         total = labels = nodes = None
         for rank in range(N_CFGS):
-            st = load_unit(unit(db, table, rank), rec["top_cfgs"][rank], ckpt)
+            st = load_unit(
+                unit(out_subdir, db, table, rank), rec["top_cfgs"][rank], ckpt
+            )
             if total is None:
                 total = st["sum_preds"].astype(np.float64)
                 labels, nodes = st["labels"], st["node_idxs"]
@@ -58,7 +73,7 @@ def main() -> None:
         mean_pred = total / (N_CFGS * N_SEEDS)
 
         mname, mval, n, align, _csv = _emit_and_score(
-            csv_dir, task, pre_dir, "all-MiniLM-L12-v2", labels, mean_pred, nodes
+            csv_out, task, pre_dir, "all-MiniLM-L12-v2", labels, mean_pred, nodes
         )
         results[task_key] = {
             "task_type": task.task_type,
@@ -81,17 +96,29 @@ def main() -> None:
         "mean_reg": float(np.mean(by_type["reg"])),
         "per_task": results,
     }
-    dest = config.series_dir() / "leaderboard" / "top4x4.json"
+    dest = Path(results_path)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(summary, indent=1, sort_keys=True) + "\n")
     print(
         f"\nmean clf: {summary['mean_clf']:.4f}  mean reg: {summary['mean_reg']:.4f}"
         f"\nwrote {dest}"
-        f"\n\nprediction CSVs are under {csv_dir}; package them with"
-        f"\n  python -m relbench.submit {csv_dir} --out {csv_dir.parent}/rt-j.zip",
+        f"\n\nprediction CSVs are under {csv_out}; validate and package them with"
+        f"\n  python -m relbench.submit {csv_out} --out {zip_path}",
         flush=True,
     )
 
 
 if __name__ == "__main__":
-    main()
+    from pipelines.icl.models import MODELS
+
+    model = MODELS["rt-j"]
+    main(
+        ckpt=config.env(model.ckpt_env),
+        configs_path=model.configs_path,
+        grid_stem=model.grid_stem,
+        task_list=tasks(),
+        out_subdir=model.out_subdir,
+        csv_dir=str(Path(config.share()) / model.out_subdir / "preds"),
+        results_path=str(config.series_dir() / "leaderboard" / "top4x4.json"),
+        zip_path=str(Path(config.share()) / model.out_subdir / f"{model.zip_stem}.zip"),
+    )

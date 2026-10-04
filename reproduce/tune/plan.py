@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from reproduce import config
@@ -15,29 +16,53 @@ VAL_ENSEMBLE_SIZE = 4
 VAL_ITEMS_PER_TASK = 4096
 
 
-def grid_path(db: str, table: str) -> Path:
-    return (
-        Path(config.out_root())
-        / "no-entity"
-        / "tune"
-        / f"tune--{db}--{table}"
-        / "tuning.json"
+def grid_stem_prefix(grid_stem: str) -> str:
+    prefix, _, rest = grid_stem.partition("{db}")
+    assert prefix and rest.endswith("{table}"), (
+        f"grid_stem {grid_stem!r} must look like 'tune-<model>--{{db}}--{{table}}'"
     )
+    return prefix
 
 
-def jobs() -> list[Job]:
+def grid_path(grid_stem: str, db: str, table: str) -> Path:
+    grid_stem_prefix(grid_stem)
+    stem = grid_stem.format(db=db, table=table)
+    return Path(config.out_root()) / "no-entity" / "tune" / stem / "tuning.json"
+
+
+def load_configs(
+    configs_path: str, grid_stem: str, task_list: list[tuple[str, str]]
+) -> dict:
+    cfgs = json.loads(Path(configs_path).read_text())
+    want = {f"{db}/{table}" for db, table in task_list}
+    assert set(cfgs) == want, (
+        f"{configs_path} holds {len(cfgs)} tasks, the task list has {len(want)}; "
+        f"only in the file: {sorted(set(cfgs) - want)}; "
+        f"only in the task list: {sorted(want - set(cfgs))}"
+    )
+    prefix = grid_stem_prefix(grid_stem)
+    for task_key, rec in sorted(cfgs.items()):
+        assert rec["grid"].startswith(prefix), (
+            f"{task_key}: tuned from {rec['grid']}, which is not a {prefix} grid. "
+            f"{configs_path} was tuned for a different checkpoint, and context "
+            f"configurations are only valid for the checkpoint they were tuned on."
+        )
+    return cfgs
+
+
+def jobs(*, ckpt: str, grid_stem: str, task_list: list[tuple[str, str]]) -> list[Job]:
     out_root = config.out_root()
     out = []
-    for db, table in tasks():
-        run_id = f"tune--{db}--{table}"
-        if (grid_path(db, table)).exists():
+    for db, table in task_list:
+        if grid_path(grid_stem, db, table).exists():
             continue
+        run_id = grid_stem.format(db=db, table=table)
         out.append(
             Job(
                 name=f"tune-{db}-{table}",
                 target="rt.eval:main",
                 args={
-                    "load_ckpt_path": config.ckpt(),
+                    "load_ckpt_path": ckpt,
                     "embedder": "all-MiniLM-L12-v2",
                     "d_text": 384,
                     "num_blocks": 12,
@@ -77,6 +102,13 @@ def jobs() -> list[Job]:
 
 
 if __name__ == "__main__":
-    plan = jobs()
+    from pipelines.icl.models import MODELS
+
+    model = MODELS["rt-j"]
+    plan = jobs(
+        ckpt=config.env(model.ckpt_env),
+        grid_stem=model.grid_stem,
+        task_list=tasks(),
+    )
     describe(plan)
     run_sequential(plan)

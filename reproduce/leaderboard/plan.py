@@ -1,21 +1,30 @@
 from pathlib import Path
 
 from reproduce import config
-from reproduce.enscurve.plan import tuned_configs
 from reproduce.launch import Job, describe, run_sequential
+from reproduce.tasks import tasks
+from reproduce.tune.plan import load_configs
 
 N_CFGS = 4
 N_SEEDS = 4
 FULL = 10_000_000
 
 
-def jobs() -> list[Job]:
+def jobs(
+    *,
+    ckpt: str,
+    configs_path: str,
+    grid_stem: str,
+    task_list: list[tuple[str, str]],
+    out_subdir: str,
+) -> list[Job]:
     out_root = config.out_root()
+    cfgs = load_configs(configs_path, grid_stem, task_list)
     out = []
-    for task_key, rec in sorted(tuned_configs().items()):
+    for task_key, rec in sorted(cfgs.items()):
         db, table = task_key.split("/")
         for rank, (ctx, lcs, bw, pl) in enumerate(rec["top_cfgs"][:N_CFGS]):
-            out_dir = f"{out_root}/leaderboard/cfg{rank}"
+            out_dir = f"{out_root}/{out_subdir}/cfg{rank}"
             if (Path(out_dir) / f"{db}__{table}.json").exists():
                 continue
             out.append(
@@ -45,7 +54,7 @@ def jobs() -> list[Job]:
                         "prefetch_factor": 2,
                         "mmap_populate": True,
                         "db_cutoff": None,
-                        "ckpt": config.ckpt(),
+                        "ckpt": ckpt,
                     },
                 )
             )
@@ -53,6 +62,15 @@ def jobs() -> list[Job]:
 
 
 if __name__ == "__main__":
-    plan = jobs()
+    from pipelines.icl.models import MODELS
+
+    model = MODELS["rt-j"]
+    plan = jobs(
+        ckpt=config.env(model.ckpt_env),
+        configs_path=model.configs_path,
+        grid_stem=model.grid_stem,
+        task_list=tasks(),
+        out_subdir=model.out_subdir,
+    )
     describe(plan)
     run_sequential(plan)

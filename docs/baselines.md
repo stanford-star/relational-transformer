@@ -10,7 +10,7 @@ predictor, and the result is scored with RelBench's own leaderboard evaluator.
 pip install "relational-transformer[baselines]"
 python scripts/baseline.py --featurizer entity --predictor ridge \
   --pre-dir data/relbench-preprocessed \
-  --db-task-list data/relbench-preprocessed/db-task-lists/forecast.json \
+  --db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')" \
   --out-dir baseline_out
 ```
 

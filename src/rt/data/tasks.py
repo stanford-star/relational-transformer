@@ -6,6 +6,25 @@ from rt.data.resolve import read_meta
 
 _TASK_TYPE = {"binary_classification": "clf", "regression": "reg"}
 
+MIXTURES_DIR = Path(__file__).parent / "mixtures"
+
+
+def list_mixtures() -> list[tuple[str, str]]:
+    return sorted((p.parent.name, p.stem) for p in MIXTURES_DIR.glob("*/*.json"))
+
+
+def get_mixture_path(collection: str, name: str) -> Path:
+    path = MIXTURES_DIR / collection / f"{name}.json"
+    assert path.is_file(), (
+        f"no vendored mixture {collection}/{name}; available: "
+        f"{', '.join(f'{c}/{n}' for c, n in list_mixtures())}"
+    )
+    return path
+
+
+def get_mixture(collection: str, name: str) -> list[tuple[str, str]]:
+    return resolve_db_task_list(str(get_mixture_path(collection, name)))
+
 
 @dataclass(frozen=True)
 class Task:
@@ -22,9 +41,10 @@ def resolve_db_task_list(db_task_list) -> list[tuple[str, str]]:
         p = Path(db_task_list).expanduser()
         if not p.is_file():
             raise FileNotFoundError(
-                f"db_task_list {db_task_list!r} does not exist. The released "
-                f"lists ship with the preprocessed data, as "
-                f"<pre_dir>/db-task-lists/<name>.json"
+                f"db_task_list {db_task_list!r} does not exist. The curated "
+                f"lists are vendored in the package: get one with "
+                f"rt.data.get_mixture(collection, name); available: "
+                f"{', '.join(f'{c}/{n}' for c, n in list_mixtures())}"
             )
         pairs = json.loads(p.read_text())
     else:

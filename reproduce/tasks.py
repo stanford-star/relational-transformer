@@ -1,13 +1,10 @@
-import json
-from pathlib import Path
-
 from reproduce import config
+from rt.data import get_mixture
 
 
 def tasks() -> list[tuple[str, str]]:
-    path = Path(config.pre_dir()) / "db-task-lists" / "forecast.json"
-    pairs = [tuple(p) for p in json.loads(path.read_text())]
-    assert len(pairs) == 21, f"{path}: {len(pairs)} tasks, the paper's grid has 21"
+    pairs = get_mixture("relbench", "forecast")
+    assert len(pairs) == 21, f"{len(pairs)} tasks, the paper's grid has 21"
     return pairs
 
 

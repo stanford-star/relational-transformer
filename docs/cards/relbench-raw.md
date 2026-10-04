@@ -36,7 +36,7 @@ depending on third-party hosts staying up. These are the inputs to the database
 
 | | |
 |---|---|
-| Files | 23 (22 zip archives + `.gitattributes`) |
+| Files | 24 |
 | Size | ~30.6 GiB |
 
 ```
@@ -85,8 +85,7 @@ Each archive is a byte mirror of an upstream download, uploaded with
 `huggingface_hub` and committed one dataset at a time (the commit titles record
 the source, e.g. *"Mirror the rel-ratebeer raw source"*). Nothing in this
 repository is produced by this project's code, so there is no preprocessing
-commit for it — and conversely, it is unaffected by the `rustler` normalization
-fix (PR #4, commit `8030aa8`) that changes the preprocessed repositories.
+commit for it.
 
 ## Revisions
 

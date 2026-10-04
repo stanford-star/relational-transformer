@@ -98,15 +98,11 @@ Same scope and limits as
 [`rt-j`](https://huggingface.co/stanford-star/rt-j#limitations-and-out-of-scope-use):
 binary entity classification and scalar entity regression only, RelBench-format
 input preprocessed by `rustler` from a local `pre_dir`, text consumed only
-through frozen `all-MiniLM-L12-v2` embeddings, and accuracy strongly dependent
+through frozen `all-MiniLM-L12-v2` embeddings (the preprocessed repositories
+ship embeddings and no readable strings, so switching embedder means re-running
+preprocessing from the raw collection), and accuracy strongly dependent
 on the context configuration. `rt-j` is the stronger checkpoint; prefer it
 unless you specifically want the PluRel-only model.
-
-The published preprocessed datasets also carry the older input normalization,
-whose z-scoring statistics were computed over the whole table rather than the
-train period only — a temporal leak in the inputs. See the
-[caveat on the `rt-j` card](https://huggingface.co/stanford-star/rt-j#known-caveat-input-normalization-in-the-published-preprocessed-data)
-for the measured magnitude.
 
 ## `paper/`: original PluRel-paper checkpoints
 

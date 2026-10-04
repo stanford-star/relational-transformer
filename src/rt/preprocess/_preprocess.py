@@ -95,7 +95,15 @@ def update_meta_with_embeddings(
     meta_path.write_text(json.dumps(meta, indent=2) + "\n")
 
 
-def upload_dataset(pre_dataset_dir: Path, repo: str, private: bool) -> None:
+def meta_without_text(pre_dataset_dir: Path) -> dict:
+    meta = json.loads((pre_dataset_dir / "meta.json").read_text())
+    meta["files"].pop("text", None)
+    return meta
+
+
+def upload_dataset(
+    pre_dataset_dir: Path, repo: str, private: bool, retain_text: bool
+) -> None:
     name = pre_dataset_dir.name
     api = HfApi()
     api.create_repo(repo, repo_type="dataset", private=private, exist_ok=True)
@@ -106,7 +114,19 @@ def upload_dataset(pre_dataset_dir: Path, repo: str, private: bool) -> None:
         repo_id=repo,
         repo_type="dataset",
         commit_message=f"add preprocessed {name}",
+        ignore_patterns=None if retain_text else ["text.json", "meta.json"],
     )
+    if not retain_text:
+        api.upload_file(
+            path_or_fileobj=json.dumps(
+                meta_without_text(pre_dataset_dir), indent=2
+            ).encode()
+            + b"\n",
+            path_in_repo=f"{name}/meta.json",
+            repo_id=repo,
+            repo_type="dataset",
+            commit_message=f"add preprocessed {name}: meta.json without text.json",
+        )
     print(f"uploaded {repo}/{name}", flush=True)
 
 
@@ -132,6 +152,7 @@ def preprocess_one(
     embed: bool = True,
     upload_repo: str | None,
     private: bool,
+    retain_text: bool,
     revision: str | None,
 ) -> Path:
     dataset_dir = resolve_dataset_dir(spec, revision=revision)
@@ -144,7 +165,9 @@ def preprocess_one(
         d_text = embed_dataset(pre_dataset_dir, embedder, batch_size)
         update_meta_with_embeddings(pre_dataset_dir, embedder, d_text)
     if upload_repo:
-        upload_dataset(pre_dataset_dir, upload_repo, private=private)
+        upload_dataset(
+            pre_dataset_dir, upload_repo, private=private, retain_text=retain_text
+        )
     return pre_dataset_dir
 
 
@@ -171,6 +194,7 @@ def one(
     embed: bool,
     upload_repo: str | None,
     public: bool,
+    retain_text: bool,
     revision: str | None,
 ) -> None:
     preprocess_one(
@@ -182,6 +206,7 @@ def one(
         embed=embed,
         upload_repo=upload_repo,
         private=not public,
+        retain_text=retain_text,
         revision=revision,
     )
 
@@ -199,6 +224,7 @@ def many(
     embed: bool,
     upload_repo: str | None,
     public: bool,
+    retain_text: bool,
     revision: str | None,
 ) -> None:
     specs = list_datasets(repo, revision=revision)
@@ -228,6 +254,7 @@ def many(
                 embed=embed,
                 upload_repo=upload_repo,
                 private=not public,
+                retain_text=retain_text,
                 revision=revision,
             )
         except Exception as e:  # noqa: BLE001
@@ -247,9 +274,15 @@ def ls(*, repo: str, revision: str | None) -> None:
         print(spec)
 
 
-def upload(*, pre_dir: str, repo: str, bulk: bool, public: bool) -> None:
+def upload(
+    *, pre_dir: str, repo: str, bulk: bool, public: bool, retain_text: bool
+) -> None:
     path = Path(pre_dir).expanduser()
     if bulk:
+        assert retain_text, (
+            "bulk_upload uploads the folder as it is on disk; it cannot drop "
+            "text.json, so pass retain_text=True or upload per dataset"
+        )
         bulk_upload(path, repo, private=not public)
     else:
-        upload_dataset(path, repo, private=not public)
+        upload_dataset(path, repo, private=not public, retain_text=retain_text)

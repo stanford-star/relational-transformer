@@ -15,7 +15,7 @@ Usage::
         --featurize-batch-size 4096 --out-subdir rdblearn_features \\
         --num-workers 6 \\
         featurizer:rdb-learn-featurizer-config \\
-        --featurizer.db-task-list ~/scratch/pre/db-task-lists/forecast.json \\
+        --featurizer.db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')" \\
         --featurizer.splits test \\
         --featurizer.pre-dir ~/scratch/pre \\
         --featurizer.max-depth 2 \\

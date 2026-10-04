@@ -11,7 +11,7 @@ python -m reproduce.enscurve.plan     # 21 jobs per variant, one GPU each
 python -m reproduce.enscurve.reduce   # -> ../series/enscurve/{default,tuned}.json
 ```
 
-The tuned variant reads the committed `../tune/tuned_configs.json`, so neither
+The tuned variant reads the committed `../tune/tuned_configs_rt-j.json`, so neither
 variant waits on the grid.
 
 ## Protocol

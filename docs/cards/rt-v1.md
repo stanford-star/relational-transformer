@@ -133,7 +133,7 @@ being z-scored numbers. The regular RT-J `pre_dir` will not do.
 
 ```bash
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
-  --include "legacy/*" "db-task-lists/*" --local-dir data/relbench-preprocessed
+  --include "legacy/*" --local-dir data/relbench-preprocessed
 
 pixi run python examples/eval_legacy.py
 ```
@@ -162,14 +162,11 @@ For new work, use [`rt-j`](https://huggingface.co/stanford-star/rt-j) instead.
 - Binary classification and scalar regression over entities only. Not
   multiclass, not link prediction, not recommendation, not generation.
 - Requires the legacy boolean-typed preprocessing described above.
-- The published preprocessed datasets carry the older input normalization,
-  whose z-scoring statistics were computed over the whole table rather than the
-  train period only — a temporal leak in the inputs. See the
-  [caveat on the `rt-j` card](https://huggingface.co/stanford-star/rt-j#known-caveat-input-normalization-in-the-published-preprocessed-data)
-  for the measured magnitude.
 - Metrics reproduce the paper within noise **except RT-v1 on `rel-avito`**,
   which degrades for sampler-level reasons outside these configurations.
-- Text is consumed only through frozen `all-MiniLM-L12-v2` embeddings.
+- Text is consumed only through frozen `all-MiniLM-L12-v2` embeddings. The
+  preprocessed repositories ship embeddings and no readable strings, so
+  switching embedder means re-running preprocessing from the raw collection.
 - Trained on public databases; carries whatever biases and errors those
   contain, has no calibration guarantees, and must not be used unexamined for
   decisions about people.

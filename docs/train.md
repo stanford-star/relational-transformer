@@ -48,11 +48,11 @@ run at that path.
 The task mixture is given by `db_task_list` — `(db, task)` pairs as a
 JSON file. Names resolve against the tasks the db ships (recorded in its
 `meta.json`); one the build cannot predict — a recommendation task, or an
-entry left over from an older build — is reported and ignored, not fatal. The curated lists ship with the data, under
-`<pre_dir>/db-task-lists/`: `forecast.json` (every forecast task in the Join),
-`autocomplete.json` (every `kind: autocomplete` task — predict a column of a db
-table, train-split only), `all.json` (both), and `rt-j.json` (the curated RT-J
-mixture, forecast + autocomplete).
+entry left over from an older build — is reported and ignored, not fatal. The curated lists are vendored in the package and read with
+`rt.data.get_mixture_path("the-join", name)`: `forecast` (every forecast task in
+the Join), `autocomplete` (every `kind: autocomplete` task — predict a column of
+a db table, train-split only), `all` (both), and `rt-j` (the RT-J pretraining
+mixture — `all` filtered to the 523 databases the repo carries, 13243 pairs).
 
 `train_splits` picks which splits of those tasks the training stream draws
 from. `["train"]` is the usual choice; `["train", "val"]` fine-tunes on the
@@ -121,9 +121,16 @@ could otherwise hand the win to the weights the run began with.
 
 There is no CLI. `rt.train._train` is a function that takes every knob as a
 required argument; a run is a script that calls it. Copy
-[`examples/train.py`](../examples/train.py) — it passes the released RT-J
-values — and edit what you want. `pixi install` builds the rustler sampler as
-part of the environment; nothing else to build.
+[`examples/train.py`](../examples/train.py) and edit what you want.
+`pixi install` builds the rustler sampler as part of the environment; nothing
+else to build.
+
+`examples/train.py` is **one** run: RT-J's second phase, on the Join, warm
+started from the released phase-1 checkpoint
+(`load_ckpt_path="stanford-star/rt-plurel"`). RT-J is two phases — PluRel first,
+then the Join from those weights — so reproducing it is both, in order, and that
+recipe is [`pipelines/pretrain/`](../pipelines/pretrain), which also records
+which step of which phase each released checkpoint is and how it was selected.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 pixi run python examples/train.py    # one GPU

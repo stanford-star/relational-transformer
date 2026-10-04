@@ -128,6 +128,7 @@ def main(
             "context_seed": context_seed,
             "db_cutoff": db_cutoff,
             "split": split,
+            "checkpoint": ckpt,
         },
     }
     tmp = out / f".tmp.{os.getpid()}.{uuid.uuid4().hex}.json"

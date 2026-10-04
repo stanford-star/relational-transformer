@@ -45,6 +45,13 @@ already written are skipped). `shard=i, num_shards=N` splits the collection
 across a job array (e.g. a preemptible slurm array with `--array=0-63` mapping
 the task id to `shard`).
 
+For a whole collection at the scale the released ones were built at — 639 raw
+databases for the Join, 2,000 for PluRel —
+[`pipelines/preprocess/`](../pipelines/preprocess) splits each database into its
+two stages (`rustler` on a CPU, then `embed` on one GPU) and enumerates them as
+a resumable job list, which is how those collections were actually produced. It
+also records the measured cost and what a raw database has to look like.
+
 ## Using preprocessed data
 
 Everywhere a `pre_dir` is taken (see [inference](inference.md) and

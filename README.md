@@ -107,6 +107,10 @@ prediction task, and infer with a released checkpoint: the
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/byod/colab.ipynb))
 runs the whole flow end-to-end on your database, or on the bundled demo.
 
+For more than a first look, [`pipelines/`](pipelines/README.md) runs the full
+recipes on your own data in RelBench format: in-context prediction with a
+frozen checkpoint, or per-task fine-tuning.
+
 ## Development
 
 We use [pixi](https://pixi.sh) to manage one self-contained
@@ -129,6 +133,7 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
 | [Baselines](docs/baselines.md) | rel2tab tabular baselines through the same eval path |
 | [Context visualization](docs/context-visualization.md) | Inspect the contexts sampled for each row |
+| [Pipelines](pipelines/README.md) | Preprocess, pretrain, in-context and fine-tune, on RelBench or your own data |
 | [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, and how to run it |
 | [Cards](docs/cards/README.md) | Model and dataset cards |
 

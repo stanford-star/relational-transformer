@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from rt.data import get_mixture_path
 from rt.eval import main
 
 
@@ -13,7 +14,7 @@ def evaluate(pre_dir: str, out_root: str, checkpoint: str, run_id: str) -> None:
         num_heads=8,
         d_ff=2048,
         splits=["test"],
-        db_task_list=f"{pre_dir}/db-task-lists/forecast.json",
+        db_task_list=str(get_mixture_path("relbench", "forecast")),
         pre_dir=pre_dir,
         tokens_per_gpu=2**18,
         num_workers=2,

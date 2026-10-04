@@ -1,3 +1,4 @@
+from rt.data import get_mixture_path
 from rt.eval.legacy import run
 from rt.model.legacy.plurel import (
     PLUREL_HUB_REPO,
@@ -38,7 +39,7 @@ def eval_v1(out_dir: str = "eval_v1_out") -> None:
         model_for_task,
         out_dir=out_dir,
         pre_dir=PRE_DIR,
-        db_task_list=f"{DATA_DIR}/db-task-lists/forecast.json",
+        db_task_list=str(get_mixture_path("relbench", "forecast")),
         **CONTEXT,
     )
 
@@ -57,7 +58,7 @@ def eval_plurel(mode: str = "synth", out_dir: str = "eval_plurel_out") -> None:
         model_for_task,
         out_dir=out_dir,
         pre_dir=PRE_DIR,
-        db_task_list=f"{DATA_DIR}/db-task-lists/forecast.json",
+        db_task_list=str(get_mixture_path("relbench", "forecast")),
         **{**CONTEXT, "bfs_width": 128},
     )
 
