@@ -3,7 +3,7 @@
 # under rustler/ is newer than the built .so. Cargo is incremental, so an
 # unchanged crate costs one mtime scan here; concurrent activations (slurm
 # ranks in a shared clone) serialize on the lock and find the rebuild done.
-_rt_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+_rt_root=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _rt_so=$_rt_root/src/rt/rustler.abi3.so
 # Sources and manifests only: rustler/target is build output and is always
 # newer than the extension it produced.

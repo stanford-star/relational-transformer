@@ -138,7 +138,7 @@ platforms = ["linux-64"]
 # Sourced on every activation (`pixi run`, `pixi shell`): rebuilds rt.rustler
 # in place whenever anything under rustler/ changed since the last build, so
 # the imported extension can never be stale.
-scripts = ["rustler/develop.sh"]
+scripts = ["activate.sh"]
 
 [tool.pixi.activation.env]
 CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER = "x86_64-conda-linux-gnu-cc"
@@ -170,7 +170,7 @@ uv = "*"
 
 [tool.pixi.pypi-dependencies]
 # This checkout, editable: `pixi install` builds the compiled extension
-# (rt.rustler) into `src/rt/`, and rustler/develop.sh (see
+# (rt.rustler) into `src/rt/`, and activate.sh (see
 # [tool.pixi.activation]) rebuilds it on activation whenever rustler/ changed.
 relational-transformer = { path = ".", editable = true, extras = [
     "dev",
