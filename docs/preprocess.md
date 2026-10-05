@@ -1,17 +1,14 @@
 # Preprocess
 
-RT trains and predicts on a custom on-disk format produced by the `rustler`
-preprocessor from **any dataset in relbench format**. A dataset is a local path, or a HuggingFace Hub spec `org/repo[/subdir]`
-(e.g. `stanford-star/relbench-v1/rel-f1`).
+RT reads a tensor format written by the `rustler` preprocessor from any
+database in RelBench format. A database is a local path or a Hub spec
+`org/repo[/subdir]`, e.g. `stanford-star/relbench-v1/rel-f1`.
 
-Preprocessing runs `download/resolve → rustler → text embeddings` and writes a
-self-contained `<out-dir>/<name>/` directory. Text embeddings use all visible
-GPUs automatically (Sentence-Transformers multi-process); rustler itself is
-multithreaded (rayon).
+Preprocessing is two steps: `rustler` builds the graph (CPU, multithreaded),
+then the strings are embedded (every visible GPU). The result is one
+self-contained `<out_dir>/<db>/` directory.
 
-## Preprocess one database in RelBench format
-
-There is no CLI. `rt.preprocess.one` takes every argument explicitly:
+## One database
 
 ```python
 from rt.preprocess import one
@@ -22,48 +19,27 @@ one(dataset="stanford-star/relbench-v1/rel-f1", out_dir="data/relbench-preproces
     upload_repo=None, public=False, revision=None)
 ```
 
-That writes `data/relbench-preprocessed/rel-f1/`, the rustler artifacts the RT
-dataloaders read.
+`skip_tasks=True` ingests the db tables only; `embed=False` stops after
+rustler; `upload_repo` pushes the result to the Hub.
 
-Any dataset in relbench format works by swapping the `dataset` argument — the
-manifest is the sole source of relational metadata; the parquet files carry only
-native dtypes. Other arguments worth knowing: `skip_tasks=True` (ingest db
-tables only), `embed=False`, `embedder`, `batch_size`, and `upload_repo="<hub
-repo>"` (preprocess and push in one step).
+## A collection
 
-## Preprocess many databases efficiently
-
-To preprocess a whole Hub collection (e.g. the 639-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)),
-call `many` instead of `one`:
+`many` takes a Hub repo of databases and processes shard `shard` of
+`num_shards`, skipping finished ones:
 
 ```python
-ls(repo="stanford-star/the-join", revision=None)      # what is in the collection
+from rt.preprocess import ls, many
+
+ls(repo="stanford-star/the-join", revision=None)
 many(repo="stanford-star/the-join", out_dir="data/the-join-preprocessed",
      shard=0, num_shards=1, skip_existing=True, ...)
 ```
 
-`skip_existing=True` makes the pass resumable (datasets whose embeddings are
-already written are skipped). `shard=i, num_shards=N` splits the collection
-across a job array (e.g. a preemptible slurm array with `--array=0-63` mapping
-the task id to `shard`).
+[`examples/preprocess/`](../examples/preprocess) is how the released
+collections were built: per-database jobs, rustler and embed separately.
 
-For a whole collection at the scale the released ones were built at — 639 raw
-databases for the Join, 2,000 for PluRel —
-[`examples/preprocess/`](../examples/preprocess) splits each database into its
-two stages (`rustler` on a CPU, then `embed` on one GPU) and enumerates them as
-a resumable job list, which is how those collections were actually produced. It
-also records the measured cost and what a raw database has to look like:
+## Using the output
 
-```bash
-pixi run python -m examples.preprocess.plan
-```
-
-## Using preprocessed data
-
-Everywhere a `pre_dir` is taken (see [inference](inference.md) and
-[pretrain](train.md)) it is a **local directory**: what this preprocessor wrote,
-or a published collection you downloaded with `hf download --local-dir` (see
-[downloads.md](downloads.md)). Nothing is fetched on demand, so you never have
-to upload anything to use your own data, and a run's data is a path you can
-inspect. The layout is the same either way — one subdirectory per database — so
-your own output and a downloaded collection are interchangeable.
+A `pre_dir` is always a local directory with one subdirectory per database.
+Your own output and a downloaded collection ([downloads.md](downloads.md)) are
+interchangeable.

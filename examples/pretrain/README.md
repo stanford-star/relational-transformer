@@ -1,8 +1,7 @@
 # Pretraining RT-J
 
 Two phases: PluRel (86,211 tasks over 1,900 databases), then the Join (13,243
-tasks over 523 databases under a 5 GB per-database cutoff) warm-started from
-phase 1. 85,562,530 parameters; 2 GPUs per phase.
+tasks over 523 databases) warm-started from phase 1.
 
 ## Reproduce ours
 
@@ -20,36 +19,21 @@ pixi run python -m examples.preprocess.task_lists
 CUDA_VISIBLE_DEVICES=0,1 pixi run python -m examples.pretrain.phases
 ```
 
-The two phases are the same call differing in three arguments —
-`load_ckpt_path`, `db_task_list`, `pre_dir`. Phase 2's warm start is the
-released `stanford-star/rt-plurel`, so it runs standalone.
+The phases differ only in `load_ckpt_path`, `db_task_list` and `pre_dir`.
+Phase 2 warm-starts from the released `stanford-star/rt-plurel`, so it also
+runs on its own.
 
-| phase | released as | file the run wrote | step | selected by |
-|---|---|---|--:|---|
-| 1 PluRel | `stanford-star/rt-plurel` | `best_live_reg.safetensors` | 8,000 | val nMAE |
-| 2 the Join | `stanford-star/rt-j` | `best_swa_clf.safetensors` | 9,000 | val AUROC 74.36 |
+| phase | released as | file | step |
+|---|---|---|--:|
+| 1 PluRel | `stanford-star/rt-plurel` | `best_live_reg.safetensors` | 8,000 |
+| 2 the Join | `stanford-star/rt-j` | `best_swa_clf.safetensors` | 9,000 |
 
-Neither phase stops at that step; the run's own selection writes those files.
-Thousands of GPU-hours, spread over requeues — there is no single wall clock.
-Job arguments were checked against `rt.train.main`'s signature; the phases
-themselves were not re-run.
+Thousands of GPU-hours over many requeues. The phases were not re-run from
+this tree.
 
 ## Run it on your own data
 
-```bash
-pixi run hf download stanford-star/plurel --repo-type dataset --local-dir data/plurel \
-  --include "*/manifest.yaml" "*/scores.json"
-pixi run python -m examples.preprocess.task_lists      # -> data/db-task-lists/*.json
-```
-
-`rt.data.db_task_list(pre_dir)` lists every task a preprocessed directory
-ships; `rt.data.plurel_train_db_task_list(pre_dir, raw_dir)` applies the PluRel
-filter ([`../../docs/train.md`](../../docs/train.md)).
-
-[`mlock.py`](mlock.py) holds the Join resident in the page cache across
-restarts while you iterate; see
-[`../../docs/train.md`](../../docs/train.md#avoiding-data-loading-during-debug-iterations).
-
-A `db_task_list` is a JSON list of `[db, task]` pairs. For a smaller budget, lower
-`total_steps` and `tokens_per_gpu` in [`phases.py`](phases.py); every argument
-is explicit there.
+Point `pre_dir` and `db_task_list` in [`phases.py`](phases.py) at your data;
+every argument is explicit there. Lower `total_steps` and `tokens_per_gpu` for
+a smaller budget. [`mlock.py`](mlock.py) keeps the data in the page cache
+between runs while you iterate ([`docs/train.md`](../../docs/train.md)).

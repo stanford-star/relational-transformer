@@ -1,7 +1,7 @@
 # Preprocessing a collection
 
-Whole collections into RT's tensor format. Two jobs per database: `rustler`
-(CPU, builds the graph) then `embed` (one GPU, embeds the strings).
+Two jobs per database: `rustler` (CPU, builds the graph) then `embed` (one GPU,
+embeds the strings).
 
 ## Reproduce ours
 
@@ -13,8 +13,8 @@ pixi run hf download stanford-star/plurel --repo-type dataset \
 pixi run hf download stanford-star/relbench-v1 --repo-type dataset \
   --revision d8e976fd0a4b78877204bc8dfbcfc9a9f7f48600 --local-dir data/relbench-v1
 
-pixi run python -m examples.preprocess.plan      # every outstanding job, in this process
-pixi run python -m examples.preprocess.task_lists  # -> data/db-task-lists/*.json
+pixi run python -m examples.preprocess.plan         # every outstanding job
+pixi run python -m examples.preprocess.task_lists   # -> data/db-task-lists/*.json
 ```
 
 Per database it writes:
@@ -25,19 +25,17 @@ Per database it writes:
        text.json  text_emb_all-MiniLM-L12-v2.bin
 ```
 
-Already-built databases are not planned again, so re-running the plan resumes
-it. `rustler` scales with output size, `embed` with text volume — the two
-`rel-amazon` databases carry 10.5 GiB of text each and dominate any RelBench
-run. Both stages were verified end to end on `rel-f1`.
+`embed` scales with text volume; the two `rel-amazon` databases dominate any
+RelBench run.
 
 ## Run it on your own data
 
-Input must be RelBench v3 format:
+Input is RelBench v3 format:
 
 ```
 <db>/
-  manifest.yaml          # the sole source of relational metadata
-  db/<table>.parquet     # one file per table, native dtypes only
+  manifest.yaml
+  db/<table>.parquet
   tasks/<task>/manifest.yaml
   tasks/<task>/<split>.parquet
 ```
