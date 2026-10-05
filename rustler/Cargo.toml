@@ -1,6 +1,6 @@
 [package]
 name = "rustler"
-version = "1.9.0"
+version = "1.10.0"
 license = "MIT"
 description = "Native data-processing engine for the Relational Transformer (rt.rustler)."
 repository = "https://github.com/stanford-star/relational-transformer"

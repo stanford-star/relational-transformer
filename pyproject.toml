@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "relational-transformer"
-version = "1.9.0"
+version = "1.10.0"
 description = "Relational Transformer (RT): a foundation model for relational data, bundling a native Rust data-processing engine (rt.rustler)."
 readme = "README.md"
 license = { file = "LICENSE" }
