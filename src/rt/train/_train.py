@@ -481,6 +481,7 @@ def main(
         prefetch_factor=prefetch_factor if num_workers else None,
         pin_memory=True,
         persistent_workers=num_workers > 0,
+        multiprocessing_context="fork" if num_workers else None,
     )
     multi_ctx = len(ctx_size_list) > 1
     for c in ctx_size_list:

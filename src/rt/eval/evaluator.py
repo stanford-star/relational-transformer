@@ -97,6 +97,7 @@ class Evaluator:
                 num_workers=num_workers,
                 prefetch_factor=prefetch_factor if num_workers > 0 else None,
                 persistent_workers=persistent_workers,
+                multiprocessing_context="fork" if num_workers > 0 else None,
                 pin_memory=True,
                 in_order=True,
             )
