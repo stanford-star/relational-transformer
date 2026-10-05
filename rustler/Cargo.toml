@@ -42,9 +42,6 @@ itertools = "0.14"
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.9.1"
 clap = { version = "4.5", features = ["derive"] }
-# abi3-py310: one stable-ABI extension for every CPython from 3.11 up, so a
-# single wheel covers the whole supported range and needs no rebuild per minor
-# version. The floor is the package's requires-python.
 pyo3 = { version = "0.24", features = ["abi3-py310"] }
 memmap2 = "0.9"
 rkyv = { version = "0.8", features = ["pointer_width_64"] }
