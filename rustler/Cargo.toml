@@ -42,10 +42,10 @@ itertools = "0.14"
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.9.1"
 clap = { version = "4.5", features = ["derive"] }
-# abi3-py311: one stable-ABI extension for every CPython from 3.11 up, so a
+# abi3-py310: one stable-ABI extension for every CPython from 3.11 up, so a
 # single wheel covers the whole supported range and needs no rebuild per minor
 # version. The floor is the package's requires-python.
-pyo3 = { version = "0.24", features = ["abi3-py311"] }
+pyo3 = { version = "0.24", features = ["abi3-py310"] }
 memmap2 = "0.9"
 rkyv = { version = "0.8", features = ["pointer_width_64"] }
 # Must track pyo3's major: numpy 0.24 is the release built against pyo3 0.24,
