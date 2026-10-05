@@ -26,7 +26,7 @@ pixi run hf download stanford-star/rt-j --repo-type model
 The `data/*-preprocessed` paths are the scripts' defaults
 (`--train.pre-dir`, `--eval.pre-dir`). The `(db, task)` lists a run trains or
 evaluates on are generated from the downloaded data, not shipped:
-`pixi run python -m examples.db_task_list` writes `data/db-task-lists/{rt-j,rt-plurel-train,relbench-forecast}.json`
+`pixi run python -m examples.preprocess.task_lists` writes `data/db-task-lists/{rt-j,rt-plurel-train,relbench-forecast}.json`
 (the PluRel list also needs the raw `stanford-star/plurel` repo's `*/manifest.yaml`
 and `*/scores.json`).
 

@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -5,7 +6,6 @@ from pathlib import Path
 from relbench.submit import evaluate_submission
 from relbench.submit import main as package
 
-from examples import config
 from examples.finetune.plan import MODELS, PROJECT, TASKS, prediction_table
 
 
@@ -74,5 +74,5 @@ if __name__ == "__main__":
     main(
         models=sys.argv[1:],
         project=PROJECT,
-        out_root=config.out_root(),
+        out_root=os.environ["RT_OUT_ROOT"],
     )

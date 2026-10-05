@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from examples import config
+from examples.icl import env
 from examples.icl.ensemble import FULL, N_CFGS, N_SEEDS
 from examples.icl.models import model_from_argv
 from examples.icl.tasks import task_list
@@ -14,7 +14,7 @@ RESULTS_DIR = Path(__file__).parent / "results"
 
 
 def unit(out_subdir: str, db: str, table: str, rank: int) -> Path:
-    return Path(config.out_root()) / out_subdir / f"cfg{rank}" / f"{db}__{table}"
+    return Path(env.out_root()) / out_subdir / f"cfg{rank}" / f"{db}__{table}"
 
 
 def load_unit(path: Path, cfg: list, ckpt: str) -> np.lib.npyio.NpzFile:
@@ -55,7 +55,7 @@ def main(
     from rt.data import get_tasks
     from rt.eval.relbench import _emit_and_score
 
-    pre_dir = config.pre_dir()
+    pre_dir = env.pre_dir()
     csv_out = Path(csv_dir)
     cfgs = load_configs(configs_path, grid_stem, task_list)
     results = {}
@@ -114,9 +114,9 @@ def main(
 
 if __name__ == "__main__":
     model = model_from_argv(sys.argv)
-    share = Path(config.share()) / model.out_subdir
+    share = Path(env.share()) / model.out_subdir
     main(
-        ckpt=config.env(model.ckpt_env),
+        ckpt=env.env(model.ckpt_env),
         configs_path=model.configs_path,
         grid_stem=model.grid_stem,
         task_list=task_list(),

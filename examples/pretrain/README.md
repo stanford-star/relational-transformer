@@ -16,7 +16,7 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 pixi run hf download stanford-star/plurel --repo-type dataset --local-dir data/plurel \
   --include "*/manifest.yaml" "*/scores.json"
 
-pixi run python -m examples.db_task_list
+pixi run python -m examples.preprocess.task_lists
 CUDA_VISIBLE_DEVICES=0,1 pixi run python -m examples.pretrain.phases
 ```
 
@@ -39,7 +39,7 @@ themselves were not re-run.
 ```bash
 pixi run hf download stanford-star/plurel --repo-type dataset --local-dir data/plurel \
   --include "*/manifest.yaml" "*/scores.json"
-pixi run python -m examples.db_task_list      # -> data/db-task-lists/*.json
+pixi run python -m examples.preprocess.task_lists      # -> data/db-task-lists/*.json
 ```
 
 `rt.data.db_task_list(pre_dir)` lists every task a preprocessed directory

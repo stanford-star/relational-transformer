@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 
-from examples import config
+from examples.icl import env
 from examples.icl.models import model_from_argv
 from examples.icl.tasks import task_list
 from examples.launch import Job, describe, run_sequential
@@ -29,7 +29,7 @@ def grid_stem_prefix(grid_stem: str) -> str:
 def grid_path(grid_stem: str, db: str, table: str) -> Path:
     grid_stem_prefix(grid_stem)
     stem = grid_stem.format(db=db, table=table)
-    return Path(config.out_root()) / "no-wandb-entity" / "tune" / stem / "tuning.json"
+    return Path(env.out_root()) / "no-wandb-entity" / "tune" / stem / "tuning.json"
 
 
 def load_configs(
@@ -53,7 +53,7 @@ def load_configs(
 
 
 def jobs(*, ckpt: str, grid_stem: str, task_list: list[tuple[str, str]]) -> list[Job]:
-    out_root = config.out_root()
+    out_root = env.out_root()
     out = []
     for db, table in task_list:
         if grid_path(grid_stem, db, table).exists():
@@ -73,7 +73,7 @@ def jobs(*, ckpt: str, grid_stem: str, task_list: list[tuple[str, str]]) -> list
                     "d_ff": 2048,
                     "splits": ["val"],
                     "db_task_list": [(db, table)],
-                    "pre_dir": config.pre_dir(),
+                    "pre_dir": env.pre_dir(),
                     "tokens_per_gpu": 2**18,
                     "num_workers": 8,
                     "prefetch_factor": 2,
@@ -106,7 +106,7 @@ def jobs(*, ckpt: str, grid_stem: str, task_list: list[tuple[str, str]]) -> list
 if __name__ == "__main__":
     model = model_from_argv(sys.argv)
     plan = jobs(
-        ckpt=config.env(model.ckpt_env),
+        ckpt=env.env(model.ckpt_env),
         grid_stem=model.grid_stem,
         task_list=task_list(),
     )

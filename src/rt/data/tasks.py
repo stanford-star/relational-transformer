@@ -24,7 +24,7 @@ def resolve_db_task_list(db_task_list) -> list[tuple[str, str]]:
             raise FileNotFoundError(
                 f"db_task_list {db_task_list!r} does not exist. Generate it with "
                 f"rt.data.db_task_list / rt.data.plurel_train_db_task_list "
-                f"(see examples/db_task_list.py)"
+                f"(see examples/preprocess/task_lists.py)"
             )
         pairs = json.loads(p.read_text())
     else:

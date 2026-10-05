@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from examples import config
+from examples.icl import env
 from examples.icl.models import model_from_argv
 from examples.icl.tasks import task_list
 from examples.icl.tune import load_configs
@@ -20,7 +20,7 @@ def jobs(
     task_list: list[tuple[str, str]],
     out_subdir: str,
 ) -> list[Job]:
-    out_root = config.out_root()
+    out_root = env.out_root()
     cfgs = load_configs(configs_path, grid_stem, task_list)
     out = []
     for task_key, rec in sorted(cfgs.items()):
@@ -45,7 +45,7 @@ def jobs(
                         "n_seeds": N_SEEDS,
                         "items_per_task": FULL,
                         "split": "test",
-                        "pre_dir": config.pre_dir(),
+                        "pre_dir": env.pre_dir(),
                         "out_dir": out_dir,
                         "num_walks": 10_000,
                         "walk_length": 20,
@@ -66,7 +66,7 @@ def jobs(
 if __name__ == "__main__":
     model = model_from_argv(sys.argv)
     plan = jobs(
-        ckpt=config.env(model.ckpt_env),
+        ckpt=env.env(model.ckpt_env),
         configs_path=model.configs_path,
         grid_stem=model.grid_stem,
         task_list=task_list(),

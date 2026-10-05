@@ -10,7 +10,7 @@ tuned-and-ensembled leaderboard numbers are [`../icl`](../icl/).
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --revision 1016626ddb30c027b92458bf866903850cc205e1 --local-dir data/relbench-preprocessed
 
-pixi run python -m examples.db_task_list      # -> data/db-task-lists/relbench-forecast.json
+pixi run python -m examples.preprocess.task_lists      # -> data/db-task-lists/relbench-forecast.json
 pixi run python -m examples.eval.plan        # RT-J, context (8192; 256, 32, latest)
 pixi run python -m examples.eval.legacy      # RT-v1 and RT-PluRel, their papers' context
 ```

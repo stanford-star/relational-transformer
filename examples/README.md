@@ -13,14 +13,13 @@ runs on RelBench or on your own data in the same format.
 
 For a first look at your own database without a recipe, use [`../byod/`](../byod/).
 
-No scheduler ships here. An example enumerates jobs and [`launch.py`](launch.py)
-runs them in the current process; `run(jobs, launcher)` takes your own. Stages skip completed work, so
-re-running a plan is how you resume. Every example is a module run from the
+No scheduler ships here. An example enumerates `Job`s and [`launch.py`](launch.py)
+runs them in the current process; hand the list to your own launcher instead if
+you have one. Stages skip completed work, so re-running a plan is how you resume. Every example is a module run from the
 repo root: `pixi run python -m examples.<name>.<stage>`.
 
-Two single-file tools sit beside the recipes: [`ctx_viz.py`](ctx_viz.py)
-(an HTTP UI over the contexts the sampler builds) and
-[`ddp_check.py`](ddp_check.py) (a model-free check of multi-GPU plumbing).
+[`ctx_viz.py`](ctx_viz.py) sits beside the recipes: an HTTP UI over the
+contexts the sampler builds.
 
 Pin the revisions in [`../docs/downloads.md`](../docs/downloads.md); expect
 agreement to a few tenths of a point.

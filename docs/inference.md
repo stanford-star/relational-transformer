@@ -34,7 +34,7 @@ The example above runs **simple** inference: one default context config
 (`lcs_bw_pl_grid=[(256, 32, True)]`, total `ctx_size_list=[8192]`) on the
 test split of every task in the default task list
 (`data/db-task-lists/relbench-forecast.json`, the 21-task RelBench benchmark,
-written by `python -m examples.db_task_list`). For each test row the sampler builds a context (a sampled
+written by `python -m examples.preprocess.task_lists`). For each test row the sampler builds a context (a sampled
 neighborhood of the relational graph), the model does a single forward pass,
 and predictions are keyed back to each row by its seed node index. Because that
 key is the seed node index and not a row position, per-row predictions stay

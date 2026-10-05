@@ -1,5 +1,5 @@
 import importlib
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 
@@ -20,11 +20,6 @@ def run_sequential(jobs: Sequence[Job]) -> None:
     for i, job in enumerate(jobs, 1):
         print(f"[{i}/{len(jobs)}] {job.name}", flush=True)
         call(job)
-
-
-def run(jobs: Sequence[Job], launcher: Callable[[Job], None]) -> None:
-    for job in jobs:
-        launcher(job)
 
 
 def describe(jobs: Sequence[Job]) -> None:

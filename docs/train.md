@@ -61,7 +61,7 @@ generating graph, has at least 2 distinct values, and (classification) has at
 least 2 classes with a majority class of at most 99%, or (regression) a standard
 deviation of at least 1e-4 — 86,211 pairs. The per-column statistics come from
 `scores.json` beside each database's `manifest.yaml` in the raw
-`stanford-star/plurel` repo. `python -m examples.db_task_list` writes both lists
+`stanford-star/plurel` repo. `python -m examples.preprocess.task_lists` writes both lists
 plus RelBench's forecast list under `data/db-task-lists/`.
 
 `train_splits` picks which splits of those tasks the training stream draws
@@ -187,10 +187,6 @@ process per GPU: `torchrun` on a single node, and under slurm one task per GPU,
 ```bash
 srun --ntasks-per-node=8 --gres=gpu:8 pixi run python -m examples.pretrain.phases
 ```
-
-[`examples/ddp_check.py`](../examples/ddp_check.py) is a model-free sanity check
-of that plumbing: every rank reports who it is, all-reduces, and shows that a
-preemption signal reaches it.
 
 with the task's `SLURM_PROCID`/`SLURM_LOCALID`/`SLURM_NTASKS` exported as the
 torch names. Because each rank is a slurm task, a preemption signal reaches all

@@ -9,7 +9,7 @@ the top 4 configs at 4 seeds on full test, average and package.
 ```bash
 export RT_CKPT=...          # or RT_PLUREL_CKPT for the rt-plurel arm
 export RT_PRE_DIR=... RT_OUT_ROOT=... RT_SHARE=...
-export RT_TASKS=data/db-task-lists/relbench-forecast.json   # from examples.db_task_list
+export RT_TASKS=data/db-task-lists/relbench-forecast.json   # from examples.preprocess.task_lists
 
 pixi run python -m examples.icl.tune     rt-plurel   # 21 jobs; skip, result is committed
 pixi run python -m examples.icl.collect  rt-plurel   # -> examples/icl/configs/tuned_configs_rt-plurel.json

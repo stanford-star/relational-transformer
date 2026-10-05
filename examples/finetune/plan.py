@@ -1,8 +1,8 @@
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from examples import config
 from examples.finetune.run import stage_dir
 from examples.launch import Job, describe, run_sequential
 
@@ -109,8 +109,8 @@ if __name__ == "__main__":
         models=sys.argv[1:],
         tasks=TASKS,
         project=PROJECT,
-        pre_dir=config.pre_dir(),
-        out_root=config.out_root(),
+        pre_dir=os.environ["RT_PRE_DIR"],
+        out_root=os.environ["RT_OUT_ROOT"],
         tokens_per_gpu=2**17,
         num_workers=8,
         eval_num_workers=2,

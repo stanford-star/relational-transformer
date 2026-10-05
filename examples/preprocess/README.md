@@ -14,6 +14,7 @@ pixi run hf download stanford-star/relbench-v1 --repo-type dataset \
   --revision d8e976fd0a4b78877204bc8dfbcfc9a9f7f48600 --local-dir data/relbench-v1
 
 pixi run python -m examples.preprocess.plan      # every outstanding job, in this process
+pixi run python -m examples.preprocess.task_lists  # -> data/db-task-lists/*.json
 ```
 
 Per database it writes:
