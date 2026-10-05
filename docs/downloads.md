@@ -37,6 +37,3 @@ pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
             "*/nodes.rkyv" "*/offsets.rkyv" "*/p2f_adj.rkyv" \
             "*/text_emb_all-MiniLM-L12-v2.bin"
 ```
-
-Preprocessed repos carry no source strings, so changing the text embedder means
-re-preprocessing from raw ([preprocess.md](preprocess.md)).
