@@ -6,8 +6,8 @@ and recipes for pretraining, fine-tuning, in-context learning and test-time scal
 of **Relational Foundation Models (RFMs)** based on RT.
 
 The following results are fully reproducible from here:
-- 🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission.
-- 🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission.
+🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission.
+🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission.
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
