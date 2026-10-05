@@ -1,7 +1,10 @@
+import shutil
 from pathlib import Path
 
 from examples.launch import Job
 from examples.preprocess.run import embed_done, rustler_done
+
+MAX_PRE_BYTES = 5 * 10**9
 
 
 def databases(raw_dir: str) -> list[str]:
@@ -56,6 +59,20 @@ def jobs(
     return out
 
 
+def drop_oversized(out_dir: str, max_pre_bytes: int = MAX_PRE_BYTES) -> list[str]:
+    out_root = Path(out_dir).expanduser()
+    dropped = []
+    for d in sorted(out_root.iterdir()):
+        if not (d / "meta.json").is_file():
+            continue
+        size = sum(f.stat().st_size for f in d.iterdir() if f.is_file())
+        if size > max_pre_bytes:
+            shutil.rmtree(d)
+            dropped.append(d.name)
+            print(f"{d.name}: dropped, {size / 1e9:.1f} GB preprocessed", flush=True)
+    return dropped
+
+
 def the_join_jobs() -> list[Job]:
     return jobs(
         raw_dir="data/the-join",
@@ -90,3 +107,4 @@ if __name__ == "__main__":
     from examples.launch import run_sequential
 
     run_sequential(the_join_jobs())
+    drop_oversized("data/the-join-preprocessed")

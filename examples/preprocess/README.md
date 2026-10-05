@@ -19,12 +19,13 @@ pixi run python -m examples.preprocess.task_lists   # -> data/db-task-lists/*.js
 ```
 
 Only databases whose preprocessed output is under 5 GB are uploaded to
-`the-join-preprocessed` and used for pretraining. That is why it holds 523 of
-the 639 `the-join` databases: 67 preprocess to more than 5 GB (`nodes.rkyv`
-dominates; `join-se-electronics` reaches 87 GB from 80 MB of parquet) and the
-other 49 ship no binary-classification or regression task, so they yield no
-tasks. Raw size does not predict preprocessed size, so the plan here
-preprocesses every database; drop the oversized ones afterwards.
+`the-join-preprocessed` and used for pretraining. Raw size does not predict
+preprocessed size, so `plan` preprocesses every database and then
+`drop_oversized` deletes any output directory over `MAX_PRE_BYTES`. That is
+why `the-join-preprocessed` holds 523 of the 639 `the-join` databases: 67
+preprocess to more than 5 GB (`nodes.rkyv` dominates; `join-se-electronics`
+reaches 87 GB from 80 MB of parquet) and the other 49 ship no
+binary-classification or regression task, so they yield no tasks.
 
 Per database it writes:
 
