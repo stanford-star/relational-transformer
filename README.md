@@ -105,8 +105,7 @@ print("driver-dnf probability:", [round(p, 3) for p in preds.tolist()])
 The context is embedded with the vectors on disk in `pre_dir`, so a checkpoint
 evaluated under a different embedder scores garbage rather than failing;
 `rt.eval.main` asserts the `embedder` and `d_text` match the checkpoint.
-Architecture, recipe, protocol, licence and limitations are on each Hub card,
-kept here under [`docs/cards/`](docs/cards/).
+Architecture, recipe, protocol, licence and limitations are on each Hub card.
 
 ## Bring your own database
 
@@ -142,7 +141,6 @@ pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
 | [Context visualization](docs/ctx_viz.md) | Inspect the contexts sampled for each row |
 | [Examples](examples/README.md) | Preprocess, pretrain, evaluate, in-context and fine-tune, on RelBench or your own data |
-| [Cards](docs/cards/README.md) | Model and dataset cards |
 
 ## Citation
 
