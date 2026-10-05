@@ -7,7 +7,7 @@ zero-shot to new databases, tasks, and schemas.
 
 | Paper | Venue | Implementation |
 |---|---|---|
-| RT-J: Large-Scale Pretraining of Relational Transformers for Context-Efficient Predictions | In progress | [`main`](https://github.com/stanford-star/relational-transformer) |
+| RT-J: Large-Scale Pretraining of Relational Transformers for Context-Efficient Predictions | NeurIPS 2026 | [`main`](https://github.com/stanford-star/relational-transformer) |
 | [PluRel: Synthetic Data unlocks Scaling Laws for Relational Foundation Models](https://arxiv.org/abs/2602.04029) | ICML 2026 | [`stanford-star/plurel`](https://github.com/stanford-star/plurel) |
 | [Relational Transformer: Toward Zero-Shot Foundation Models for Relational Data](https://arxiv.org/abs/2510.06377) | ICLR 2026 | [`rt-v1`](https://github.com/stanford-star/relational-transformer/tree/rt-v1) |
 
@@ -140,12 +140,24 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 ## Citation
 
 ```bibtex
-@article{ranjan2026rtj,
+@inproceedings{ranjan2026rtj,
   title     = {RT-J: Large-Scale Pretraining of Relational Transformers for
                Context-Efficient Predictions},
   author    = {Ranjan, Rishabh and Kothapalli, Vignesh and Agarwal,
                Harshvardhan and Kanatsoulis, Charilaos and Upendra, Roshan and
                Palczewski, Tom and Guestrin, Carlos and Leskovec, Jure},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2026},
+}
+
+@inproceedings{ranjan2026relational,
+  title     = {Relational Transformer: Toward Zero-Shot Foundation Models for
+               Relational Data},
+  author    = {Ranjan, Rishabh and Hudovernik, Valter and Znidar, Mark and
+               Kanatsoulis, Charilaos and Upendra, Roshan and Mohammadi, Mahmoud
+               and Meyer, Joe and Palczewski, Tom and Guestrin, Carlos and
+               Leskovec, Jure},
+  booktitle = {International Conference on Learning Representations},
   year      = {2026},
 }
 ```
