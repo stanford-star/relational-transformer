@@ -53,8 +53,8 @@ class RDBLearnFeaturizer(Featurizer):
         from sklearn.linear_model import LogisticRegression, Ridge
         from sklearn.pipeline import make_pipeline
 
-        from rt.rel2tab.featurizer import load_table_info
         from rt.data import get_tasks
+        from rt.rel2tab.featurizer import load_table_info
 
         # (db, table) -> (precomputed_features_tensor, min_offset)
         self._features: dict[tuple[str, str], tuple[torch.Tensor, int]] = {}

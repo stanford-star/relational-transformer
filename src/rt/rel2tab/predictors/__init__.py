@@ -3,7 +3,10 @@ from rt.rel2tab.predictors.identity_predictor import (
     IdentityPredictorConfig,
 )
 from rt.rel2tab.predictors.lgbm_predictor import LGBMPredictor, LGBMPredictorConfig
-from rt.rel2tab.predictors.linear_predictor import LinearPredictor, LinearPredictorConfig
+from rt.rel2tab.predictors.linear_predictor import (
+    LinearPredictor,
+    LinearPredictorConfig,
+)
 from rt.rel2tab.predictors.mean_predictor import MeanPredictor, MeanPredictorConfig
 from rt.rel2tab.predictors.ridge_predictor import RidgePredictor, RidgePredictorConfig
 from rt.rel2tab.predictors.tab_predictor import TabPredictor, TabPredictorConfig
