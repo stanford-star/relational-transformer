@@ -3,8 +3,14 @@ from pathlib import Path
 from examples.launch import Job
 from examples.preprocess.run import embed_done, rustler_done
 
+MAX_RAW_BYTES = 5 * 1024**3
 
-def databases(raw_dir: str) -> list[str]:
+
+def raw_bytes(raw_db_dir: Path) -> int:
+    return sum(f.stat().st_size for f in (raw_db_dir / "db").glob("*.parquet"))
+
+
+def databases(raw_dir: str, max_raw_bytes: int = MAX_RAW_BYTES) -> list[str]:
     raw = Path(raw_dir).expanduser()
     assert raw.is_dir(), (
         f"{raw} is not a directory; download the raw collection first "
@@ -12,7 +18,14 @@ def databases(raw_dir: str) -> list[str]:
     )
     names = sorted(p.parent.name for p in raw.glob("*/manifest.yaml"))
     assert names, f"{raw} holds no <database>/manifest.yaml"
-    return names
+    kept = [n for n in names if raw_bytes(raw / n) <= max_raw_bytes]
+    if len(kept) < len(names):
+        print(
+            f"{raw}: {len(kept)} of {len(names)} databases have <= "
+            f"{max_raw_bytes / 1024**3:g} GiB of raw parquet; skipping the rest",
+            flush=True,
+        )
+    return kept
 
 
 def jobs(
@@ -22,10 +35,11 @@ def jobs(
     source_repo: str,
     embedder: str,
     batch_size: int,
+    max_raw_bytes: int = MAX_RAW_BYTES,
 ) -> list[Job]:
     out_root = Path(out_dir).expanduser()
     out = []
-    for database in databases(raw_dir):
+    for database in databases(raw_dir, max_raw_bytes):
         pre_dataset_dir = out_root / database
         if not rustler_done(pre_dataset_dir):
             out.append(

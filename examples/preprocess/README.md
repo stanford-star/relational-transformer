@@ -18,6 +18,12 @@ pixi run python -m examples.preprocess.plan         # every outstanding job
 pixi run python -m examples.preprocess.task_lists   # -> data/db-task-lists/*.json
 ```
 
+`plan.jobs` skips any database whose raw parquet tables exceed
+`MAX_RAW_BYTES` (5 GiB). This is the only filter between a raw collection and
+its preprocessed form: `the-join-preprocessed` holds the 639 databases of
+`the-join` that fit under it, and the dropped ones are exactly the ones above
+it. Pass `max_raw_bytes` to `jobs` to change the cutoff.
+
 Per database it writes:
 
 ```

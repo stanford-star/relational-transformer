@@ -2,7 +2,7 @@ import json
 
 import yaml
 
-from rt.data import db_task_list, plurel_train_db_task_list, write_db_task_list
+from rt.data import make_db_task_list, make_plurel_db_task_list, write_db_task_list
 from rt.data.tasks import resolve_db_task_list
 
 
@@ -24,7 +24,7 @@ def _task(name, entity_table, target_col, task_type, kind="autocomplete"):
     }
 
 
-def test_db_task_list_kinds_and_dropped_targets(tmp_path):
+def test_make_db_task_list_kinds_and_dropped_targets(tmp_path):
     pre = tmp_path / "pre"
     _write_db(
         pre,
@@ -38,19 +38,19 @@ def test_db_task_list_kinds_and_dropped_targets(tmp_path):
         {"age of users": 0, "churn of users-churn": 1},
     )
     _write_db(pre, "db-a", [_task("t-x", "t", "x", "regression")], {"x of t": 0})
-    assert db_task_list(pre) == [
+    assert make_db_task_list(pre) == [
         ("db-a", "t-x"),
         ("db-b", "users-age"),
         ("db-b", "users-churn"),
     ]
-    assert db_task_list(pre, kinds=("forecast",)) == [("db-b", "users-churn")]
-    assert db_task_list(pre, kinds=("autocomplete",)) == [
+    assert make_db_task_list(pre, kinds=("forecast",)) == [("db-b", "users-churn")]
+    assert make_db_task_list(pre, kinds=("autocomplete",)) == [
         ("db-a", "t-x"),
         ("db-b", "users-age"),
     ]
 
 
-def test_plurel_train_db_task_list(tmp_path):
+def test_make_plurel_db_task_list(tmp_path):
     pre, raw = tmp_path / "pre", tmp_path / "raw"
     specs = {
         "plurel-3000": 2,
@@ -104,7 +104,7 @@ def test_plurel_train_db_task_list(tmp_path):
                 }
             )
         )
-    pairs = plurel_train_db_task_list(pre, raw, num_dbs=2)
+    pairs = make_plurel_db_task_list(pre, raw, num_dbs=2)
     assert pairs == [
         ("plurel-3000", "t-feature_0"),
         ("plurel-3000", "t-feature_1"),

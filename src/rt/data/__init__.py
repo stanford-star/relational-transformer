@@ -5,8 +5,8 @@ from rt.data.datasets import (
     process_batch,
 )
 from rt.data.db_task_list import (
-    db_task_list,
-    plurel_train_db_task_list,
+    make_db_task_list,
+    make_plurel_db_task_list,
     write_db_task_list,
 )
 from rt.data.mlock import mlock_main
@@ -34,13 +34,13 @@ __all__ = [
     "RustlerDataset",
     "Task",
     "TrainDataset",
-    "db_task_list",
     "get_column_index",
     "get_tasks",
     "is_local",
     "list_datasets",
+    "make_db_task_list",
+    "make_plurel_db_task_list",
     "mlock_main",
-    "plurel_train_db_task_list",
     "process_batch",
     "read_meta",
     "resolve_db_task_list",

@@ -26,7 +26,7 @@ def _kind(task: dict) -> str:
     return "autocomplete" if task.get("kind") == "autocomplete" else "forecast"
 
 
-def db_task_list(pre_dir: str, kinds=KINDS) -> list[tuple[str, str]]:
+def make_db_task_list(pre_dir: str, kinds=KINDS) -> list[tuple[str, str]]:
     p = Path(pre_dir).expanduser()
     out = []
     for db in _databases(pre_dir):
@@ -59,7 +59,7 @@ def _keep_plurel_column(
     return stats.get("std", 0.0) >= min_std
 
 
-def plurel_train_db_task_list(
+def make_plurel_db_task_list(
     pre_dir: str,
     raw_dir: str,
     num_dbs: int = 1900,
