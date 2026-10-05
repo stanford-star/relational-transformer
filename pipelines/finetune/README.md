@@ -56,17 +56,20 @@ failing loudly if missing ([`config.py`](config.py)):
 | `RT_PRE_DIR` | preprocessed RelBench data ([`stanford-star/relbench-preprocessed`](https://huggingface.co/datasets/stanford-star/relbench-preprocessed)) |
 | `RT_OUT_ROOT` | a writable directory for checkpoints, tuning results and prediction tables |
 
-The warm-start checkpoints are Hub ids resolved on demand, not paths:
-`rt-j` warm-starts from
-[`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j),
-`rt-plurel` from
-[`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel),
-and `rt` from nothing — random initialisation, no pretrained checkpoint. The
-four stages are identical for all three; with no warm start the selection and
-reporting arms train the whole model rather than a zero-initialised additive
-delta, which is what `delta_finetune` switches on
-([`plan.py`](plan.py) `MODELS`). [`docs/downloads.md`](../../docs/downloads.md)
-is how to fetch the data.
+Three models run through the identical four stages, differing only in what
+they start from ([`plan.py`](plan.py) `MODELS`):
+
+| model | warm start | leaderboard entry |
+|---|---|---|
+| `rt-j` | [`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j) | RT-J (fine-tuned) |
+| `rt-plurel` | [`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel) | RT-PluRel (fine-tuned) |
+| `rt` | none — random initialisation | RT (from scratch) |
+
+The warm starts are Hub ids resolved on demand, not paths. With no warm start
+the selection and reporting arms train the whole model rather than a
+zero-initialised additive delta, which is what `delta_finetune` switches on;
+everything else is the same. [`docs/downloads.md`](../../docs/downloads.md) is
+how to fetch the data.
 
 ```bash
 export RT_PRE_DIR=data/relbench-preprocessed
