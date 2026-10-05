@@ -32,67 +32,11 @@ builds the engine with [Rust](https://rustup.rs).
 
 ## Quickstart
 
-The quickest way to try a released checkpoint is on a RelBench
-database already preprocessed into RT's tensor format on the Hub. The example below predicts whether an F1 driver fails to finish a race (`driver-dnf`) with a released RT-J checkpoint:
-
-```python
-import os
-
-# flex_attention's compiled kernel is CUDA-only; run it eager on CPU/MPS
-os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
-
-import torch
-from huggingface_hub import snapshot_download
-
-from rt import RelationalTransformer
-from rt.eval import build_evaluator
-from rt.data import get_tasks
-
-device = (
-    "cuda" if torch.cuda.is_available()
-    else "mps" if torch.backends.mps.is_available()
-    else "cpu"
-)
-
-# 1. download one RelBench database, already preprocessed into RT's tensor format
-pre_dir = snapshot_download(
-    "stanford-star/relbench-preprocessed",
-    repo_type="dataset",
-    allow_patterns="rel-f1/*",
-)
-
-# 2. load a pretrained checkpoint (RT-J here)
-model = RelationalTransformer.from_pretrained(
-    "stanford-star/rt-j", device=device
-).to(torch.bfloat16)
-cfg = model.config
-
-# 3. build an evaluator for one task and predict zero-shot for 5 test rows.
-#    the evaluator samples each row's context from the preprocessed DB;
-tasks = get_tasks(pre_dir, [("rel-f1", "driver-dnf")], ("test",))
-ev = build_evaluator(
-    tasks, pre_dir,
-    embedder=cfg["embedder"], d_text=cfg["d_text"], device=device,
-    ctx_size_list=[128], local_ctx_size=64, bfs_width=32, prefer_latest=True,
-    num_walks=10_000, walk_length=20, tokens_per_gpu=2**18,
-    items_per_task=5, num_workers=0, prefetch_factor=2,
-    shuffle_seed=0, context_seed=0, mmap_populate=True, vector_db_path=None,
-    db_cutoff=None,
-)
-
-# evaluate_raw yields one (task, ctx, labels, preds, n) per task
-results = ev.evaluate_raw([(model, "")], [128])
-_task, _ctx, _labels, out, _n = next(iter(results))
-preds = torch.sigmoid(torch.tensor(out[""], dtype=torch.float32))
-print("driver-dnf probability:", [round(p, 3) for p in preds.tolist()])
-```
-
-> [!NOTE]
-> `items_per_task=5` and a 128-cell context keep this demo small. On a CPU it
-> still takes tens of minutes: `flex_attention` has no fused bfloat16 CPU kernel,
-> so the forward pass dominates. On a GPU it is seconds, and you can raise
-> `ctx_size_list` toward RT-J's training context of 8192 (with
-> `local_ctx_size <= ctx_size`) for full accuracy over the whole test split.
+The [notebook](examples/byod/colab.ipynb)
+([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/byod/colab.ipynb))
+runs a released RT-J checkpoint end to end on a bundled toy database: define
+tasks in SQL, preprocess, predict, score. Swap in your own database to go from
+there.
 
 ## Released checkpoints
 
@@ -109,12 +53,8 @@ Architecture, recipe, protocol, licence and limitations are on each Hub card.
 
 ## Bring your own database
 
-Point RT at your **own** database, define a
-prediction task, and infer with a released checkpoint: the
-[fully worked notebook](byod/colab.ipynb)
-([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/byod/colab.ipynb))
-runs the whole flow end-to-end on your database, or on the bundled demo.
-
+The [quickstart notebook](examples/byod/colab.ipynb) is the first step: it
+preprocesses your database and predicts your tasks with a released checkpoint.
 For more than a first look, [`examples/`](examples/README.md) runs the full
 recipes on your own data in RelBench format: in-context prediction with a
 frozen checkpoint, or per-task fine-tuning.

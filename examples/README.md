@@ -11,7 +11,7 @@ on RelBench or on your own data in the same format.
 | [`icl`](icl/) | frozen checkpoint: context search, then ensemble | ~200 GPU-h |
 | [`finetune`](finetune/) | per-task fine-tuning and ensemble | ~135 GPU-h |
 
-For a first look at your own database, use [`../byod/`](../byod/).
+For a first look at your own database, use [`byod/`](byod/).
 
 Each example builds a list of `Job`s and [`launch.py`](launch.py) runs them in
 the current process; hand the list to your own scheduler if you have one.

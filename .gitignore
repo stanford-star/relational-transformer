@@ -31,7 +31,7 @@ scratch_logs/
 
 # byod example: the dummy-DB generator is a local-only helper; the committed
 # mini-shop.duckdb it produces is what the notebook uses.
-byod/make_duckdb.py
+examples/byod/make_duckdb.py
 
 # inference example: everything it writes (labels, dataset, preprocessed tensors)
 
