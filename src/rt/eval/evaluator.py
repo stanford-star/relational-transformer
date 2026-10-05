@@ -5,7 +5,7 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader
 
 from rt.data import EvalDataset, RustlerDataset
-from rt.progress import fmt_duration, log
+from rt.utils import fmt_duration, log
 
 
 class Evaluator:

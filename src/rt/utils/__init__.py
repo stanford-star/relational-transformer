@@ -1,4 +1,5 @@
 import os
+import re
 
 import torch
 
@@ -23,7 +24,7 @@ def _omp_threads(num_workers: int) -> int:
     return max(1, cpus // max(1, num_workers))
 
 
-def _setup_env(num_workers: int = 0) -> None:
+def setup_env(num_workers: int = 0) -> None:
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", _ALLOC_CONF)
 
     os.environ.setdefault("TORCH_FR_BUFFER_SIZE", _FR_BUFFER_SIZE)
@@ -38,3 +39,34 @@ def _setup_env(num_workers: int = 0) -> None:
 
     os.environ.setdefault("OMP_NUM_THREADS", str(_omp_threads(num_workers)))
     torch.set_num_threads(1)
+
+
+BOLD = "\033[1m"
+RESET = "\033[0m"
+
+_NUMERIC = re.compile(r"^[+-]?\d")
+
+
+def fmt_duration(secs):
+    m, s = divmod(int(secs), 60)
+    return f"{m}m{s:02d}s"
+
+
+def fmt_bytes(n):
+    return f"{n / (1024**3):.2f}GiB"
+
+
+_widths: dict[str, dict[str, int]] = {}
+
+
+def log(*, indent=0, **fields):
+    widths = _widths.setdefault(",".join(fields), {})
+    parts = []
+    for k, v in fields.items():
+        v = str(v)
+        widths[k] = max(widths.get(k, 0), len(v))
+        v = v.ljust(widths[k])
+        parts.append(
+            f"{k}: {BOLD}{v}{RESET}" if _NUMERIC.match(v.strip()) else f"{k}: {v}"
+        )
+    print(("  " * indent + "  ".join(parts)).rstrip(), flush=True)

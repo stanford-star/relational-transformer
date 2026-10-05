@@ -10,19 +10,18 @@ import torch
 import torch.distributed as dist
 import wandb
 
-from rt._env import _setup_env
 from rt.data import get_tasks
 from rt.eval.evaluator import Evaluator
 from rt.eval.metrics import metric_for
 from rt.eval.relbench import _emit_and_score
 from rt.model import load_rt_model
-from rt.progress import log
+from rt.utils import log, setup_env
 
 METRIC_NAMES = {"clf": "auroc", "reg": "nmae"}
 
 
 def setup_dist(num_workers: int = 0):
-    _setup_env(num_workers)
+    setup_env(num_workers)
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size > 1:
         rank = int(os.environ["RANK"])

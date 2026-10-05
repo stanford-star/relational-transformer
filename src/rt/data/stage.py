@@ -5,7 +5,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from rt.progress import log
+from rt.utils import log
 
 MARKER = ".staged"
 

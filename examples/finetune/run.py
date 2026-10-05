@@ -7,8 +7,8 @@ from safetensors import safe_open
 
 from rt.data import get_tasks
 from rt.eval import main as evaluate
-from rt.progress import log
 from rt.train import main as train
+from rt.utils import log
 
 
 def lcs_bw_pl_grid() -> list[tuple[int, int, bool]]:

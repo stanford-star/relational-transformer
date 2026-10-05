@@ -15,7 +15,6 @@ import wandb
 from torch import optim
 from torch.utils.data import DataLoader
 
-from rt._env import _setup_env
 from rt.data import TrainDataset, get_tasks, stage_paths
 from rt.eval import Evaluator, member_context_seed, metric_for
 from rt.model import (
@@ -24,15 +23,15 @@ from rt.model import (
     resolve_checkpoint,
     save_model,
 )
-from rt.progress import fmt_bytes, fmt_duration, log
 from rt.train.muon import Muon
 from rt.train.swa import SwaState
+from rt.utils import fmt_bytes, fmt_duration, log, setup_env
 
 BEST_METRICS = [("clf", "auroc", max), ("reg", "nmae", min)]
 
 
 def setup_dist(num_workers: int = 0):
-    _setup_env(num_workers)
+    setup_env(num_workers)
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size > 1:
         rank = int(os.environ["RANK"])

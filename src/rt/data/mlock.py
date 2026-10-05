@@ -7,7 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from rt.data.tasks import resolve_db_task_list
-from rt.progress import log
+from rt.utils import log
 
 _libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
 _libc.mmap.argtypes = [
