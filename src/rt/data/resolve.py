@@ -33,7 +33,7 @@ def resolve_pre_dir(pre_dir: str) -> str:
             f"downloaded on demand; fetch it first, e.g.\n"
             f"  hf download stanford-star/the-join-preprocessed --repo-type dataset "
             f"--local-dir {pre_dir}\n"
-            f"(see docs/train.md for fetching only the dbs you need)"
+            f"(see examples/README.md for fetching only the dbs you need)"
         )
     return str(p)
 

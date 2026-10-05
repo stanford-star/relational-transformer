@@ -1,7 +1,8 @@
-# Preprocessing a collection
+# Preprocess
 
-Two jobs per database: `rustler` (CPU, builds the graph) then `embed` (one GPU,
-embeds the strings).
+RT reads a tensor format written by the `rustler` preprocessor from any
+database in RelBench format. Two jobs per database: `rustler` builds the
+graph (CPU, multithreaded), then `embed` embeds the strings (one GPU).
 
 ## Reproduce ours
 
@@ -30,7 +31,7 @@ RelBench run.
 
 ## Run it on your own data
 
-Input is RelBench v3 format:
+Input is RelBench v3 format, local or on the Hub as `org/repo[/subdir]`:
 
 ```
 <db>/
@@ -52,3 +53,21 @@ run_sequential(jobs(
     batch_size=1024,
 ))
 ```
+
+## The API underneath
+
+`rt.preprocess.one` does one database in one call:
+
+```python
+from rt.preprocess import one
+
+one(dataset="stanford-star/relbench-v1/rel-f1", out_dir="data/relbench-preprocessed",
+    embedder="all-MiniLM-L12-v2", batch_size=1024,
+    skip_tasks=False, embed=True,
+    upload_repo=None, public=False, revision=None)
+```
+
+`skip_tasks=True` ingests the db tables only; `embed=False` stops after
+rustler; `upload_repo` pushes the result to the Hub. `rt.preprocess.many`
+takes a Hub repo of databases and does shard `shard` of `num_shards`, skipping
+finished ones; `rt.preprocess.ls` lists the repo.

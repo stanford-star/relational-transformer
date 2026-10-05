@@ -8,7 +8,7 @@ def databases(raw_dir: str) -> list[str]:
     raw = Path(raw_dir).expanduser()
     assert raw.is_dir(), (
         f"{raw} is not a directory; download the raw collection first "
-        f"(see docs/downloads.md)"
+        f"(see examples/README.md)"
     )
     names = sorted(p.parent.name for p in raw.glob("*/manifest.yaml"))
     assert names, f"{raw} holds no <database>/manifest.yaml"

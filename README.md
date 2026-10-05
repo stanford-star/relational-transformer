@@ -6,8 +6,8 @@ and the recipes to pretrain, fine-tune, inference and test-time scale
 **Relational Foundation Models (RFMs)** based on RT.
 
 The following results are fully reproducible from here:  
-🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission.  
-🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission.
+🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission ([in-context](examples/icl/), [fine-tuned](examples/finetune/)).  
+🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission ([in-context](examples/icl/), [fine-tuned](examples/finetune/)).
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
@@ -28,23 +28,24 @@ pip install relational-transformer
 ```
 
 This installs the `rt` package, including the Rust sampler `rt.rustler`,
-_without_ any Rust dependency.
+_without any dependency on Rust_.
 
 ## Quickstart
 
-The [notebook](examples/byod/colab.ipynb)
-([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/byod/colab.ipynb))
-runs a released RT-J checkpoint end to end on a bundled toy database: define
-tasks in SQL, preprocess, predict, score. Swap in your own database to go from
-there.
+[`examples/quickstart.ipynb`](examples/quickstart.ipynb)
+([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/quickstart.ipynb))
+evaluates the released RT-J checkpoint on a RelBench task, `rel-f1/driver-dnf`,
+with no training: download one preprocessed database, predict every test row
+from its sampled context, score the AUROC. A few minutes on a GPU runtime.
 
 ## Bring your own database
 
-The [quickstart notebook](examples/byod/colab.ipynb) is the first step: it
-preprocesses your database and predicts your tasks with a released checkpoint.
-For more than a first look, [`examples/`](examples/README.md) runs the full
-recipes on your own data in RelBench format: in-context prediction with a
-frozen checkpoint, or per-task fine-tuning.
+The [BYOD notebook](examples/byod/colab.ipynb)
+([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/byod/colab.ipynb))
+preprocesses your database and predicts tasks you define in SQL with a released
+checkpoint. For more than a first look, [`examples/`](examples/README.md) runs
+the full recipes on your own data in RelBench format: in-context prediction
+with a frozen checkpoint, or per-task fine-tuning.
 
 ## Development
 
@@ -58,16 +59,20 @@ pixi run pytest                              # the test suite
 pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 ```
 
-## Documentation
+## Examples
 
-| Guide | Description |
+[`examples/`](examples/README.md) holds the recipes behind the released
+checkpoints and leaderboard entries, with the notes on how each part works.
+
+| | what |
 |---|---|
-| [Downloads](docs/downloads.md) | Bulk-download raw data, preprocessed data, and checkpoints from HuggingFace |
-| [Preprocess](docs/preprocess.md) | Convert RelBench-format databases into RT's on-disk format |
-| [Inference](docs/inference.md) | Run a trained checkpoint; evaluate, engineer, tune, and ensemble contexts |
-| [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
-| [Context visualization](docs/ctx_viz.md) | Inspect the contexts sampled for each row |
-| [Examples](examples/README.md) | Preprocess, pretrain, evaluate, in-context and fine-tune, on RelBench or your own data |
+| [`quickstart.ipynb`](examples/quickstart.ipynb) | RT-J on one RelBench task, in Colab |
+| [`byod/`](examples/byod/) | RT-J on your own database, in Colab |
+| [`preprocess/`](examples/preprocess/) | RelBench-format databases -> RT's tensor format |
+| [`pretrain/`](examples/pretrain/) | RT-J from scratch: PluRel, then the Join |
+| [`eval/`](examples/eval/) | a checkpoint on every RelBench task; context knobs, tuning, ensembling |
+| [`icl/`](examples/icl/) | leaderboard entries: RT-J and RT-PluRel in-context |
+| [`finetune/`](examples/finetune/) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned |
 
 ## Citation
 

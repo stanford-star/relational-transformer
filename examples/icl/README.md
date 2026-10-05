@@ -1,31 +1,38 @@
-# In-context
+# In-context leaderboard entries
 
-A frozen checkpoint predicts a RelBench task with no gradient step. Three
-stages: search each task's context on validation, run the top 4 configs at 4
-seeds on test, average and package.
+A frozen checkpoint predicts a RelBench task with no gradient step on the
+target database. Three stages: search each task's context on validation, run
+the top 4 configs at 4 seeds on test, average and package.
 
-## Reproduce ours
+## Reproduce the leaderboard entries
+
+| entry | `<model>` | checkpoint | clf roc_auc | reg nmae | cost |
+|---|---|---|---|---|---|
+| RT-J (in-context) | `rt-j` | `stanford-star/rt-j` | 0.744512 | 0.323543 | ~200 GPU-h |
+| RT-PluRel (in-context) | `rt-plurel` | `stanford-star/rt-plurel` | 0.729828 | 0.329467 | ~200 GPU-h |
 
 ```bash
-export RT_CKPT=...          # or RT_PLUREL_CKPT for rt-plurel
-export RT_PRE_DIR=... RT_OUT_ROOT=... RT_SHARE=...
+pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
+  --revision 1016626ddb30c027b92458bf866903850cc205e1 --local-dir data/relbench-preprocessed
+pixi run python -m examples.preprocess.task_lists
+
+export RT_CKPT=stanford-star/rt-j RT_PLUREL_CKPT=stanford-star/rt-plurel
+export RT_PRE_DIR=data/relbench-preprocessed RT_OUT_ROOT=~/ckpts RT_SHARE=~/ckpts/share
 export RT_TASKS=data/db-task-lists/relbench-forecast.json
 
-pixi run python -m examples.icl.tune     rt-plurel   # 21 jobs; result is committed
-pixi run python -m examples.icl.collect  rt-plurel   # -> configs/tuned_configs_rt-plurel.json
-pixi run python -m examples.icl.ensemble rt-plurel   # 84 jobs
-pixi run python -m examples.icl.package  rt-plurel   # CSVs + the packaging command
+pixi run python -m examples.icl.tune     <model>   # 21 jobs; result is committed, skip
+pixi run python -m examples.icl.collect  <model>   # -> configs/tuned_configs_<model>.json
+pixi run python -m examples.icl.ensemble <model>   # 84 jobs
+pixi run python -m examples.icl.package  <model>   # CSVs, scores, submission zips
 ```
 
-Swap `rt-plurel` for `rt-j`. One GPU per job.
+`<model>` is `rt-j` or `rt-plurel`. One GPU per job. `tune` dominates the
+cost; its output is committed under [`configs/`](configs/) so the other stages
+run without it. The GPU stages were not re-run from this tree; the committed
+configs and packaged CSVs are what we verified.
 
-| entry | clf roc_auc | reg nmae | cost |
-|---|---|---|---|
-| RT-J (in-context) | 0.744512 | 0.323543 | ~200 GPU-h |
-| RT-PluRel (in-context) | 0.729828 | 0.329467 | ~200 GPU-h |
-
-`tune` dominates the cost. The GPU stages were not re-run from this tree; the
-committed configs and packaged CSVs are what we verified.
+Every context is built from rows dated strictly before the seed row's time,
+and no checkpoint was trained on any RelBench database.
 
 ## Run it on your own data
 
