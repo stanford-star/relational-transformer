@@ -24,8 +24,11 @@ pixi run hf download stanford-star/rt-j --repo-type model
 ```
 
 The `data/*-preprocessed` paths are the scripts' defaults
-(`--train.pre-dir`, `--eval.pre-dir`). The `(db, task)` mixtures are vendored
-in the package: `rt.data.list_mixtures()`, `rt.data.get_mixture(collection, name)`.
+(`--train.pre-dir`, `--eval.pre-dir`). The `(db, task)` lists a run trains or
+evaluates on are generated from the downloaded data, not shipped:
+`pixi run python -m examples.db_task_list` writes `data/db-task-lists/{rt-j,rt-plurel-train,relbench-forecast}.json`
+(the PluRel list also needs the raw `stanford-star/plurel` repo's `*/manifest.yaml`
+and `*/scores.json`).
 
 To fetch a subset, keep the core rustler artifacts plus the one text embedder
 you train with, and/or restrict to databases (`--include "<db>/*"`):

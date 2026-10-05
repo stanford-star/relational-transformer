@@ -13,7 +13,10 @@ pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
   --revision ba5574ba659f0ef8b592793ed2ac9cb78dc87100 --local-dir data/the-join-preprocessed
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --revision 1016626ddb30c027b92458bf866903850cc205e1 --local-dir data/relbench-preprocessed
+pixi run hf download stanford-star/plurel --repo-type dataset --local-dir data/plurel \
+  --include "*/manifest.yaml" "*/scores.json"
 
+pixi run python -m examples.db_task_list
 CUDA_VISIBLE_DEVICES=0,1 pixi run python -m examples.pretrain.phases
 ```
 
@@ -33,17 +36,20 @@ themselves were not re-run.
 
 ## Run it on your own data
 
-```python
-from rt.data import get_mixture_path, list_mixtures
-
-list_mixtures()                            # every (collection, name)
-get_mixture_path("the-join", "forecast")   # or a path to your own JSON
+```bash
+pixi run hf download stanford-star/plurel --repo-type dataset --local-dir data/plurel \
+  --include "*/manifest.yaml" "*/scores.json"
+pixi run python -m examples.db_task_list      # -> data/db-task-lists/*.json
 ```
+
+`rt.data.db_task_list(pre_dir)` lists every task a preprocessed directory
+ships; `rt.data.plurel_train_db_task_list(pre_dir, raw_dir)` applies the PluRel
+filter ([`../../docs/train.md`](../../docs/train.md)).
 
 [`mlock.py`](mlock.py) holds the Join resident in the page cache across
 restarts while you iterate; see
 [`../../docs/train.md`](../../docs/train.md#avoiding-data-loading-during-debug-iterations).
 
-Your mixture is a JSON list of `[db, task]` pairs. For a smaller budget, lower
+A `db_task_list` is a JSON list of `[db, task]` pairs. For a smaller budget, lower
 `total_steps` and `tokens_per_gpu` in [`phases.py`](phases.py); every argument
 is explicit there.

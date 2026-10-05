@@ -33,8 +33,8 @@ There is no CLI: [`examples/eval/plan.py`](../examples/eval/plan.py) calls
 The example above runs **simple** inference: one default context config
 (`lcs_bw_pl_grid=[(256, 32, True)]`, total `ctx_size_list=[8192]`) on the
 test split of every task in the default task list
-(`rt.data.get_mixture_path("relbench", "forecast")`, the 21-task RelBench
-benchmark). For each test row the sampler builds a context (a sampled
+(`data/db-task-lists/relbench-forecast.json`, the 21-task RelBench benchmark,
+written by `python -m examples.db_task_list`). For each test row the sampler builds a context (a sampled
 neighborhood of the relational graph), the model does a single forward pass,
 and predictions are keyed back to each row by its seed node index. Because that
 key is the seed node index and not a row position, per-row predictions stay
@@ -60,9 +60,9 @@ score) on the released RT-J checkpoints.
 ## Inference on a subset of tasks
 
 The task set is `db_task_list`: `(db, task)` pairs given inline or as a path to
-a JSON file of pairs. The curated mixtures are vendored in the package —
-`rt.data.get_mixture(collection, name)` returns the pairs,
-`rt.data.get_mixture_path(collection, name)` the path to the vendored JSON. To run one task:
+a JSON file of pairs. `rt.data.db_task_list(pre_dir, kinds)` enumerates every
+task a preprocessed directory ships (`kinds` any of `forecast`, `autocomplete`)
+and `rt.data.write_db_task_list(pairs, path)` writes the JSON. To run one task:
 
 ```python
 main(load_ckpt_path="stanford-star/rt-j",
@@ -73,9 +73,9 @@ main(load_ckpt_path="stanford-star/rt-j",
 That reads just that task's data out of `pre_dir`, so it's the quickest
 way to try the model end-to-end — and you can fetch only that database:
 `hf download stanford-star/relbench-preprocessed --repo-type dataset --local-dir
-data/relbench-preprocessed --include "rel-f1/*"`. The curated lists for this
-repo are `rt.data.get_mixture("relbench", name)` for `name` in
-`{forecast, autocomplete, all}`.
+data/relbench-preprocessed --include "rel-f1/*"`. RelBench's 21 forecast tasks
+are `rt.data.db_task_list("data/relbench-preprocessed", kinds=("forecast",))`;
+its 13 autocomplete tasks `kinds=("autocomplete",)`; both, the default `kinds`.
 
 ## Evaluate with the RelBench evaluator
 

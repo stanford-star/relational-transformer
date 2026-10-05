@@ -45,14 +45,24 @@ passes for phase 2 (`pre_dir="data/the-join-preprocessed"`,
 `eval_pre_dir="data/relbench-preprocessed"`). The preprocessed Join is large, so on
 a cluster fetch it **once** to shared storage and point every run at that path.
 
-The task mixture is given by `db_task_list` — `(db, task)` pairs as a
+The tasks to train on are given by `db_task_list` — `(db, task)` pairs as a
 JSON file. Names resolve against the tasks the db ships (recorded in its
 `meta.json`); one the build cannot predict — a recommendation task, or an
-entry left over from an older build — is reported and ignored, not fatal. The curated lists are vendored in the package and read with
-`rt.data.get_mixture_path("the-join", name)`: `forecast` (every forecast task in
-the Join), `autocomplete` (every `kind: autocomplete` task — predict a column of
-a db table, train-split only), `all` (both), and `rt-j` (the RT-J pretraining
-mixture — `all` filtered to the 523 databases the repo carries, 13243 pairs).
+entry left over from an older build — is reported and ignored, not fatal. The lists are generated from the downloaded data by
+`rt.data.db_task_list(pre_dir, kinds)`: `kinds=("forecast",)` is every forecast
+task, `("autocomplete",)` every `kind: autocomplete` task (predict a column of a
+db table, train-split only), and the default (both) over
+`data/the-join-preprocessed` is exactly RT-J's phase-2 pretraining list: 13,243
+pairs over 523 databases. RT-J's phase-1 list is
+`rt.data.plurel_train_db_task_list(pre_dir, raw_dir)`: PluRel databases
+`plurel-3000`… in order, dropping any whose table has more than 5 foreign keys,
+first 1,900 survivors; a column is a task if it is not a source node of the
+generating graph, has at least 2 distinct values, and (classification) has at
+least 2 classes with a majority class of at most 99%, or (regression) a standard
+deviation of at least 1e-4 — 86,211 pairs. The per-column statistics come from
+`scores.json` beside each database's `manifest.yaml` in the raw
+`stanford-star/plurel` repo. `python -m examples.db_task_list` writes both lists
+plus RelBench's forecast list under `data/db-task-lists/`.
 
 `train_splits` picks which splits of those tasks the training stream draws
 from. `["train"]` is the usual choice; `["train", "val"]` fine-tunes on the
@@ -152,7 +162,7 @@ Outside slurm, `torchrun --standalone --nproc-per-node=auto -m examples.pretrain
 works the same way.
 
 Give the process as much of the node's RAM as you can: by default each run
-populates the preprocessed mixture into the page cache at startup
+populates the preprocessed data into the page cache at startup
 (`mmap_populate=True`) so the GPUs are fed instead of cold-faulting
 the (large) data from shared storage per item.
 
@@ -231,7 +241,7 @@ pixi run python -m examples.pretrain.phases
 
 This is purely a convenience for repeated local runs; it is **not required**.
 (`mlock` needs a high `RLIMIT_MEMLOCK` — e.g. `ulimit -l unlimited` or
-slurm `--propagate=MEMLOCK` — to lock the full mixture.)
+slurm `--propagate=MEMLOCK` — to lock the full dataset.)
 
 ## Loading checkpoints
 

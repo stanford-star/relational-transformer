@@ -9,7 +9,6 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=1000]
-        exclude: ^src/rt/data/mixtures/
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

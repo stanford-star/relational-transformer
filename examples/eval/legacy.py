@@ -1,5 +1,4 @@
-from reproduce.launch import Job
-from rt.data import get_mixture_path
+from examples.launch import Job
 from rt.eval.legacy import run
 
 CONTEXT = {
@@ -33,7 +32,7 @@ def v1(*, pre_dir: str, out_dir: str) -> None:
         model_for_task,
         out_dir=out_dir,
         pre_dir=pre_dir,
-        db_task_list=str(get_mixture_path("relbench", "forecast")),
+        db_task_list="data/db-task-lists/relbench-forecast.json",
         **CONTEXT,
     )
 
@@ -60,7 +59,7 @@ def plurel(*, pre_dir: str, out_dir: str, mode: str) -> None:
         model_for_task,
         out_dir=out_dir,
         pre_dir=pre_dir,
-        db_task_list=str(get_mixture_path("relbench", "forecast")),
+        db_task_list="data/db-task-lists/relbench-forecast.json",
         **{**CONTEXT, "bfs_width": 128},
     )
 
@@ -94,7 +93,7 @@ def jobs(*, pre_dir: str, out_root: str) -> list[Job]:
 
 
 if __name__ == "__main__":
-    from reproduce.launch import run_sequential
+    from examples.launch import run_sequential
 
     run_sequential(
         jobs(pre_dir="data/relbench-preprocessed/legacy", out_root="~/ckpts/legacy")

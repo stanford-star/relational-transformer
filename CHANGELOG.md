@@ -27,6 +27,17 @@ All notable changes to the `relational-transformer` package.
 
 ### Changed
 
+- **No vendored task lists.** `src/rt/data/mixtures/` and
+  `rt.data.{get_mixture,get_mixture_path,list_mixtures}` are gone. A
+  `db_task_list` JSON is generated from the data it names:
+  `rt.data.db_task_list(pre_dir, kinds)` enumerates a preprocessed directory's
+  tasks (RT-J's phase-2 list is the default `kinds` over the Join; RelBench's
+  benchmark is `kinds=("forecast",)`), `rt.data.plurel_train_db_task_list(pre_dir,
+  raw_dir)` applies the PluRel filter (RT-J's phase-1 list, 86,211 pairs), and
+  `python -m examples.db_task_list` writes all three under `data/db-task-lists/`.
+  The PluRel filter reads `scores.json`, now published beside each database's
+  `manifest.yaml` in `stanford-star/plurel`.
+
 - `reproduce/tune/tuned_configs.json` is now `tuned_configs_rt-j.json`, so that
   it cannot be confused with another checkpoint's configurations. Each file
   records the grid stem it was ranked from, and every consumer asserts it.

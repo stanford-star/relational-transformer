@@ -43,3 +43,6 @@ src/rt/rustler*.so
 dist/
 rustler/.build.lock
 %h/
+
+# downloaded data and generated db-task lists
+/data/

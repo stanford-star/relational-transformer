@@ -22,7 +22,7 @@ generalized successor.
 pip install "relational-transformer[baselines]"
 python scripts/baseline.py --featurizer entity --predictor ridge \
   --pre-dir data/relbench-preprocessed \
-  --db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')" \
+  --db-task-list data/db-task-lists/relbench-forecast.json \
   --out-dir baseline_out
 ```
 

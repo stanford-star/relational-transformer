@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from reproduce.launch import Job
-from rt.data import get_mixture_path
+from examples.launch import Job
 
 
 def phase_one(
@@ -33,7 +32,7 @@ def phase_one(
             "materialize_attn_masks": True,
             "loss_fn": "huber",
             "load_ckpt_path": None,
-            "db_task_list": str(get_mixture_path("plurel", "rt-plurel-train")),
+            "db_task_list": "data/db-task-lists/rt-plurel-train.json",
             "train_splits": ["train"],
             "pre_dir": pre_dir,
             "stage_dir": stage_dir,
@@ -69,7 +68,7 @@ def phase_one(
             "db_cutoff": None,
             "resume_save_mins": 20.0,
             "eval_splits": ["val"],
-            "eval_db_task_list": str(get_mixture_path("relbench", "forecast")),
+            "eval_db_task_list": "data/db-task-lists/relbench-forecast.json",
             "eval_pre_dir": eval_pre_dir,
             "eval_tokens_per_gpu": eval_tokens_per_gpu,
             "eval_num_workers": eval_num_workers,
@@ -125,7 +124,7 @@ def phase_two(
             "materialize_attn_masks": True,
             "loss_fn": "huber",
             "load_ckpt_path": load_ckpt_path,
-            "db_task_list": str(get_mixture_path("the-join", "rt-j")),
+            "db_task_list": "data/db-task-lists/rt-j.json",
             "train_splits": ["train"],
             "pre_dir": pre_dir,
             "stage_dir": stage_dir,
@@ -161,7 +160,7 @@ def phase_two(
             "db_cutoff": None,
             "resume_save_mins": 20.0,
             "eval_splits": ["val"],
-            "eval_db_task_list": str(get_mixture_path("relbench", "forecast")),
+            "eval_db_task_list": "data/db-task-lists/relbench-forecast.json",
             "eval_pre_dir": eval_pre_dir,
             "eval_tokens_per_gpu": eval_tokens_per_gpu,
             "eval_num_workers": eval_num_workers,
@@ -260,6 +259,6 @@ def rt_j_jobs() -> list[Job]:
 
 
 if __name__ == "__main__":
-    from reproduce.launch import run_sequential
+    from examples.launch import run_sequential
 
     run_sequential(rt_j_jobs())

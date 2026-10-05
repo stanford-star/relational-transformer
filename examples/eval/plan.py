@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from reproduce.launch import Job
-from rt.data import get_mixture_path
+from examples.launch import Job
 
 
 def job(
@@ -67,7 +66,7 @@ def rt_j_jobs() -> list[Job]:
             name="eval-rt-j",
             ckpt="stanford-star/rt-j",
             pre_dir="data/relbench-preprocessed",
-            db_task_list=str(get_mixture_path("relbench", "forecast")),
+            db_task_list="data/db-task-lists/relbench-forecast.json",
             out_root="~/ckpts",
             project="rt-eval",
             run_id=stamp,
@@ -81,6 +80,6 @@ def rt_j_jobs() -> list[Job]:
 
 
 if __name__ == "__main__":
-    from reproduce.launch import run_sequential
+    from examples.launch import run_sequential
 
     run_sequential(rt_j_jobs())

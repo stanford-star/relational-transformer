@@ -4,6 +4,11 @@ from rt.data.datasets import (
     TrainDataset,
     process_batch,
 )
+from rt.data.db_task_list import (
+    db_task_list,
+    plurel_train_db_task_list,
+    write_db_task_list,
+)
 from rt.data.mlock import mlock_main
 from rt.data.resolve import (
     CORE_FILES,
@@ -18,10 +23,7 @@ from rt.data.resolve import (
 from rt.data.stage import stage_paths
 from rt.data.tasks import (
     Task,
-    get_mixture,
-    get_mixture_path,
     get_tasks,
-    list_mixtures,
     resolve_db_task_list,
 )
 
@@ -32,18 +34,18 @@ __all__ = [
     "RustlerDataset",
     "Task",
     "TrainDataset",
+    "db_task_list",
     "get_column_index",
-    "get_mixture",
-    "get_mixture_path",
     "get_tasks",
     "is_local",
     "list_datasets",
-    "list_mixtures",
     "mlock_main",
+    "plurel_train_db_task_list",
     "process_batch",
     "read_meta",
     "resolve_db_task_list",
     "resolve_pre_dir",
     "resolve_repo",
     "stage_paths",
+    "write_db_task_list",
 ]
