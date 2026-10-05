@@ -1,7 +1,7 @@
 """Interactive web UI for inspecting rustler batch tensors.
 
 Run:
-    pixi run python scripts/ctx_viz.py
+    pixi run python examples/ctx_viz.py
     # then open http://localhost:8765 in your browser
 
 The server keeps a small LRU cache of `RustlerDataset` objects keyed by

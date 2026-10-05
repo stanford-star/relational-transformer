@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from examples.launch import Job
 from examples.preprocess.run import embed_done, rustler_done
-from reproduce.launch import Job
 
 
 def databases(raw_dir: str) -> list[str]:
@@ -87,6 +87,6 @@ def relbench_jobs() -> list[Job]:
 
 
 if __name__ == "__main__":
-    from reproduce.launch import run_sequential
+    from examples.launch import run_sequential
 
     run_sequential(the_join_jobs())

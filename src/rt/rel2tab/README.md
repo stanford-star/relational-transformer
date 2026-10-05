@@ -12,7 +12,7 @@ labels (and optional features) are fed to a tabular predictor. The two extension
 points are **featurizers** (row selection / feature extraction) and
 **predictors** (train-set → prediction).
 
-The narrow copy under [`reproduce/baselines/rel2tab`](../../../reproduce/baselines/rel2tab)
+The narrow copy under `reproduce/baselines/rel2tab` (removed with `reproduce/`)
 is the one the paper's numbers were produced with; this package is its
 generalized successor.
 
@@ -20,7 +20,7 @@ generalized successor.
 
 ```bash
 pip install "relational-transformer[baselines]"
-python scripts/baseline.py --featurizer entity --predictor ridge \
+python examples/baseline.py --featurizer entity --predictor ridge \
   --pre-dir data/relbench-preprocessed \
   --db-task-list data/db-task-lists/relbench-forecast.json \
   --out-dir baseline_out
@@ -37,7 +37,7 @@ output. The context flags (`--ctx-size`, `--local-ctx-size`, `--bfs-width`, …)
 match `examples/eval/plan.py` — see
 [context engineering](../../../docs/inference.md#context-engineering).
 
-The other featurizers and predictors below are not exposed by `scripts/baseline.py`;
+The other featurizers and predictors below are not exposed by `examples/baseline.py`;
 compose them in Python via `Rel2TabModelConfig`. Feature-heavy featurizers
 (`SQLFeaturizer`, `RDBLearnFeaturizer`) can be run once over every row with
 `python -m rt.rel2tab.featurize` and then read back with `PrecomputedFeaturizer`.

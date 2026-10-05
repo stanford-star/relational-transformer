@@ -14,7 +14,11 @@ All notable changes to the `relational-transformer` package.
   `eval.py` and `eval_legacy.py` became `examples/eval/` (`plan.py`,
   `legacy.py`); `mlock.py` is `examples/pretrain/mlock.py`; `smoke.py` lives
   in the test that was its only caller; `ddp_check.py` is
-  `scripts/ddp_check.py`.
+  `examples/ddp_check.py`. `scripts/` is gone too: `baseline.py` and
+  `ctx_viz.py` moved to `examples/`. The job launcher and the in-context
+  stage code that lived under `reproduce/` (`launch.py`, `config.py`, the
+  tuning grid, the ensemble runner, the tuned-configuration files) now live
+  in `examples/` beside the recipes that run them.
 - **`examples/icl/`** — the in-context leaderboard pipeline: a per-task
   context search over the 120-point grid on validation, then the top-4
   configurations x 4 context seeds on the full official test split, averaged

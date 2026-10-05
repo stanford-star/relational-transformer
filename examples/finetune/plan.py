@@ -2,9 +2,9 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from examples.finetune import config
+from examples import config
 from examples.finetune.run import stage_dir
-from reproduce.launch import Job, describe, run_sequential
+from examples.launch import Job, describe, run_sequential
 
 PROJECT = "finetune"
 

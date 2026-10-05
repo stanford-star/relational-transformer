@@ -1,4 +1,4 @@
-from reproduce import config
+from examples import config
 
 
 def task_list() -> list[tuple[str, str]]:

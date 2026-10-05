@@ -114,7 +114,7 @@ features = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# The repo root, so a top-level package such as `examples.*` or `reproduce.*`
+# The repo root, so the top-level `examples.*` package
 # imports the same way in a test as it does in a job (roach targets are module
 # paths relative to the checkout).
 pythonpath = ["."]
@@ -262,7 +262,7 @@ pyarrow = "*"
 featurize = { features = ["featurize"], no-default-feature = true }
 gnn = { features = ["gnn"], no-default-feature = true }
 
-# The lint scope is the public tree plus `reproduce/`: everything a reader who
+# The lint scope is the public tree: everything a reader who
 # arrived from the paper will open. `expts/` is private research code held to
 # different rules (see `expts/CLAUDE.md`) and is excluded here rather than in a
 # workflow argument, so a bare `ruff check` at the root, the pre-commit hook and

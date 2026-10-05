@@ -5,7 +5,7 @@ from pathlib import Path
 from relbench.submit import evaluate_submission
 from relbench.submit import main as package
 
-from examples.finetune import config
+from examples import config
 from examples.finetune.plan import MODELS, PROJECT, TASKS, prediction_table
 
 

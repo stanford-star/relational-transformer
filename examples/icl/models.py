@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-CONFIGS_DIR = Path(__file__).parents[2] / "reproduce" / "tune"
+CONFIGS_DIR = Path(__file__).parent / "configs"
 
 
 @dataclass(frozen=True)

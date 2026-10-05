@@ -138,10 +138,9 @@ pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 | [Preprocess](docs/preprocess.md) | Convert RelBench-format databases into RT's on-disk format |
 | [Inference](docs/inference.md) | Run a trained checkpoint; evaluate, engineer, tune, and ensemble contexts |
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
-| [Baselines](src/rt/rel2tab/README.md) | rel2tab tabular baselines through the same eval path |
+| [Baselines](src/rt/rel2tab/README.md) | rel2tab tabular baselines through the same eval path (`examples/baseline.py`) |
 | [Context visualization](docs/ctx_viz.md) | Inspect the contexts sampled for each row |
 | [Examples](examples/README.md) | Preprocess, pretrain, evaluate, in-context and fine-tune, on RelBench or your own data |
-| [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, and how to run it |
 | [Cards](docs/cards/README.md) | Model and dataset cards |
 
 ## Citation

@@ -188,7 +188,7 @@ process per GPU: `torchrun` on a single node, and under slurm one task per GPU,
 srun --ntasks-per-node=8 --gres=gpu:8 pixi run python -m examples.pretrain.phases
 ```
 
-[`scripts/ddp_check.py`](../scripts/ddp_check.py) is a model-free sanity check
+[`examples/ddp_check.py`](../examples/ddp_check.py) is a model-free sanity check
 of that plumbing: every rank reports who it is, all-reduces, and shows that a
 preemption signal reaches it.
 

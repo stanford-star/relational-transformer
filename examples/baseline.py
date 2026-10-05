@@ -6,9 +6,9 @@ as ``examples/eval/plan.py``: each task's in-context training labels (optionally
 featurized) are fed to a tabular predictor. Prints per-task + mean metrics and
 writes per-item prediction CSVs.
 
-    python scripts/baseline.py --featurizer entity --predictor ridge \\
+    python examples/baseline.py --featurizer entity --predictor ridge \\
         --pre-dir data/relbench-preprocessed \\
-        --db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')"
+        --db-task-list data/db-task-lists/relbench-forecast.json
 
 Featurizers: ``global`` (all in-context rows), ``entity`` (same-entity rows),
 ``rt`` (RelationalTransformer embeddings; needs --rt-ckpt). Predictors:
@@ -100,8 +100,7 @@ def main() -> None:
     ap.add_argument(
         "--db-task-list",
         required=True,
-        help="JSON db-task list; the curated lists are vendored in the "
-        "package, at rt.data.get_mixture_path(collection, name)",
+        help="JSON list of [db, task] pairs; see examples/db_task_list.py",
     )
     ap.add_argument("--splits", nargs="+", default=["test"])
     ap.add_argument("--task-type", default="both", choices=["clf", "reg", "both"])

@@ -43,7 +43,7 @@ Input must be RelBench v3 format:
 
 ```python
 from examples.preprocess.plan import jobs
-from reproduce.launch import run_sequential
+from examples.launch import run_sequential
 
 run_sequential(jobs(
     raw_dir="data/my-collection",

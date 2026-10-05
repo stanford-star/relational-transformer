@@ -12,7 +12,7 @@ export RT_PRE_DIR=... RT_OUT_ROOT=... RT_SHARE=...
 export RT_TASKS=data/db-task-lists/relbench-forecast.json   # from examples.db_task_list
 
 pixi run python -m examples.icl.tune     rt-plurel   # 21 jobs; skip, result is committed
-pixi run python -m examples.icl.collect  rt-plurel   # -> reproduce/tune/tuned_configs_rt-plurel.json
+pixi run python -m examples.icl.collect  rt-plurel   # -> examples/icl/configs/tuned_configs_rt-plurel.json
 pixi run python -m examples.icl.ensemble rt-plurel   # 84 units (21 tasks x 4 configs)
 pixi run python -m examples.icl.package  rt-plurel   # CSVs + the packaging command
 ```
