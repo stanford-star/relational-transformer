@@ -18,8 +18,7 @@ runs them in the current process; `run(jobs, launcher)` takes your own. Stages s
 re-running a plan is how you resume. Every example is a module run from the
 repo root: `pixi run python -m examples.<name>.<stage>`.
 
-Three single-file tools sit beside the recipes: [`baseline.py`](baseline.py)
-(rel2tab tabular baselines through RT's eval path), [`ctx_viz.py`](ctx_viz.py)
+Two single-file tools sit beside the recipes: [`ctx_viz.py`](ctx_viz.py)
 (an HTTP UI over the contexts the sampler builds) and
 [`ddp_check.py`](ddp_check.py) (a model-free check of multi-GPU plumbing).
 
