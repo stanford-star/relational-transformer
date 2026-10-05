@@ -150,7 +150,7 @@ If you use this repo, please cite the following papers:
 
 ```bibtex
 @inproceedings{ranjan2026rtj,
-    title={{RT-J:} Large-Scale Pretraining of Relational Transformers for Context-Efficient Predictions},
+    title={{RT-J}: Large-Scale Pretraining of Relational Transformers for Context-Efficient Predictions},
     author={Rishabh Ranjan and Vignesh Kothapalli and Harshvardhan Agarwal and Charilaos Kanatsoulis and Roshan Upendra and Tom Palczewski and Carlos Guestrin and Jure Leskovec},
     booktitle={The Fortieth Annual Conference on Neural Information Processing Systems},
     year={2026}
@@ -168,7 +168,7 @@ Additionally, if you use **RT-PluRel** please also cite:
 
 ```bibtex
 @inproceedings{kothapalli2026plurel,
-    title={{PluRel:} Synthetic Data unlocks Scaling Laws for Relational Foundation Models},
+    title={{PluRel}: Synthetic Data unlocks Scaling Laws for Relational Foundation Models},
     author={Vignesh Kothapalli and Rishabh Ranjan and Valter Hudovernik and Vijay Prakash Dwivedi and Johannes Hoffart and Carlos Guestrin and Jure Leskovec},
     booktitle={Forty-third International Conference on Machine Learning},
     year={2026}
