@@ -16,7 +16,7 @@ winning configs.
 import json
 import os
 
-from rel2tab.predictors.xgboost_predictor import XGBoostHP, XGBoostPredictorConfig
+from rt.rel2tab.predictors.xgboost_predictor import XGBoostHP, XGBoostPredictorConfig
 
 # Optional runtime override: if env var XGB_TUNED_JSON points to a JSON file,
 # read tuned clf/reg HP sets from it. Lets a single job tune then eval with the

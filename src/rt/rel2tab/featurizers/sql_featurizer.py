@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from rel2tab.featurizer import Featurizer, load_table_info
-from rel2tab.featurizers.sql_queries import SQL_REGISTRY
+from rt.rel2tab.featurizer import Featurizer, load_table_info
+from rt.rel2tab.featurizers.sql_queries import SQL_REGISTRY
 
 
 @dataclass

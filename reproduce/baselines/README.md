@@ -1,7 +1,7 @@
 # Baseline featurization
 
 Everything the paper's tabular baselines and retriever ablations need before
-any eval can run: the `rel2tab/` library (label-matched featurizer + predictor
+any eval can run: the [`rt.rel2tab`](../../src/rt/rel2tab) library (label-matched featurizer + predictor
 pairs that the evaluator drives exactly like an RT network), precomputed
 per-row features for every RelBench task table, and the FAISS indices the
 vector-similarity retriever arms read. The evals themselves are
@@ -60,7 +60,7 @@ against `table_info.json`.
 
 ## Why there are two `rel2tab`s
 
-The top-level [`rel2tab/`](../../rel2tab) is the released, generalized baseline
+[`src/rt/rel2tab/`](../../src/rt/rel2tab) is the released, generalized baseline
 library: more featurizers and predictors, configs, a registry. The
 `rel2tab/` here is the narrow version the paper's numbers were actually produced
 with — four `(featurizer, predictor)` pairs, no registry, and in particular the

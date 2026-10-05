@@ -73,10 +73,10 @@ dev = [
     "pytest",
     "ruff",
 ]
-# The rel2tab baselines under `rel2tab/`: the tabular predictors, the SQL
+# The rel2tab baselines under `src/rt/rel2tab/`: the tabular predictors, the SQL
 # featurizer's query engine, and the FAISS indices the sampler's opt-in vecdb
-# cargo feature reads. Heavy, and no shipped module under `src/rt` imports any
-# of it, so it is never installed by default.
+# cargo feature reads. Heavy, and nothing outside `rt.rel2tab` imports any
+# of it at import time, so it is never installed by default.
 #
 # The three git dependencies these extras used to carry (`exaonetabular`,
 # `tabfm`, `roach`) are declared in `[tool.pixi.pypi-dependencies]` instead:
@@ -94,7 +94,7 @@ baselines = [
     # estimators load.
     "tabpfn>=9,<10",
     "tqdm",
-    # The CLI of rel2tab.featurize.
+    # The CLI of rt.rel2tab.featurize.
     "tyro",
 ]
 # Cluster submission and plotting: the workflow around a research run rather
@@ -114,7 +114,7 @@ features = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# The repo root, so a top-level package such as `examples.*` or `rel2tab.*`
+# The repo root, so a top-level package such as `examples.*` or `reproduce.*`
 # imports the same way in a test as it does in a job (roach targets are module
 # paths relative to the checkout).
 pythonpath = ["."]

@@ -62,7 +62,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 try:  # pragma: no cover - import-time environment shim
     _importlib.import_module("tabicl.model")

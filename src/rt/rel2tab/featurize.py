@@ -1,7 +1,7 @@
 """
 Pre-compute features for all rows in a database and save to disk.
 
-Works with any :class:`~rel2tab.featurizer.Featurizer` that implements
+Works with any :class:`~rt.rel2tab.featurizer.Featurizer` that implements
 ``compute_features()``.  The script builds the featurizer from the given
 config, iterates over task tables, calls ``compute_features`` for every
 node, and writes the resulting vectors to disk.
@@ -11,7 +11,7 @@ All unique databases the db-task list resolves to are processed in parallel
 
 Usage::
 
-    python -m rel2tab.featurize \\
+    python -m rt.rel2tab.featurize \\
         --featurize-batch-size 4096 --out-subdir rdblearn_features \\
         --num-workers 6 \\
         featurizer:rdb-learn-featurizer-config \\
@@ -32,12 +32,12 @@ import numpy as np
 import torch
 import torch.distributed as dist
 
-from rel2tab.featurizers.rdblearn_featurizer import (
+from rt.rel2tab.featurizers.rdblearn_featurizer import (
     RDBLearnFeaturizer,
     RDBLearnFeaturizerConfig,
 )
-from rel2tab.featurizers.rt_featurizer import RTFeaturizer, RTFeaturizerConfig
-from rel2tab.featurizers.sql_featurizer import SQLFeaturizer, SQLFeaturizerConfig
+from rt.rel2tab.featurizers.rt_featurizer import RTFeaturizer, RTFeaturizerConfig
+from rt.rel2tab.featurizers.sql_featurizer import SQLFeaturizer, SQLFeaturizerConfig
 
 
 @dataclass
@@ -92,7 +92,7 @@ def _build_featurizer(cfg, db, device):
 
 def _featurize_db(featurizer_cfg, db, out_subdir, featurize_batch_size, local_rank):
     """Process all tables for a single db. Runs in a worker process."""
-    from rel2tab.featurizer import (
+    from rt.rel2tab.featurizer import (
         get_table_splits,
         load_table_info,
         validate_contiguous,

@@ -6,7 +6,7 @@ Designed for use with featurizers that produce a 1-d "prediction" feature
 
 from dataclasses import dataclass
 
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 
 @dataclass

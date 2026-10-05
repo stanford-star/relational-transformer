@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizer import Featurizer
 from rt.data import process_batch
 
 

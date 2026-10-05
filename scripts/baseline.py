@@ -32,7 +32,7 @@ RT_DIMS = {"num_blocks": 12, "d_model": 512, "num_heads": 8, "d_ff": 2048}
 def make_featurizer(
     name: str, rt_ckpt: str | None, pre_dir: str, db_task_list: str, splits: tuple
 ):
-    from rel2tab.featurizers import (
+    from rt.rel2tab.featurizers import (
         EntityFeaturizerConfig,
         GlobalFeaturizerConfig,
         RTFeaturizerConfig,
@@ -63,7 +63,7 @@ def make_featurizer(
 
 
 def make_predictor(name: str, alpha_clf: float, alpha_reg: float, xgb_features: str):
-    from rel2tab.predictors import (
+    from rt.rel2tab.predictors import (
         LinearPredictorConfig,
         MeanPredictorConfig,
         RidgePredictorConfig,
@@ -78,7 +78,7 @@ def make_predictor(name: str, alpha_clf: float, alpha_reg: float, xgb_features: 
     if name == "xgboost":
         # Global val-tuned HP set (shared across tasks within each task type).
         # XGB_TUNED_JSON overrides the baked-in winners; see xgboost_tuned.py.
-        from rel2tab.predictors.xgboost_tuned import tuned_xgboost_config
+        from rt.rel2tab.predictors.xgboost_tuned import tuned_xgboost_config
 
         return tuned_xgboost_config(xgb_features)
     raise ValueError(f"unknown predictor {name!r}")
@@ -133,7 +133,7 @@ def main() -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    from rel2tab.config import Rel2TabModelConfig
+    from rt.rel2tab.config import Rel2TabModelConfig
 
     cfg = Rel2TabModelConfig(
         featurizer=make_featurizer(

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizer import Featurizer
 
 
 @dataclass

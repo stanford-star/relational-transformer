@@ -5,7 +5,7 @@ from typing import Literal
 
 import numpy as np
 
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 
 @dataclass

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizer import Featurizer
 
 
 @dataclass
@@ -53,7 +53,7 @@ class RDBLearnFeaturizer(Featurizer):
         from sklearn.linear_model import LogisticRegression, Ridge
         from sklearn.pipeline import make_pipeline
 
-        from rel2tab.featurizer import load_table_info
+        from rt.rel2tab.featurizer import load_table_info
         from rt.data import get_tasks
 
         # (db, table) -> (precomputed_features_tensor, min_offset)

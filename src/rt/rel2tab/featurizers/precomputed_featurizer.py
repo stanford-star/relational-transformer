@@ -4,14 +4,14 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizer import Featurizer
 
 
 @dataclass
 class PrecomputedFeaturizerConfig:
     """Config for PrecomputedFeaturizer.
 
-    Reads features pre-computed by ``rel2tab.featurize`` from disk.
+    Reads features pre-computed by ``rt.rel2tab.featurize`` from disk.
     ``compute_features`` loads the binary vectors and does index lookup.
     """
 
@@ -30,7 +30,7 @@ class PrecomputedFeaturizerConfig:
 
 
 class PrecomputedFeaturizer(Featurizer):
-    """Load pre-computed feature vectors saved by ``rel2tab.featurize``.
+    """Load pre-computed feature vectors saved by ``rt.rel2tab.featurize``.
 
     At init, eagerly loads ``{table}_vectors.bin`` and ``{table}_meta.json``
     for every (db, table) pair the db-task list resolves to.  At eval time,

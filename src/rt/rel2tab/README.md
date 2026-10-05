@@ -1,25 +1,72 @@
-# rel2tab
+# rel2tab: tabular baselines
 
-rel2tab converts relational prediction tasks into tabular (train, test) pairs
-and runs a featurizer + predictor pipeline on them. The two extension points
-are **featurizers** (row selection / feature extraction) and **predictors**
-(train-set → prediction).
+`rel2tab` is RT's tabular-baseline library. It converts relational prediction
+tasks into tabular (train, test) pairs and runs a **featurizer + predictor**
+pipeline on them, through the **same eval path** as RT
+([inference.md](../../../docs/inference.md)). A baseline produces the same
+RelBench submission directory as an RT eval and is scored with RelBench's own
+leaderboard evaluator, so the two are directly comparable.
+
+A baseline is a `(featurizer, predictor)` pair: each task's in-context training
+labels (and optional features) are fed to a tabular predictor. The two extension
+points are **featurizers** (row selection / feature extraction) and
+**predictors** (train-set → prediction).
+
+The narrow copy under [`reproduce/baselines/rel2tab`](../../../reproduce/baselines/rel2tab)
+is the one the paper's numbers were produced with; this package is its
+generalized successor.
+
+## Running a baseline
+
+```bash
+pip install "relational-transformer[baselines]"
+python scripts/baseline.py --featurizer entity --predictor ridge \
+  --pre-dir data/relbench-preprocessed \
+  --db-task-list "$(python -c 'import rt.data; print(rt.data.get_mixture_path("relbench", "forecast"))')" \
+  --out-dir baseline_out
+```
+
+- **Featurizers** (`--featurizer`): `global`, `entity`, `rt` (RT embeddings —
+  pass a checkpoint with `--rt-ckpt`).
+- **Predictors** (`--predictor`): `mean`, `linear`, `ridge`, `xgboost`.
+
+The `global`/`entity` featurizers with the `mean`/`linear`/`ridge` predictors
+need no GPU (only the `rt` featurizer runs a model). `--out-dir` is a valid
+RelBench submission directory, scored and re-validatable exactly like RT's eval
+output. The context flags (`--ctx-size`, `--local-ctx-size`, `--bfs-width`, …)
+match `examples/eval.py` — see
+[context engineering](../../../docs/inference.md#context-engineering).
+
+The other featurizers and predictors below are not exposed by `scripts/baseline.py`;
+compose them in Python via `Rel2TabModelConfig`. Feature-heavy featurizers
+(`SQLFeaturizer`, `RDBLearnFeaturizer`) can be run once over every row with
+`python -m rt.rel2tab.featurize` and then read back with `PrecomputedFeaturizer`.
 
 ## Architecture
 
 ```
-rel2tab/
+src/rt/rel2tab/
   featurizer.py          # Featurizer ABC
   predictor.py           # Predictor ABC
   model.py               # Rel2TabModel (orchestrates the pipeline)
   config.py              # Rel2TabModelConfig, FeaturizerConfig/PredictorConfig unions
+  featurize.py           # CLI: precompute a featurizer's features for every row
   featurizers/
     global_featurizer.py  # simplest example — good starting template
     entity_featurizer.py
     rt_featurizer.py
+    sql_featurizer.py
+    rdblearn_featurizer.py
+    precomputed_featurizer.py
   predictors/
     mean_predictor.py     # simplest example — good starting template
     linear_predictor.py
+    ridge_predictor.py
+    xgboost_predictor.py
+    lgbm_predictor.py
+    tab_predictor.py
+    tabicl_batched_predictor.py
+    identity_predictor.py
 ```
 
 ## How prediction works
@@ -44,11 +91,11 @@ For each batch, `Rel2TabModel.predict` runs three steps:
 
 ## Adding a new featurizer
 
-Create a single file `rel2tab/featurizers/my_featurizer.py`:
+Create a single file `src/rt/rel2tab/featurizers/my_featurizer.py`:
 
 ```python
 from dataclasses import dataclass
-from rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizer import Featurizer
 
 
 @dataclass
@@ -95,12 +142,12 @@ class MyFeaturizer(Featurizer):
 
 Then register it:
 
-1. **`rel2tab/featurizers/__init__.py`** — add the import:
+1. **`featurizers/__init__.py`** — add the import:
    ```python
-   from rel2tab.featurizers.my_featurizer import MyFeaturizer, MyFeaturizerConfig
+   from rt.rel2tab.featurizers.my_featurizer import MyFeaturizer, MyFeaturizerConfig
    ```
 
-2. **`rel2tab/config.py`** — add `MyFeaturizerConfig` to the union:
+2. **`config.py`** — add `MyFeaturizerConfig` to the union:
    ```python
    FeaturizerConfig = (
        GlobalFeaturizerConfig
@@ -115,11 +162,11 @@ That's it. `Rel2TabModelConfig.build(device)` will call
 
 ## Adding a new predictor
 
-Create `rel2tab/predictors/my_predictor.py`:
+Create `src/rt/rel2tab/predictors/my_predictor.py`:
 
 ```python
 from dataclasses import dataclass
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 
 @dataclass
@@ -150,8 +197,8 @@ class MyPredictor(Predictor):
 
 Then register it:
 
-1. **`rel2tab/predictors/__init__.py`** — add the import.
-2. **`rel2tab/config.py`** — add to the `PredictorConfig` union.
+1. **`predictors/__init__.py`** — add the import.
+2. **`config.py`** — add to the `PredictorConfig` union.
 
 ## Existing examples
 
@@ -160,6 +207,9 @@ Then register it:
 | `GlobalFeaturizer` | Passes all rows, no features | (none) |
 | `EntityFeaturizer` | Filters to same-entity rows via `f2p_nbr_idxs` | (none) |
 | `RTFeaturizer` | Builds local contexts, runs RT model for embeddings | RT model params, checkpoint, sampler params |
+| `SQLFeaturizer` | Hand-written DuckDB feature queries per RelBench task | `pre_dir`, `db_task_list`, `splits` |
+| `RDBLearnFeaturizer` | Deep-feature-synthesis features via `rdblearn` | `pre_dir`, `db_task_list`, `splits`, `max_depth`, `max_train_samples` |
+| `PrecomputedFeaturizer` | Reads features written by `rt.rel2tab.featurize` | `pre_dir`, `db_task_list`, `splits`, `features_subdir` |
 
 | Predictor | What it does | Config fields |
 |---|---|---|
@@ -167,6 +217,10 @@ Then register it:
 | `LinearPredictor` | Fits sklearn linear/logistic regression | (none) |
 | `RidgePredictor` | Fits sklearn ridge/logistic regression with built-in CV | (none) |
 | `XGBoostPredictor` | Fits gradient-boosted trees, optional hyperparameter tuning | XGBoost hyperparameters |
+| `LGBMPredictor` | Fits LightGBM | `n_estimators`, `num_leaves`, `learning_rate`, `min_child_samples`, `reg_lambda` |
+| `TabPredictor` | In-context TabICL or TabPFN, one item at a time | `model`, `num_workers` |
+| `TabICLBatchedPredictor` | TabICL with items binned and batched per forward pass | `max_batch_size`, `min_bin_size`, `softmax_temperature`, `use_amp` |
+| `IdentityPredictor` | Returns the test feature itself (for precomputed predictions) | (none) |
 
 ## Composing baselines
 

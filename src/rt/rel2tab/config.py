@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-from rel2tab.featurizers import (
+from rt.rel2tab.featurizers import (
     EntityFeaturizerConfig,
     GlobalFeaturizerConfig,
     PrecomputedFeaturizerConfig,
     RDBLearnFeaturizerConfig,
     RTFeaturizerConfig,
 )
-from rel2tab.predictors import (
+from rt.rel2tab.predictors import (
     IdentityPredictorConfig,
     LGBMPredictorConfig,
     LinearPredictorConfig,
@@ -52,7 +52,7 @@ class Rel2TabModelConfig:
     d_text: int
 
     def build(self, device):
-        from rel2tab.model import Rel2TabModel
+        from rt.rel2tab.model import Rel2TabModel
 
         featurizer = self.featurizer.build(device)
         predictor = self.predictor.build()

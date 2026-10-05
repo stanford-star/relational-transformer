@@ -113,12 +113,12 @@ native data engine ships as a prebuilt stable-ABI extension.
   `v*` tag and publishes them with PyPI trusted publishing.
 - **Optional-dependency extras**: `dev` (maturin, pre-commit, pytest, ruff) is
   what the tree needs to test and lint itself; `baselines` carries what
-  `rel2tab/` needs, and `research` the cluster-submission and plotting tooling.
+  `rt.rel2tab` needs, and `research` the cluster-submission and plotting tooling.
   A plain `pip install relational-transformer` installs none of them.
 - **Docs**: [`downloads.md`](docs/downloads.md),
   [`preprocess.md`](docs/preprocess.md), [`inference.md`](docs/inference.md),
-  [`train.md`](docs/train.md), [`baselines.md`](docs/baselines.md),
-  [`context-visualization.md`](docs/context-visualization.md).
+  [`train.md`](docs/train.md), [`rel2tab/README.md`](src/rt/rel2tab/README.md),
+  [`ctx_viz.md`](docs/ctx_viz.md).
 
 ### Changed
 

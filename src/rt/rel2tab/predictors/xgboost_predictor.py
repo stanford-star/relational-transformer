@@ -26,7 +26,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 
 @dataclass

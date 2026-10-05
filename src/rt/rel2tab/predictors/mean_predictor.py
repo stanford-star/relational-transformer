@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from rel2tab.predictor import Predictor
+from rt.rel2tab.predictor import Predictor
 
 
 @dataclass

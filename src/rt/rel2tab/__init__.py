@@ -1,6 +1,6 @@
-from rel2tab.config import FeaturizerConfig, PredictorConfig, Rel2TabModelConfig
-from rel2tab.featurizer import Featurizer
-from rel2tab.featurizers import (
+from rt.rel2tab.config import FeaturizerConfig, PredictorConfig, Rel2TabModelConfig
+from rt.rel2tab.featurizer import Featurizer
+from rt.rel2tab.featurizers import (
     EntityFeaturizer,
     EntityFeaturizerConfig,
     GlobalFeaturizer,
@@ -10,9 +10,9 @@ from rel2tab.featurizers import (
     RTFeaturizer,
     RTFeaturizerConfig,
 )
-from rel2tab.model import Rel2TabModel
-from rel2tab.predictor import Predictor
-from rel2tab.predictors import (
+from rt.rel2tab.model import Rel2TabModel
+from rt.rel2tab.predictor import Predictor
+from rt.rel2tab.predictors import (
     LinearPredictor,
     LinearPredictorConfig,
     MeanPredictor,
