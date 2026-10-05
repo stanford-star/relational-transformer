@@ -31,7 +31,7 @@ RT-v1 on rel-avito.
 
 `job(...)` in [`plan.py`](plan.py) calls `rt.eval.main` with the checkpoint,
 `pre_dir`, task list and context. `db_task_list` is a list of `(db, task)`
-pairs, inline or as a JSON path; `rt.data.db_task_list(pre_dir, kinds)`
+pairs, inline or as a JSON path; `rt.data.make_db_task_list(pre_dir, kinds)`
 enumerates what a preprocessed directory ships, `kinds` any of `"forecast"`,
 `"autocomplete"`. The quickest end-to-end run is one task:
 

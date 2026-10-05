@@ -2,12 +2,11 @@
 
 Everything here runs on RelBench or on your own data in the same format. The
 recipes behind the released checkpoints and leaderboard entries live beside the
-notes on how the pieces work.
+notes on how the pieces work. For a first look, start with the
+[notebooks](../notebooks/).
 
 | | what | cost |
 |---|---|---|
-| [`quickstart.ipynb`](quickstart.ipynb) | RT-J on one RelBench task, in Colab | minutes |
-| [`byod/`](byod/) | RT-J on your own database, tasks defined in SQL, in Colab | minutes |
 | [`preprocess/`](preprocess/) | RelBench-format databases -> RT's tensor format | CPU per database, one GPU to embed |
 | [`pretrain/`](pretrain/) | PluRel, then the Join warm-started from it | thousands of GPU-h |
 | [`eval/`](eval/) | one checkpoint, one context, every test split | a few GPU-h |

@@ -32,16 +32,16 @@ _without any dependency on Rust_.
 
 ## Quickstart
 
-[`examples/quickstart.ipynb`](examples/quickstart.ipynb)
-([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/quickstart.ipynb))
+The [Quickstart notebook](notebooks/quickstart.ipynb)
+([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb))
 evaluates the released RT-J checkpoint on a RelBench task, `rel-f1/driver-dnf`,
 with no training: download one preprocessed database, predict every test row
 from its sampled context, score the AUROC. A few minutes on a GPU runtime.
 
 ## Bring your own database
 
-The [BYOD notebook](examples/byod/colab.ipynb)
-([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/examples/byod/colab.ipynb))
+The [BYOD notebook](notebooks/byod.ipynb)
+([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb))
 preprocesses your database and predicts tasks you define in SQL with a released
 checkpoint. For more than a first look, [`examples/`](examples/README.md) runs
 the full recipes on your own data in RelBench format: in-context prediction
@@ -66,8 +66,6 @@ checkpoints and leaderboard entries, with the notes on how each part works.
 
 | | what |
 |---|---|
-| [`quickstart.ipynb`](examples/quickstart.ipynb) | RT-J on one RelBench task, in Colab |
-| [`byod/`](examples/byod/) | RT-J on your own database, in Colab |
 | [`preprocess/`](examples/preprocess/) | RelBench-format databases -> RT's tensor format |
 | [`pretrain/`](examples/pretrain/) | RT-J from scratch: PluRel, then the Join |
 | [`eval/`](examples/eval/) | a checkpoint on every RelBench task; context knobs, tuning, ensembling |

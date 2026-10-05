@@ -39,8 +39,8 @@ this tree.
 `rt.train.main` takes every knob as an argument; a run is a script that calls
 it. Copy [`phases.py`](phases.py) and edit: `pre_dir` holds the pretraining
 databases and `eval_pre_dir` the validation ones. `db_task_list` is a JSON
-list of `[db, task]` pairs; `rt.data.db_task_list(pre_dir, kinds)` enumerates
-a directory and `rt.data.plurel_train_db_task_list` applies the PluRel filter.
+list of `[db, task]` pairs; `rt.data.make_db_task_list(pre_dir, kinds)` enumerates
+a directory and `rt.data.make_plurel_db_task_list` applies the PluRel filter.
 Lower `total_steps` and `tokens_per_gpu` for a smaller budget.
 
 ## Outputs
