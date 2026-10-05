@@ -18,11 +18,14 @@ pixi run python -m examples.preprocess.plan         # every outstanding job
 pixi run python -m examples.preprocess.task_lists   # -> data/db-task-lists/*.json
 ```
 
-`plan.jobs` skips any database whose raw parquet tables exceed
-`MAX_RAW_BYTES` (5 GiB). This is the only filter between a raw collection and
-its preprocessed form: `the-join-preprocessed` holds the 639 databases of
-`the-join` that fit under it, and the dropped ones are exactly the ones above
-it. Pass `max_raw_bytes` to `jobs` to change the cutoff.
+`make_db_task_list` drops a database whose preprocessed directory exceeds
+`MAX_PRE_BYTES` (5 GB), and a database with no binary-classification or
+regression task contributes nothing. These two rules are why
+`the-join-preprocessed` is 523 of the 639 `the-join` databases: 49 ship no
+supported task, and 67 preprocess to more than 5 GB (`nodes.rkyv` dominates;
+`join-se-electronics` reaches 87 GB from 80 MB of parquet). Raw size does not
+predict this, so preprocessing runs on every database and the cut is applied
+afterwards. Pass `max_pre_bytes=None` to keep everything.
 
 Per database it writes:
 

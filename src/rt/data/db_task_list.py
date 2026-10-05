@@ -7,6 +7,7 @@ from rt.data.resolve import read_meta
 
 SUPPORTED_TASK_TYPES = ("binary_classification", "regression")
 KINDS = ("forecast", "autocomplete")
+MAX_PRE_BYTES = 5 * 10**9
 
 
 def _databases(pre_dir: str) -> list[str]:
@@ -26,10 +27,18 @@ def _kind(task: dict) -> str:
     return "autocomplete" if task.get("kind") == "autocomplete" else "forecast"
 
 
-def make_db_task_list(pre_dir: str, kinds=KINDS) -> list[tuple[str, str]]:
+def pre_bytes(pre_db_dir: Path) -> int:
+    return sum(f.stat().st_size for f in pre_db_dir.iterdir() if f.is_file())
+
+
+def make_db_task_list(
+    pre_dir: str, kinds=KINDS, max_pre_bytes: int | None = MAX_PRE_BYTES
+) -> list[tuple[str, str]]:
     p = Path(pre_dir).expanduser()
     out = []
     for db in _databases(pre_dir):
+        if max_pre_bytes is not None and pre_bytes(p / db) > max_pre_bytes:
+            continue
         column_index = json.loads((p / db / "column_index.json").read_text())
         for task in read_meta(pre_dir, db).get("tasks", []):
             if task.get("task_type") not in SUPPORTED_TASK_TYPES:
