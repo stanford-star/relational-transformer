@@ -146,26 +146,32 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 
 ## Citation
 
+If you use this repo, please cite the following papers:
+
 ```bibtex
 @inproceedings{ranjan2026rtj,
-  title     = {RT-J: Large-Scale Pretraining of Relational Transformers for
-               Context-Efficient Predictions},
-  author    = {Ranjan, Rishabh and Kothapalli, Vignesh and Agarwal,
-               Harshvardhan and Kanatsoulis, Charilaos and Upendra, Roshan and
-               Palczewski, Tom and Guestrin, Carlos and Leskovec, Jure},
-  booktitle = {Advances in Neural Information Processing Systems},
-  year      = {2026},
+    title={{RT-J:} Large-Scale Pretraining of Relational Transformers for Context-Efficient Predictions},
+    author={Rishabh Ranjan and Vignesh Kothapalli and Harshvardhan Agarwal and Charilaos Kanatsoulis and Roshan Upendra and Tom Palczewski and Carlos Guestrin and Jure Leskovec},
+    booktitle={The Fortieth Annual Conference on Neural Information Processing Systems},
+    year={2026}
 }
 
 @inproceedings{ranjan2026relational,
-  title     = {Relational Transformer: Toward Zero-Shot Foundation Models for
-               Relational Data},
-  author    = {Ranjan, Rishabh and Hudovernik, Valter and Znidar, Mark and
-               Kanatsoulis, Charilaos and Upendra, Roshan and Mohammadi, Mahmoud
-               and Meyer, Joe and Palczewski, Tom and Guestrin, Carlos and
-               Leskovec, Jure},
-  booktitle = {International Conference on Learning Representations},
-  year      = {2026},
+    title={Relational Transformer: Toward Zero-Shot Foundation Models for Relational Data},
+    author={Rishabh Ranjan and Valter Hudovernik and Mark Znidar and Charilaos Kanatsoulis and Roshan Upendra and Mahmoud Mohammadi and Joe Meyer and Tom Palczewski and Carlos Guestrin and Jure Leskovec},
+    booktitle={The Fourteenth International Conference on Learning Representations},
+    year={2026}
+}
+```
+
+Additionally, if you use **RT-PluRel** please also cite:
+
+```bibtex
+@inproceedings{kothapalli2026plurel,
+    title={{PluRel:} Synthetic Data unlocks Scaling Laws for Relational Foundation Models},
+    author={Vignesh Kothapalli and Rishabh Ranjan and Valter Hudovernik and Vijay Prakash Dwivedi and Johannes Hoffart and Carlos Guestrin and Jure Leskovec},
+    booktitle={Forty-third International Conference on Machine Learning},
+    year={2026}
 }
 ```
 
