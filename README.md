@@ -20,13 +20,15 @@ This repo is linked to the following papers in the
 
 ## Installation
 
-Install the `rt` package (the model plus the native Rust data engine) from
-GitHub. It builds the extension from source, so you need a
-[Rust toolchain](https://rustup.rs) and Python 3.11+:
-
 ```bash
-pip install "git+https://github.com/stanford-star/relational-transformer.git"
+pip install relational-transformer
 ```
+
+This installs the `rt` package: the model plus its native data engine
+(`rt.rustler`), shipped as prebuilt wheels for Linux (x86_64, aarch64) and
+macOS (Apple Silicon, Intel) on Python 3.10+. No Rust toolchain is needed.
+On any other platform `pip` falls back to the source distribution, which
+builds the engine with [Rust](https://rustup.rs).
 
 ## Quickstart
 

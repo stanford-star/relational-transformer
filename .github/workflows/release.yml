@@ -3,6 +3,8 @@ name: release
 on:
   push:
     tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -14,15 +16,21 @@ jobs:
           - runner: ubuntu-latest
             target: x86_64
             manylinux: "2_28"
+          - runner: ubuntu-latest
+            target: aarch64
+            manylinux: "2_28"
           - runner: macos-14
             target: aarch64
             manylinux: "auto"
+          - runner: macos-14
+            target: x86_64
+            manylinux: "auto"
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.10"
       - uses: PyO3/maturin-action@v1
         with:
           command: build
@@ -37,7 +45,7 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: PyO3/maturin-action@v1
         with:
           command: sdist
@@ -51,7 +59,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           version=$(python -c 'import tomllib,sys; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')
           tag=${GITHUB_REF_NAME#v}
@@ -68,11 +76,12 @@ jobs:
         with:
           path: dist
           merge-multiple: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install twine packaging
       - run: twine check --strict dist/*
+      - run: ls -l dist
       - run: |
           python - <<'EOF'
           import glob, zipfile
@@ -107,3 +116,4 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
