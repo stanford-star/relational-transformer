@@ -14,8 +14,8 @@ and the recipes to pretrain, fine-tune, inference and test-time scale
 **Relational Foundation Models (RFMs)** based on RT.
 
 The following results are fully reproducible from here:  
-🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission ([in-context](examples/icl/), [fine-tuned](examples/finetune/)).  
-🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission ([in-context](examples/icl/), [fine-tuned](examples/finetune/)).
+🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission ([repro](examples/icl/)).  
+🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission ([repro](examples/finetune/)).
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
