@@ -1,5 +1,13 @@
 # Relational Transformer (RT)
 
+[![Website](https://img.shields.io/badge/website-RT--J-8C1515?logo=googlechrome&logoColor=white)](https://star-project.stanford.edu/rt-j)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-stanford--star-yellow)](https://huggingface.co/stanford-star)
+[![PyPI](https://img.shields.io/pypi/v/relational-transformer?logo=pypi&logoColor=white)](https://pypi.org/project/relational-transformer/)
+[![Python](https://img.shields.io/pypi/pyversions/relational-transformer?logo=python&logoColor=white)](https://pypi.org/project/relational-transformer/)
+[![Quickstart in Colab](https://img.shields.io/badge/Colab-Quickstart-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb)
+[![BYOD in Colab](https://img.shields.io/badge/Colab-BYOD-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 This repo is the official implementation
 of the **Relational Transformer (RT)** architecture
 and the recipes to pretrain, fine-tune, inference and test-time scale
