@@ -38,7 +38,7 @@ evaluates the released RT-J checkpoint on a RelBench task, `rel-f1/driver-dnf`,
 with no training: download one preprocessed database, predict every test row
 from its sampled context, score the AUROC. A few minutes on a GPU runtime.
 
-## Bring your own database
+## Bring your own database (BYOD)
 
 The [BYOD notebook](notebooks/byod.ipynb)
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb))
@@ -67,8 +67,8 @@ checkpoints and leaderboard entries, with the notes on how each part works.
 | | what |
 |---|---|
 | [`preprocess/`](examples/preprocess/) | RelBench-format databases -> RT's tensor format |
-| [`pretrain/`](examples/pretrain/) | RT-J from scratch: PluRel, then the Join |
-| [`eval/`](examples/eval/) | a checkpoint on every RelBench task; context knobs, tuning, ensembling |
+| [`pretrain/`](examples/pretrain/) | RT-PluRel pretraining on PluRel, then RT-J continued pretraining on the Join |
+| [`eval/`](examples/eval/) | evaluate a checkpoint on every RelBench task; context knobs, tuning, ensembling |
 | [`icl/`](examples/icl/) | leaderboard entries: RT-J and RT-PluRel in-context |
 | [`finetune/`](examples/finetune/) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned |
 
