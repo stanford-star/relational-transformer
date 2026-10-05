@@ -40,22 +40,3 @@ pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
 
 Preprocessed repos carry no source strings, so changing the text embedder means
 re-preprocessing from raw ([preprocess.md](preprocess.md)).
-
-## Revisions
-
-The repos are rewritten in place. The RT-J paper's numbers were produced
-against these revisions; pass `--revision <sha>` to reproduce them.
-
-| repository | revision | date |
-|---|---|---|
-| `stanford-star/the-join-preprocessed` | `ba5574ba659f0ef8b592793ed2ac9cb78dc87100` | 2026-09-12 |
-| `stanford-star/relbench-preprocessed` | `1016626ddb30c027b92458bf866903850cc205e1` | 2026-08-08 |
-| `stanford-star/plurel-preprocessed` | `9d70172425b44053f1270b19094ba6dcf7d66464` | 2026-09-12 |
-| `stanford-star/the-join` | `ec028dddca63c7eeb49bbce3d7a713783e165eea` | 2026-08-04 |
-| `stanford-star/relbench-v1` | `d8e976fd0a4b78877204bc8dfbcfc9a9f7f48600` | 2026-08-25 |
-| `stanford-star/plurel` | `ae2f0b04f71ec17aebf6cf1fa8259fa655994b58` | 2026-09-08 |
-| `stanford-star/relbench-raw` | `f1d7228af23a22b9ece756fe5dda4dda79b711dc` | 2026-08-25 |
-| `stanford-star/rt-j` | `360798f5335975fdcae73e3ed58cf03366dbc082` | 2026-09-14 |
-| `stanford-star/rt-plurel` | `d27c97b045fc4f504848f15c730acb87970aac1d` | 2026-09-11 |
-
-The checkpoint and the `rustler` commit (recorded in each card) fix a result too.

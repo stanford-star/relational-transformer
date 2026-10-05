@@ -1,4 +1,3 @@
-import json
 import shutil
 from pathlib import Path
 
@@ -8,7 +7,6 @@ from huggingface_hub import HfApi
 from rt.preprocess._preprocess import (
     dataset_name,
     embed_dataset,
-    meta_without_text,
     resolve_dataset_dir,
     run_rustler_pre,
     update_meta_with_embeddings,
@@ -121,7 +119,6 @@ def preprocess_one_legacy(
     batch_size: int,
     upload_repo: str | None,
     private: bool,
-    retain_text: bool,
     revision: str | None,
 ) -> Path:
     out_dir = Path(out_dir).expanduser()
@@ -142,20 +139,6 @@ def preprocess_one_legacy(
             repo_id=upload_repo,
             repo_type="dataset",
             commit_message=f"add legacy (RT-v1 boolean typing) preprocessed {name}",
-            ignore_patterns=None if retain_text else ["text.json", "meta.json"],
         )
-        if not retain_text:
-            api.upload_file(
-                path_or_fileobj=json.dumps(
-                    meta_without_text(pre_dataset_dir), indent=2
-                ).encode()
-                + b"\n",
-                path_in_repo=f"legacy/{name}/meta.json",
-                repo_id=upload_repo,
-                repo_type="dataset",
-                commit_message=(
-                    f"add legacy preprocessed {name}: meta.json without text.json"
-                ),
-            )
         print(f"uploaded {upload_repo}/legacy/{name}", flush=True)
     return pre_dataset_dir

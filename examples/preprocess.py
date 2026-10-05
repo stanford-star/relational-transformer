@@ -11,7 +11,6 @@ def preprocess_one_dataset() -> None:
         embed=True,
         upload_repo=None,
         public=False,
-        retain_text=False,
         revision=None,
     )
 
@@ -29,7 +28,6 @@ def preprocess_a_collection() -> None:
         embed=True,
         upload_repo=None,
         public=False,
-        retain_text=False,
         revision=None,
     )
 
@@ -44,7 +42,6 @@ def upload_result() -> None:
         repo="your-org/your-preprocessed",
         bulk=False,
         public=False,
-        retain_text=False,
     )
 
 
