@@ -1,9 +1,9 @@
 # Relational Transformer (RT)
 
 This repo is the official implementation
-of the **Relational Transformer (RT)** architecture,
-and recipes for pretraining, fine-tuning, in-context learning and test-time scaling
-of **Relational Foundation Models (RFMs)** based on RT.
+of the **Relational Transformer (RT)** architecture
+and the recipes to pretrain, fine-tune, inference and test-time scale
+**Relational Foundation Models (RFMs)** based on RT.
 
 The following results are fully reproducible from here:  
 🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission.  
