@@ -58,9 +58,13 @@ failing loudly if missing ([`config.py`](config.py)):
 
 The warm-start checkpoints are Hub ids resolved on demand, not paths:
 `rt-j` warm-starts from
-[`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j) and
+[`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j),
 `rt-plurel` from
-[`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel)
+[`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel),
+and `rt` from nothing — random initialisation, no pretrained checkpoint. The
+four stages are identical for all three; with no warm start the selection and
+reporting arms train the whole model rather than a zero-initialised additive
+delta, which is what `delta_finetune` switches on
 ([`plan.py`](plan.py) `MODELS`). [`docs/downloads.md`](../../docs/downloads.md)
 is how to fetch the data.
 
@@ -71,10 +75,12 @@ export RT_OUT_ROOT=out/finetune
 # 21 jobs per model, one GPU each, run sequentially in this process
 pixi run python -m pipelines.finetune.plan rt-j
 pixi run python -m pipelines.finetune.plan rt-plurel
+pixi run python -m pipelines.finetune.plan rt
 
 # gather the prediction tables, score them, write the submission zips
 pixi run python -m pipelines.finetune.collect rt-j
 pixi run python -m pipelines.finetune.collect rt-plurel
+pixi run python -m pipelines.finetune.collect rt
 ```
 
 To see a model's job list without running anything:
@@ -120,6 +126,7 @@ them:
 |---|---|---|
 | RT-J (fine-tuned) | **0.7902** | **0.2711** |
 | RT-PluRel (fine-tuned) | 0.7853 | 0.2757 |
+| RT (from scratch) | 0.7776 | 0.2927 |
 
 Per task:
 

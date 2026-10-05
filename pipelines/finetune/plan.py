@@ -8,9 +8,10 @@ from reproduce.launch import Job, describe, run_sequential
 
 PROJECT = "finetune"
 
-MODELS = {
+MODELS: dict[str, str | None] = {
     "rt-j": "stanford-star/rt-j",
     "rt-plurel": "stanford-star/rt-plurel",
+    "rt": None,
 }
 
 TASKS = (
