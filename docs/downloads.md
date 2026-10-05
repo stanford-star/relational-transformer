@@ -1,39 +1,34 @@
 # Downloads
 
-Our HuggingFace org [`stanford-star`](https://huggingface.co/stanford-star)
-provides raw data, preprocessed data, and model checkpoints.
-
-**Data is downloaded up front, by you; only checkpoints are fetched on demand.**
-A `pre_dir` is always a local directory. Preprocessed datasets run to hundreds
-of GiB and every rank and dataloader worker of a run reads them, so on-demand
-fetching meant thousands of Hub requests per run (HTTP 429 rate limits, even
-when the bytes were already cached, because each call still revalidates over the
-network) and a separate copy per machine. One explicit `hf download` into a path
-you choose is faster, and the data a run used is a directory you can inspect.
-
-Download the preprocessed data you need with the `hf` CLI:
+Raw data, preprocessed data, and checkpoints live on HuggingFace under
+[`stanford-star`](https://huggingface.co/stanford-star). Download data up front
+with the `hf` CLI; a `pre_dir` is always a local directory. Checkpoints are
+fetched on demand (`load_rt_model("stanford-star/rt-j")`,
+`--model.load-ckpt-path stanford-star/rt-j`).
 
 ```bash
-# Preprocessed "the Join" (rustler artifacts, ready for RT) -- the pretraining data
+# Preprocessed "the Join" -- pretraining data (~256 GiB)
 pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
   --local-dir data/the-join-preprocessed
 
-# Preprocessed RelBench (rustler artifacts, ready for RT) -- validation/eval data
+# Preprocessed RelBench -- validation/eval data
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --local-dir data/relbench-preprocessed
+
+# Raw data, only to re-run preprocessing (see preprocess.md)
+pixi run hf download stanford-star/the-join --repo-type dataset
+pixi run hf download stanford-star/relbench-v1 --repo-type dataset
+
+# Checkpoint
+pixi run hf download stanford-star/rt-j --repo-type model
 ```
 
-Those are the paths the scripts default to (`--train.pre-dir data/the-join-preprocessed`,
-`--eval.pre-dir data/relbench-preprocessed`); pass your own to put them elsewhere.
-The curated `(db, task)` mixtures are **not** in these repos: they are vendored
-in the Python package and read with `rt.data.get_mixture(collection, name)` /
-`rt.data.get_mixture_path(collection, name)`, where `collection` is one of
-`the-join`, `relbench`, `plurel`. `rt.data.list_mixtures()` names every one.
+The `data/*-preprocessed` paths are the scripts' defaults
+(`--train.pre-dir`, `--eval.pre-dir`). The `(db, task)` mixtures are vendored
+in the package: `rt.data.list_mixtures()`, `rt.data.get_mixture(collection, name)`.
 
-The full preprocessed Join is **~256 GiB** at the current revision, since the
-2026-09-12 trim to the 523 databases under the 5 GB per-database cutoff (it was
-~1.5 TiB before). To fetch only what a run needs, keep the core rustler
-artifacts plus the one text embedder you train with:
+To fetch a subset, keep the core rustler artifacts plus the one text embedder
+you train with, and/or restrict to databases (`--include "<db>/*"`):
 
 ```bash
 pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
@@ -43,46 +38,13 @@ pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
             "*/text_emb_all-MiniLM-L12-v2.bin"
 ```
 
-Narrow it further with `--include "<db>/*"` per database (a mixture from
-`rt.data.get_mixture("the-join", "rt-j")` names the dbs it needs). Sizes across the 523 databases:
-`nodes.rkyv` ~195 GiB, `text_emb_all-MiniLM-L12-v2.bin` ~30 GiB, `p2f_adj.rkyv`
-~26 GiB, `offsets.rkyv` ~5 GiB.
+Preprocessed repos carry no source strings, so changing the text embedder means
+re-preprocessing from raw ([preprocess.md](preprocess.md)).
 
-The preprocessed repositories carry no source strings: `rustler` writes a
-`text.json` intern table while preprocessing, the embedder consumes it, and a
-string cell in `nodes.rkyv` is then just an index into `text_emb_*.bin`. Only
-`plurel-preprocessed`, whose databases are synthetic, ships it. To train with a
-different text embedder, re-run preprocessing from the raw repository (see
-[preprocess.md](preprocess.md)) rather than re-embedding a downloaded tree.
+## Revisions
 
-Raw data (only needed to re-run preprocessing yourself, see
-[preprocess.md](preprocess.md)) and checkpoints:
-
-```bash
-# Raw "the Join" (639 databases in RelBench format)
-pixi run hf download stanford-star/the-join --repo-type dataset
-
-# Raw RelBench databases (RelBench format)
-pixi run hf download stanford-star/relbench-v1 --repo-type dataset
-
-# The RT-J checkpoint
-pixi run hf download stanford-star/rt-j --repo-type model
-```
-
-Checkpoints are the one thing still resolved from the Hub on demand: a single
-small file fetched once by one process, so `load_rt_model("stanford-star/rt-j")`
-and `--model.load-ckpt-path stanford-star/rt-j` keep working without a manual
-download. The preprocessor also reads its *raw* inputs straight from the Hub.
-
-## Revisions the published results were produced against
-
-These repositories are rewritten in place as databases are added, dropped or
-re-preprocessed, so an unpinned download is not necessarily the data a published
-number came from. `the-join-preprocessed` was trimmed to the 523 databases under
-the 5 GB per-database cutoff on 2026-09-12, dropping 116 of them; a reader who
-takes the head today gets a different dataset than an earlier reader did.
-
-Every number in the RT-J paper was produced against these revisions:
+The repos are rewritten in place. The RT-J paper's numbers were produced
+against these revisions; pass `--revision <sha>` to reproduce them.
 
 | repository | revision | date |
 |---|---|---|
@@ -96,25 +58,4 @@ Every number in the RT-J paper was produced against these revisions:
 | `stanford-star/rt-j` | `360798f5335975fdcae73e3ed58cf03366dbc082` | 2026-09-14 |
 | `stanford-star/rt-plurel` | `d27c97b045fc4f504848f15c730acb87970aac1d` | 2026-09-11 |
 
-Pass the revision to every download that has to be reproducible:
-
-```bash
-pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
-  --revision ba5574ba659f0ef8b592793ed2ac9cb78dc87100 \
-  --local-dir data/the-join-preprocessed
-
-pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
-  --revision 1016626ddb30c027b92458bf866903850cc205e1 \
-  --local-dir data/relbench-preprocessed
-```
-
-Two further things fix a result besides the data: the checkpoint, and the
-`rustler` commit the data was preprocessed with and the contexts were sampled
-with. Each card records the commit its tree was built at.
-
-Without `--local-dir` these land in the shared HuggingFace cache
-(`~/.cache/huggingface/hub`, or `$HF_HOME`), which is what you want for
-checkpoints and raw preprocessing inputs. For a `pre_dir`, use `--local-dir` so
-the path you pass to the scripts is a plain directory. Useful flags:
-`--include`/`--exclude` (glob patterns to grab a subset), `--max-workers`
-(parallel downloads), and `--revision` (pin a branch, tag, or commit).
+The checkpoint and the `rustler` commit (recorded in each card) fix a result too.

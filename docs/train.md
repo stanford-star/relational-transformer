@@ -31,7 +31,7 @@ Pretraining takes a `pre_dir` of preprocessed pretraining data (the
 Join) and an `eval_pre_dir` of preprocessed RelBench for validation. Both are
 **local directories** — either produced by [preprocess.md](preprocess.md) or
 downloaded up front; nothing is fetched on demand (see
-[downloads.md](downloads.md) for why, and for how to fetch a subset):
+[downloads.md](downloads.md) for how to fetch a subset):
 
 ```bash
 pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
