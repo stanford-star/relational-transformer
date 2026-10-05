@@ -18,17 +18,17 @@ This repo is linked to the following papers in the
 | [PluRel: Synthetic Data unlocks Scaling Laws for Relational Foundation Models](https://arxiv.org/abs/2602.04029) | ICML 2026 | Synthetic data generation + paper experiments: [`stanford-star/plurel`](https://github.com/stanford-star/plurel). RT-PluRel recipes: this repo.|
 | [Relational Transformer: Toward Zero-Shot Foundation Models for Relational Data](https://arxiv.org/abs/2510.06377) | ICLR 2026 | Legacy architecture + paper experiments: this repo @ [`rt-v1`](https://github.com/stanford-star/relational-transformer/tree/rt-v1) |
 
+Models and datasets (including preprocessed versions) are available on
+[Hugging Face](https://huggingface.co/stanford-star).
+
 ## Installation
 
 ```bash
 pip install relational-transformer
 ```
 
-This installs the `rt` package: the model plus its native data engine
-(`rt.rustler`), shipped as prebuilt wheels for Linux (x86_64, aarch64) and
-macOS (Apple Silicon, Intel) on Python 3.10+. No Rust toolchain is needed.
-On any other platform `pip` falls back to the source distribution, which
-builds the engine with [Rust](https://rustup.rs).
+This installs the `rt` package, including the Rust sampler `rt.rustler`,
+_without_ any Rust dependency.
 
 ## Quickstart
 
@@ -37,19 +37,6 @@ The [notebook](examples/byod/colab.ipynb)
 runs a released RT-J checkpoint end to end on a bundled toy database: define
 tasks in SQL, preprocess, predict, score. Swap in your own database to go from
 there.
-
-## Released checkpoints
-
-| Checkpoint | Paper | Loader |
-|---|---|---|
-| [`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j) | RT-J | `RelationalTransformer.from_pretrained` |
-| [`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel) | PluRel | [`examples/eval/legacy.py`](examples/eval/legacy.py) |
-| [`stanford-star/rt-v1`](https://huggingface.co/stanford-star/rt-v1) | ICLR 2026 | [`examples/eval/legacy.py`](examples/eval/legacy.py) |
-
-The context is embedded with the vectors on disk in `pre_dir`, so a checkpoint
-evaluated under a different embedder scores garbage rather than failing;
-`rt.eval.main` asserts the `embedder` and `d_text` match the checkpoint.
-Architecture, recipe, protocol, licence and limitations are on each Hub card.
 
 ## Bring your own database
 
