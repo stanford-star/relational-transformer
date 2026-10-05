@@ -41,9 +41,8 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
 ```
 
 Those two paths are what `examples/train.py` passes (`pre_dir="data/the-join-preprocessed"`,
-`eval_pre_dir="data/relbench-preprocessed"`). The full preprocessed Join is
-~1.5 TiB, so on a cluster fetch it **once** to shared storage and point every
-run at that path.
+`eval_pre_dir="data/relbench-preprocessed"`). The preprocessed Join is large, so on
+a cluster fetch it **once** to shared storage and point every run at that path.
 
 The task mixture is given by `db_task_list` — `(db, task)` pairs as a
 JSON file. Names resolve against the tasks the db ships (recorded in its

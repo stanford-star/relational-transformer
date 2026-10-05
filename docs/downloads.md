@@ -7,7 +7,7 @@ fetched on demand (`load_rt_model("stanford-star/rt-j")`,
 `--model.load-ckpt-path stanford-star/rt-j`).
 
 ```bash
-# Preprocessed "the Join" -- pretraining data (~256 GiB)
+# Preprocessed "the Join" -- pretraining data
 pixi run hf download stanford-star/the-join-preprocessed --repo-type dataset \
   --local-dir data/the-join-preprocessed
 
