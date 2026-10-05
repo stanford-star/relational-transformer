@@ -34,7 +34,7 @@ The `global`/`entity` featurizers with the `mean`/`linear`/`ridge` predictors
 need no GPU (only the `rt` featurizer runs a model). `--out-dir` is a valid
 RelBench submission directory, scored and re-validatable exactly like RT's eval
 output. The context flags (`--ctx-size`, `--local-ctx-size`, `--bfs-width`, …)
-match `examples/eval.py` — see
+match `examples/eval/plan.py` — see
 [context engineering](../../../docs/inference.md#context-engineering).
 
 The other featurizers and predictors below are not exposed by `scripts/baseline.py`;

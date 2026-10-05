@@ -21,11 +21,11 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --local-dir data/relbench-preprocessed
 
 # the checkpoint still comes from the Hub, on demand
-pixi run python examples/eval.py
+pixi run python -m examples.eval.plan
 ```
 
-There is no CLI: [`examples/eval.py`](../examples/eval.py) calls `rt.eval.main`
-with every argument spelled out (`load_ckpt_path="stanford-star/rt-j"`,
+There is no CLI: [`examples/eval/plan.py`](../examples/eval/plan.py) calls
+`rt.eval.main` with every argument spelled out (`load_ckpt_path="stanford-star/rt-j"`,
 `pre_dir="data/relbench-preprocessed"`, ...). Copy it and edit the call.
 
 ## Inference with default context
@@ -44,7 +44,7 @@ Eval runs single-process on one GPU by default. For multi-GPU eval, launch it
 under torchrun:
 
 ```bash
-srun --ntasks-per-node=8 --gres=gpu:8 pixi run python examples/eval.py
+srun --ntasks-per-node=8 --gres=gpu:8 pixi run python -m examples.eval.plan
 ```
 
 Rows are sharded across ranks and gathered back on rank 0, which scores them
@@ -204,18 +204,20 @@ maturin develop --release --features vecdb
 
 The released checkpoints of the earlier papers use their original
 architectures, kept verbatim in `rt.model.legacy` (state-dict compatible with
-the published `.pt` files). [`examples/eval_legacy.py`](../examples/eval_legacy.py) reproduces the published
+the published `.pt` files). [`examples/eval/legacy.py`](../examples/eval/legacy.py) reproduces the published
 context configuration (ctx 1024, one BFS neighborhood around the seed,
 bfs_width 256, no random-walk tier) and writes RelBench leaderboard submission
 dirs:
 
 ```python
-from examples.eval_legacy import eval_plurel, eval_v1
+from examples.eval.legacy import plurel, v1
 
-eval_v1()                      # RT-v1 (ICLR 2026), task-wise checkpoints
-eval_plurel(mode="synth")      # RT-PluRel (ICML 2026), one synthetic-only checkpoint
-eval_plurel(mode="synth-real") # ... or the task-wise continued-pretraining ones
+v1(pre_dir=PRE_DIR, out_dir="eval_v1")                    # RT-v1 (ICLR 2026), task-wise checkpoints
+plurel(pre_dir=PRE_DIR, out_dir="eval_plurel", mode="synth")       # RT-PluRel (ICML 2026), one synthetic-only checkpoint
+plurel(pre_dir=PRE_DIR, out_dir="eval_plurel_sr", mode="synth-real")  # ... or the task-wise continued-pretraining ones
 ```
+
+`pixi run python -m examples.eval.legacy` runs all three.
 
 `synth` uses the best synthetic-only pretraining checkpoint (same for
 all tasks); `synth-real` uses the task-wise continued-pretraining
@@ -228,7 +230,7 @@ with the RT-v1-era boolean-typing
 rules (binary targets and a few db columns become a real Boolean semantic
 type instead of z-scored numbers) before the regular pipeline. The legacy
 nets read classification targets from their BCE-trained boolean head, so this
-is the data they need; `examples/eval_legacy.py` points at it. `eval_plurel`
+is the data they need; `examples/eval/legacy.py` points at it. `plurel`
 additionally uses the paper's bfs_width 128. Metrics reproduce the papers within noise except
 RT-v1 on rel-avito, which degrades for sampler-level reasons outside these
 configs.

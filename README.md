@@ -97,8 +97,8 @@ print("driver-dnf probability:", [round(p, 3) for p in preds.tolist()])
 | Checkpoint | Paper | Loader |
 |---|---|---|
 | [`stanford-star/rt-j`](https://huggingface.co/stanford-star/rt-j) | RT-J | `RelationalTransformer.from_pretrained` |
-| [`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel) | PluRel | [`examples/eval_legacy.py`](examples/eval_legacy.py) |
-| [`stanford-star/rt-v1`](https://huggingface.co/stanford-star/rt-v1) | ICLR 2026 | [`examples/eval_legacy.py`](examples/eval_legacy.py) |
+| [`stanford-star/rt-plurel`](https://huggingface.co/stanford-star/rt-plurel) | PluRel | [`examples/eval/legacy.py`](examples/eval/legacy.py) |
+| [`stanford-star/rt-v1`](https://huggingface.co/stanford-star/rt-v1) | ICLR 2026 | [`examples/eval/legacy.py`](examples/eval/legacy.py) |
 
 The context is embedded with the vectors on disk in `pre_dir`, so a checkpoint
 evaluated under a different embedder scores garbage rather than failing;
@@ -114,7 +114,7 @@ prediction task, and infer with a released checkpoint: the
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/byod/colab.ipynb))
 runs the whole flow end-to-end on your database, or on the bundled demo.
 
-For more than a first look, [`pipelines/`](pipelines/README.md) runs the full
+For more than a first look, [`examples/`](examples/README.md) runs the full
 recipes on your own data in RelBench format: in-context prediction with a
 frozen checkpoint, or per-task fine-tuning.
 
@@ -126,8 +126,8 @@ environment (Python, PyTorch + CUDA, Rust, and all dependencies), built on first
 ```bash
 git clone https://github.com/stanford-star/relational-transformer.git
 cd relational-transformer
-pixi run pytest                        # the test suite
-pixi run python examples/train.py      # or eval.py, preprocess.py, ...
+pixi run pytest                              # the test suite
+pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 ```
 
 ## Documentation
@@ -140,7 +140,7 @@ pixi run python examples/train.py      # or eval.py, preprocess.py, ...
 | [Pretrain](docs/train.md) | Train RT from scratch, single-GPU to multi-node |
 | [Baselines](src/rt/rel2tab/README.md) | rel2tab tabular baselines through the same eval path |
 | [Context visualization](docs/ctx_viz.md) | Inspect the contexts sampled for each row |
-| [Pipelines](pipelines/README.md) | Preprocess, pretrain, in-context and fine-tune, on RelBench or your own data |
+| [Examples](examples/README.md) | Preprocess, pretrain, evaluate, in-context and fine-tune, on RelBench or your own data |
 | [Reproducing the paper](reproduce/README.md) | What produces which figure, what it costs, and how to run it |
 | [Cards](docs/cards/README.md) | Model and dataset cards |
 

@@ -11,17 +11,19 @@ multithreaded (rayon).
 
 ## Preprocess one database in RelBench format
 
-There is no CLI. Copy [`examples/preprocess.py`](../examples/preprocess.py),
-edit the call, run it:
+There is no CLI. `rt.preprocess.one` takes every argument explicitly:
 
-```bash
-pixi run python examples/preprocess.py
+```python
+from rt.preprocess import one
+
+one(dataset="stanford-star/relbench-v1/rel-f1", out_dir="data/relbench-preprocessed",
+    embedder="all-MiniLM-L12-v2", batch_size=1024,
+    skip_tasks=False, embed=True,
+    upload_repo=None, public=False, revision=None)
 ```
 
-As written it calls `one(dataset="stanford-star/relbench-v1/rel-f1",
-out_dir="data/relbench-preprocessed", ...)` and writes
-`data/relbench-preprocessed/rel-f1/`, the rustler artifacts the RT dataloaders
-read.
+That writes `data/relbench-preprocessed/rel-f1/`, the rustler artifacts the RT
+dataloaders read.
 
 Any dataset in relbench format works by swapping the `dataset` argument — the
 manifest is the sole source of relational metadata; the parquet files carry only
@@ -32,7 +34,7 @@ repo>"` (preprocess and push in one step).
 ## Preprocess many databases efficiently
 
 To preprocess a whole Hub collection (e.g. the 639-database [the Join](https://huggingface.co/datasets/stanford-star/the-join)),
-call `many` instead of `one` — `preprocess_a_collection()` in the same example:
+call `many` instead of `one`:
 
 ```python
 ls(repo="stanford-star/the-join", revision=None)      # what is in the collection
@@ -47,10 +49,14 @@ the task id to `shard`).
 
 For a whole collection at the scale the released ones were built at — 639 raw
 databases for the Join, 2,000 for PluRel —
-[`pipelines/preprocess/`](../pipelines/preprocess) splits each database into its
+[`examples/preprocess/`](../examples/preprocess) splits each database into its
 two stages (`rustler` on a CPU, then `embed` on one GPU) and enumerates them as
 a resumable job list, which is how those collections were actually produced. It
-also records the measured cost and what a raw database has to look like.
+also records the measured cost and what a raw database has to look like:
+
+```bash
+pixi run python -m examples.preprocess.plan
+```
 
 ## Using preprocessed data
 

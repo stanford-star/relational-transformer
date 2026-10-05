@@ -6,7 +6,16 @@ All notable changes to the `relational-transformer` package.
 
 ### Added
 
-- **`pipelines/icl/`** — the in-context leaderboard pipeline: a per-task
+- **`examples/` is the recipes.** What was `pipelines/` is now `examples/`:
+  `preprocess`, `pretrain`, `eval`, `icl` and `finetune`, each a module run
+  with `python -m examples.<name>.<stage>` and a README with the expected
+  numbers. The old flat scripts went where they belonged: `train.py` and
+  `preprocess.py` were the single-run forms of `pretrain` and `preprocess`;
+  `eval.py` and `eval_legacy.py` became `examples/eval/` (`plan.py`,
+  `legacy.py`); `mlock.py` is `examples/pretrain/mlock.py`; `smoke.py` lives
+  in the test that was its only caller; `ddp_check.py` is
+  `scripts/ddp_check.py`.
+- **`examples/icl/`** — the in-context leaderboard pipeline: a per-task
   context search over the 120-point grid on validation, then the top-4
   configurations x 4 context seeds on the full official test split, averaged
   per row and packaged with `relbench.submit`. It is a thin entry point over

@@ -2,7 +2,7 @@
 """Run rel2tab tabular baselines on the RelBench benchmark tasks.
 
 A baseline is a (featurizer, predictor) pair evaluated through the same data path
-as ``examples/eval.py``: each task's in-context training labels (optionally
+as ``examples/eval/plan.py``: each task's in-context training labels (optionally
 featurized) are fed to a tabular predictor. Prints per-task + mean metrics and
 writes per-item prediction CSVs.
 

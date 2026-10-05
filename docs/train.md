@@ -40,7 +40,8 @@ pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \
   --local-dir data/relbench-preprocessed
 ```
 
-Those two paths are what `examples/train.py` passes (`pre_dir="data/the-join-preprocessed"`,
+Those two paths are what [`examples/pretrain/phases.py`](../examples/pretrain/phases.py)
+passes for phase 2 (`pre_dir="data/the-join-preprocessed"`,
 `eval_pre_dir="data/relbench-preprocessed"`). The preprocessed Join is large, so on
 a cluster fetch it **once** to shared storage and point every run at that path.
 
@@ -120,19 +121,19 @@ could otherwise hand the win to the weights the run began with.
 
 There is no CLI. `rt.train._train` is a function that takes every knob as a
 required argument; a run is a script that calls it. Copy
-[`examples/train.py`](../examples/train.py) and edit what you want.
+[`examples/pretrain/phases.py`](../examples/pretrain/phases.py) and edit what you want.
 `pixi install` builds the rustler sampler as part of the environment; nothing
 else to build.
 
-`examples/train.py` is **one** run: RT-J's second phase, on the Join, warm
+`phase_two` there is **one** run: RT-J's second phase, on the Join, warm
 started from the released phase-1 checkpoint
 (`load_ckpt_path="stanford-star/rt-plurel"`). RT-J is two phases — PluRel first,
-then the Join from those weights — so reproducing it is both, in order, and that
-recipe is [`pipelines/pretrain/`](../pipelines/pretrain), which also records
-which step of which phase each released checkpoint is and how it was selected.
+then the Join from those weights — so reproducing it is both, in order; the
+[`examples/pretrain/`](../examples/pretrain) README records which step of which
+phase each released checkpoint is and how it was selected.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 pixi run python examples/train.py    # one GPU
+CUDA_VISIBLE_DEVICES=0 pixi run python -m examples.pretrain.phases    # one GPU
 ```
 
 ## Multi-GPU single-node training
@@ -141,13 +142,13 @@ One process per GPU, each told who it is; the model is replicated per rank (full
 model + optimizer on every rank, no sharding). Under slurm that is one line:
 
 ```bash
-srun --ntasks-per-node=8 --gres=gpu:8 pixi run python examples/train.py
+srun --ntasks-per-node=8 --gres=gpu:8 pixi run python -m examples.pretrain.phases
 ```
 
 All RT needs is `RANK`/`LOCAL_RANK`/`WORLD_SIZE` in each task's environment, so
 export them from slurm's `SLURM_PROCID`/`SLURM_LOCALID`/`SLURM_NTASKS` — and
 because each rank is a slurm task, a preemption signal reaches all of them.
-Outside slurm, `torchrun --standalone --nproc-per-node=auto examples/train.py`
+Outside slurm, `torchrun --standalone --nproc-per-node=auto -m examples.pretrain.phases`
 works the same way.
 
 Give the process as much of the node's RAM as you can: by default each run
@@ -174,8 +175,12 @@ launcher that gives each process `RANK`, `LOCAL_RANK` and `WORLD_SIZE`, with one
 process per GPU: `torchrun` on a single node, and under slurm one task per GPU,
 
 ```bash
-srun --ntasks-per-node=8 --gres=gpu:8 pixi run python examples/train.py
+srun --ntasks-per-node=8 --gres=gpu:8 pixi run python -m examples.pretrain.phases
 ```
+
+[`scripts/ddp_check.py`](../scripts/ddp_check.py) is a model-free sanity check
+of that plumbing: every rank reports who it is, all-reduces, and shows that a
+preemption signal reaches it.
 
 with the task's `SLURM_PROCID`/`SLURM_LOCALID`/`SLURM_NTASKS` exported as the
 torch names. Because each rank is a slurm task, a preemption signal reaches all
@@ -192,8 +197,10 @@ one rank per GPU.
 ```python
 from roach.slurm import Resources, submit
 
-submit("examples.train:train",
-       args={"pre_dir": ..., "eval_pre_dir": ..., "out_root": ...},
+from examples.pretrain.phases import phase_two
+
+submit("rt.train:main",
+       args=phase_two(load_ckpt_path="stanford-star/rt-plurel", pre_dir=..., ...).args,
        resources=Resources(...),
        cluster=...,
        name="rt-j",
@@ -211,16 +218,15 @@ every `resume_save_mins` minutes (20 in the examples) bounds lost progress.
 By default each run re-populates the preprocessed data into RAM at startup. When
 iterating on training code, that reload is wasted work on every restart. Lock the
 data into the page cache **once** with a long-lived holder
-([`examples/mlock.py`](../examples/mlock.py)), then train with
+([`examples/pretrain/mlock.py`](../examples/pretrain/mlock.py)), then train with
 `mmap_populate=False` so reads hit the
 locked cache:
 
 ```bash
 # terminal 1: hold the data resident (Ctrl-C to release)
-pixi run python examples/mlock.py
-# terminal 2 (same node): train without re-populating
+pixi run python -m examples.pretrain.mlock
 # terminal 2 (same node): train with mmap_populate=False in your script
-pixi run python examples/train.py
+pixi run python -m examples.pretrain.phases
 ```
 
 This is purely a convenience for repeated local runs; it is **not required**.
