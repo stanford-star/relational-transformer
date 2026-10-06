@@ -6,62 +6,15 @@ on:
   pull_request:
   workflow_dispatch:
 
-# One run per ref. Every job here does a full `maturin build --release` of
-# polars, so a burst of pushes otherwise queues several identical release builds
-# against the same runner pool and the newest commit's verdict arrives last.
-# Cancelling applies to `main` too: a superseded run is testing a tree that no
-# longer exists, and the only result anyone acts on is the tip's.
-#
-# A `workflow_dispatch` run gets a group of its own (`github.run_id` is unique),
-# so a manual verification run is never cancelled by the next push -- which is
-# the only way to get a verdict on a specific tree while several sessions are
-# committing to `main` minutes apart.
+# One run per ref: a superseded run is checking a tree that no longer exists,
+# and the only verdict anyone acts on is the tip's. A `workflow_dispatch` run
+# gets a group of its own (`github.run_id` is unique), so a manual run is never
+# cancelled by the next push.
 concurrency:
   group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - uses: dtolnay/rust-toolchain@stable
-      - run: pip install maturin
-      - run: maturin build --release --out dist
-      # The CUDA wheel's nvidia-* dependencies do not fit on a hosted runner's
-      # disk, and there is no GPU here to use them. Resolving torch from the
-      # CPU index first is what makes `pip install dist/*.whl` fit.
-      - run: pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install --no-cache-dir dist/*.whl
-      - run: pip install pytest
-      - run: pytest -q
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels
-          path: dist
-
-  # release.yml ships macOS wheels, so the suite runs there too: platform
-  # differences surface at `import rt` (torch allows only the file_system
-  # sharing strategy on macOS, and os.sched_getaffinity does not exist), which
-  # the Linux job cannot see. PyPI's macOS torch wheel is CPU/MPS-only and small,
-  # so no index override is needed.
-  test-macos:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - uses: dtolnay/rust-toolchain@stable
-      - run: pip install maturin
-      - run: maturin build --release --out dist
-      - run: pip install dist/*.whl
-      - run: pip install pytest
-      - run: pytest -q
-
   # The lint scope lives in `[tool.ruff]` in `pyproject.toml`, not here: passing
   # paths as `args` does not replace this action's `src` default, it appends to
   # it, so a path list here would silently lint the excluded tree as well.

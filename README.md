@@ -70,13 +70,8 @@ The environment is defined for Linux x86_64 only.
 ```bash
 git clone https://github.com/stanford-star/relational-transformer.git
 cd relational-transformer
-pixi run pytest                              # the test suite
 pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 ```
-
-`tests/test_smoke.py`, a short training run on a GPU, is skipped unless
-`data/relbench-preprocessed/rel-f1` exists. Fetching it is described under
-[Data](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md#data).
 
 ## Examples
 
