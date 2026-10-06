@@ -83,4 +83,4 @@ extend-exclude = ["expts", "local", "rustler/target"]
 force-exclude = true
 
 [tool.ruff.format]
-exclude = ["*.md"]
+exclude = ["*.md", "*.ipynb"]
