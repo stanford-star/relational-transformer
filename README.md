@@ -6,16 +6,16 @@
 [![Python](https://img.shields.io/pypi/pyversions/relational-transformer?logo=python&logoColor=white)](https://pypi.org/project/relational-transformer/)
 [![Quickstart in Colab](https://img.shields.io/badge/Colab-Quickstart-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb)
 [![BYOD in Colab](https://img.shields.io/badge/Colab-BYOD-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/stanford-star/relational-transformer/blob/main/LICENSE)
 
 This repo is the official implementation
 of the **Relational Transformer (RT)** architecture
-and the recipes to pretrain, fine-tune, inference and test-time scale
+and the recipes to pretrain, fine-tune, run inference with and test-time scale
 **Relational Foundation Models (RFMs)** based on RT.
 
 The following results are fully reproducible from here:  
-🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission ([repro](examples/icl/)).  
-🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission ([repro](examples/finetune/)).
+🥇 **RT-J** is the #1 in-context model on the [RelBench leaderboard](https://star-project.stanford.edu/relbench/leaderboard) at the time of submission ([repro](https://github.com/stanford-star/relational-transformer/tree/main/examples/icl)).  
+🥇 **RT-PluRel** is #1 on the combined system + model leaderboard on [RelArena-alpha](https://star-project.stanford.edu/relarena-alpha) at the time of submission ([repro](https://github.com/stanford-star/relational-transformer/tree/main/examples/finetune)).
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
@@ -40,25 +40,32 @@ _without any dependency on Rust_.
 
 ## Quickstart
 
-The [Quickstart notebook](notebooks/quickstart.ipynb)
+The [Quickstart notebook](https://github.com/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb)
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb))
 evaluates the released RT-J checkpoint on a RelBench task, `rel-f1/driver-dnf`,
 with no training: download one preprocessed database, predict every test row
-from its sampled context, score the AUROC. A few minutes on a GPU runtime.
+from its sampled context, score the AUROC (0.826 on an A100). A few minutes on
+an A100 or L4 runtime.
 
 ## Bring your own database (BYOD)
 
-The [BYOD notebook](notebooks/byod.ipynb)
+The [BYOD notebook](https://github.com/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb)
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb))
 preprocesses your database and predicts tasks you define in SQL with a released
-checkpoint. For more than a first look, [`examples/`](examples/README.md) runs
+checkpoint. For more than a first look, [`examples/`](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md) runs
 the full recipes on your own data in RelBench format: in-context prediction
-with a frozen checkpoint, or per-task fine-tuning.
+with a frozen checkpoint, or per-task fine-tuning. That format is a directory of
+Parquet tables with a `manifest.yaml` naming each table's primary key, foreign
+keys and time column, plus one directory of labelled splits per task. The BYOD
+notebook writes one, and
+[`examples/preprocess`](https://github.com/stanford-star/relational-transformer/tree/main/examples/preprocess#run-it-on-your-own-data)
+shows the layout.
 
 ## Development
 
 We use [pixi](https://pixi.sh) to manage one self-contained
 environment (Python, PyTorch + CUDA, Rust, and all dependencies), built on first use.
+The environment is defined for Linux x86_64 only.
 
 ```bash
 git clone https://github.com/stanford-star/relational-transformer.git
@@ -67,18 +74,22 @@ pixi run pytest                              # the test suite
 pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 ```
 
+`tests/test_smoke.py`, a short training run on a GPU, is skipped unless
+`data/relbench-preprocessed/rel-f1` exists. Fetching it is described under
+[Data](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md#data).
+
 ## Examples
 
-[`examples/`](examples/README.md) holds the recipes behind the released
+[`examples/`](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md) holds the recipes behind the released
 checkpoints and leaderboard entries, with the notes on how each part works.
 
 | | what |
 |---|---|
-| [`preprocess/`](examples/preprocess/) | RelBench-format databases -> RT's tensor format |
-| [`pretrain/`](examples/pretrain/) | RT-PluRel pretraining on PluRel, then RT-J continued pretraining on the Join |
-| [`eval/`](examples/eval/) | evaluate a checkpoint on every RelBench task; context knobs, tuning, ensembling |
-| [`icl/`](examples/icl/) | leaderboard entries: RT-J and RT-PluRel in-context |
-| [`finetune/`](examples/finetune/) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned |
+| [`preprocess/`](https://github.com/stanford-star/relational-transformer/tree/main/examples/preprocess) | RelBench-format databases -> RT's tensor format |
+| [`pretrain/`](https://github.com/stanford-star/relational-transformer/tree/main/examples/pretrain) | RT-PluRel pretraining on PluRel, then RT-J continued pretraining on the Join |
+| [`eval/`](https://github.com/stanford-star/relational-transformer/tree/main/examples/eval) | evaluate a checkpoint on every RelBench task; context knobs, tuning, ensembling |
+| [`icl/`](https://github.com/stanford-star/relational-transformer/tree/main/examples/icl) | leaderboard entries: RT-J and RT-PluRel in-context |
+| [`finetune/`](https://github.com/stanford-star/relational-transformer/tree/main/examples/finetune) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned |
 
 ## Citation
 
@@ -113,6 +124,6 @@ Additionally, if you use **RT-PluRel** please also cite:
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The released checkpoints and datasets carry their
+MIT, see [LICENSE](https://github.com/stanford-star/relational-transformer/blob/main/LICENSE). The released checkpoints and datasets carry their
 own licences; "the Join" is assembled from third-party databases that keep
 theirs.
