@@ -20,7 +20,10 @@ _DYNAMO_CACHE_SIZE_LIMIT = 16
 
 
 def _omp_threads(num_workers: int) -> int:
-    cpus = len(os.sched_getaffinity(0))
+    if hasattr(os, "sched_getaffinity"):
+        cpus = len(os.sched_getaffinity(0))
+    else:
+        cpus = os.cpu_count() or 1
     return max(1, cpus // max(1, num_workers))
 
 

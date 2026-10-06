@@ -7,6 +7,10 @@ import pytest
 torch = pytest.importorskip("torch")
 
 
+@pytest.mark.skipif(
+    "file_descriptor" not in torch.multiprocessing.get_all_sharing_strategies(),
+    reason="file_system is the only sharing strategy on macOS and Windows",
+)
 def test__sharing_strategy__is_leak_proof() -> None:
     import rt.data.resolve  # noqa: F401  -- sets it at import
 
