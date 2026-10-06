@@ -1,4 +1,6 @@
 import json
+import threading
+import time
 
 import ml_dtypes
 import numpy as np
@@ -192,4 +194,78 @@ def test_prefer_latest_biases_the_fallback_tier_toward_recent_rows(
     assert sum(late) / len(late) <= sum(uniform) / len(uniform), (
         f"prefer_latest=True mean gap {sum(late) / len(late):.1f} is not closer to "
         f"the target than False's {sum(uniform) / len(uniform):.1f}"
+    )
+
+
+def test_batch_for_nodes_releases_the_gil(
+    synthetic_dataset_with_external_task, tmp_path
+):
+    out = tmp_path / "out"
+    preprocess(str(synthetic_dataset_with_external_task), str(out))
+    (produced,) = [d for d in out.iterdir() if d.is_dir()]
+    pre_dir, db_name, d_text, embedder = str(out), produced.name, 8, "test-embed"
+    n_text = len(json.loads((produced / "text.json").read_text()))
+    (produced / f"text_emb_{embedder}.bin").write_bytes(
+        np.zeros((n_text, d_text), dtype=ml_dtypes.bfloat16).tobytes()
+    )
+    (task,) = get_tasks(pre_dir, [[db_name, "spend"]], ["train"])
+    info = json.loads((produced / "table_info.json").read_text())
+    span = info[f"{task.table_name}:Train"]
+    target_idx = get_column_index(task.target_column, task.table_name, db_name, pre_dir)
+    sampler = Sampler(
+        [(db_name, task.table_name, span["node_idx_offset"], span["num_nodes"])],
+        0,
+        0,
+        1,
+        [64],
+        [8],
+        0,
+        10,
+        [False],
+        0.0,
+        embedder,
+        pre_dir,
+        d_text,
+        0,
+        0,
+        [target_idx],
+        [[]],
+        [None],
+        -1,
+        True,
+        False,
+        0,
+        True,
+        False,
+        10.0,
+        None,
+    )
+
+    def rows(n):
+        return [span["node_idx_offset"] + i % span["num_nodes"] for i in range(n)]
+
+    tic = time.perf_counter()
+    sampler.batch_for_nodes_py(rows(256), 0, 64)
+    per_row = (time.perf_counter() - tic) / 256
+    n = int(min(max(0.5 / per_row, 256), 100_000))
+
+    started = threading.Event()
+    call = {}
+
+    def sample():
+        started.set()
+        tic = time.perf_counter()
+        call["out"] = sampler.batch_for_nodes_py(rows(n), 0, 64)
+        call["secs"] = time.perf_counter() - tic
+
+    tic = time.perf_counter()
+    thread = threading.Thread(target=sample)
+    thread.start()
+    started.wait()
+    time.sleep(0.05)
+    main_secs = time.perf_counter() - tic
+    thread.join()
+    assert main_secs < call["secs"] / 2, (
+        f"the main thread was held for {main_secs:.3f}s of a {call['secs']:.3f}s "
+        f"batch_for_nodes_py call: the sampler holds the GIL while it samples"
     )
