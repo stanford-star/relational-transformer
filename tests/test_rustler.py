@@ -219,8 +219,8 @@ def test_batch_for_nodes_releases_the_gil(
         1,
         [64],
         [8],
-        0,
-        10,
+        10_000,
+        20,
         [False],
         0.0,
         embedder,
@@ -245,27 +245,27 @@ def test_batch_for_nodes_releases_the_gil(
         return [span["node_idx_offset"] + i % span["num_nodes"] for i in range(n)]
 
     tic = time.perf_counter()
-    sampler.batch_for_nodes_py(rows(256), 0, 64)
-    per_row = (time.perf_counter() - tic) / 256
-    n = int(min(max(0.5 / per_row, 256), 100_000))
+    sampler.batch_for_nodes_py(rows(512), 0, 64)
+    per_row = (time.perf_counter() - tic) / 512
+    n = int(min(max(1.5 / per_row, 512), 20_000))
 
-    started = threading.Event()
     call = {}
 
     def sample():
-        started.set()
-        tic = time.perf_counter()
+        call["enter"] = time.perf_counter()
         call["out"] = sampler.batch_for_nodes_py(rows(n), 0, 64)
-        call["secs"] = time.perf_counter() - tic
+        call["exit"] = time.perf_counter()
 
-    tic = time.perf_counter()
     thread = threading.Thread(target=sample)
     thread.start()
-    started.wait()
-    time.sleep(0.05)
-    main_secs = time.perf_counter() - tic
+    wakes = []
+    while thread.is_alive():
+        time.sleep(0.01)
+        wakes.append(time.perf_counter())
     thread.join()
-    assert main_secs < call["secs"] / 2, (
-        f"the main thread was held for {main_secs:.3f}s of a {call['secs']:.3f}s "
-        f"batch_for_nodes_py call: the sampler holds the GIL while it samples"
+    inside = sum(call["enter"] < w < call["exit"] for w in wakes)
+    assert inside >= 5, (
+        f"the main thread woke {inside} times inside a "
+        f"{call['exit'] - call['enter']:.3f}s batch_for_nodes_py call: the sampler "
+        f"holds the GIL while it samples"
     )
