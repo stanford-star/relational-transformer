@@ -165,11 +165,110 @@ fn read_timestamp(df: &DataFrame, tcol_name: &str, r: usize) -> Option<i32> {
         .map(|v| (v / 1_000_000_000).clamp(i32::MIN as i64, i32::MAX as i64) as i32)
 }
 
-fn fk_parent_idxs(v: &AnyValue) -> Vec<i64> {
+fn anyvalue_to_key_string(v: &AnyValue) -> Option<String> {
     match v {
-        AnyValue::Null => Vec::new(),
-        AnyValue::List(series) => series.iter().filter_map(|x| anyvalue_to_i64(&x)).collect(),
-        scalar => anyvalue_to_i64(scalar).into_iter().collect(),
+        AnyValue::String(s) => Some(s.to_string()),
+        AnyValue::StringOwned(s) => Some(s.to_string()),
+        _ => anyvalue_to_i64(v).map(|i| i.to_string()),
+    }
+}
+
+/// Maps a foreign-key value to the row of the parent table it references.
+/// `Positional` (no pkey declared, or a pkey that is exactly 0..n-1 in row order,
+/// as in every RelBench database) reads the value as the row itself.
+enum KeyIndex {
+    Positional(i64),
+    Int(HashMap<i64, i64>),
+    Str(HashMap<String, i64>),
+}
+
+impl KeyIndex {
+    fn new(table: &Table) -> Self {
+        let num_rows = table.df.height() as i64;
+        let Some(pcol_name) = table.pcol_name.as_deref() else {
+            return Self::Positional(num_rows);
+        };
+        let col = table
+            .df
+            .column(pcol_name)
+            .unwrap_or_else(|_| {
+                panic!(
+                    "primary key {:?} is not a column of table {}",
+                    pcol_name, table.table_name
+                )
+            })
+            .as_materialized_series()
+            .rechunk();
+        if col.null_count() == 0
+            && col
+                .iter()
+                .enumerate()
+                .all(|(r, v)| anyvalue_to_i64(&v) == Some(r as i64))
+        {
+            return Self::Positional(num_rows);
+        }
+
+        let strings = matches!(col.dtype(), DataType::String);
+        let mut int_rows = HashMap::new();
+        let mut str_rows = HashMap::new();
+        for (r, v) in col.iter().enumerate() {
+            let fresh = if strings {
+                match anyvalue_to_key_string(&v) {
+                    Some(k) => str_rows.insert(k, r as i64).is_none(),
+                    None => continue,
+                }
+            } else {
+                match anyvalue_to_i64(&v) {
+                    Some(k) => int_rows.insert(k, r as i64).is_none(),
+                    None => continue,
+                }
+            };
+            assert!(
+                fresh,
+                "primary key {} of table {} has duplicate value {}",
+                pcol_name, table.table_name, v
+            );
+        }
+        println!(
+            "  {}: foreign keys resolve through primary key {} ({} values, not row positions)",
+            table.table_name,
+            pcol_name,
+            if strings { "string" } else { "integer" }
+        );
+        if strings {
+            Self::Str(str_rows)
+        } else {
+            Self::Int(int_rows)
+        }
+    }
+
+    fn row(&self, v: &AnyValue) -> Option<i64> {
+        match self {
+            Self::Positional(num_rows) => anyvalue_to_i64(v).filter(|r| (0..*num_rows).contains(r)),
+            Self::Int(rows) => anyvalue_to_i64(v)
+                .or_else(|| anyvalue_to_key_string(v).and_then(|s| s.parse().ok()))
+                .and_then(|k| rows.get(&k).copied()),
+            Self::Str(rows) => anyvalue_to_key_string(v).and_then(|k| rows.get(&k).copied()),
+        }
+    }
+
+    /// The parent rows a (possibly list-valued) foreign-key cell references, and
+    /// how many of its non-null values reference no row.
+    fn rows(&self, v: &AnyValue) -> (Vec<i64>, usize) {
+        let keys: Vec<AnyValue> = match v {
+            AnyValue::Null => return (Vec::new(), 0),
+            AnyValue::List(series) => series.iter().filter(|x| !x.is_null()).collect(),
+            scalar => vec![scalar.clone()],
+        };
+        let mut rows = Vec::with_capacity(keys.len());
+        let mut missing = 0;
+        for k in &keys {
+            match self.row(k) {
+                Some(r) => rows.push(r),
+                None => missing += 1,
+            }
+        }
+        (rows, missing)
     }
 }
 
@@ -643,6 +742,18 @@ pub fn main(cli: Cli) {
     }
     println!("done in {:?}.", tic.elapsed());
 
+    let mut key_indices: HashMap<String, KeyIndex> = HashMap::new();
+    for table in table_map.values() {
+        for ptable_name in table.fcol_name_to_ptable_name.values() {
+            if let Some(ptable) = table_map.get(&(ptable_name.clone(), TableType::Db)) {
+                key_indices
+                    .entry(ptable_name.clone())
+                    .or_insert_with(|| KeyIndex::new(ptable));
+            }
+        }
+    }
+    let mut fk_warnings: Vec<String> = Vec::new();
+
     println!("making node vector...");
     let tic = Instant::now();
     let pbar = ProgressBar::new(num_cells_sum as u64).with_style(
@@ -726,9 +837,18 @@ pub fn main(cli: Cli) {
                         panic!()
                     })
                     .node_idx_offset;
+                let key_index = &key_indices[ptable_name];
+                let mut num_missing = 0;
+                let mut missing_examples: Vec<String> = Vec::new();
                 for (r, val) in col.iter().enumerate() {
                     pbar.inc(1);
-                    let parent_idxs = fk_parent_idxs(&val);
+                    let (parent_idxs, missing) = key_index.rows(&val);
+                    if missing > 0 {
+                        num_missing += missing;
+                        if missing_examples.len() < 3 {
+                            missing_examples.push(val.to_string());
+                        }
+                    }
                     if parent_idxs.is_empty() {
                         continue;
                     }
@@ -777,6 +897,18 @@ pub fn main(cli: Cli) {
                         };
                         p2f_adj.adj[pnode_idx as usize].push(p2f_edge);
                     }
+                }
+                if num_missing > 0 {
+                    fk_warnings.push(format!(
+                        "{} value(s) of {} in {} ({:?}) reference no row of {} (e.g. {}); \
+                         those references are dropped",
+                        num_missing,
+                        col.name(),
+                        table.table_name,
+                        table_type,
+                        ptable_name,
+                        missing_examples.join(", ")
+                    ));
                 }
 
                 continue;
@@ -879,6 +1011,9 @@ pub fn main(cli: Cli) {
     }
     pbar.finish();
     println!("done in {:?}.", tic.elapsed());
+    for warning in &fk_warnings {
+        eprintln!("warning: {}", warning);
+    }
 
     let pre_path = format!("{}/{}", cli.out_dir, name);
     fs::create_dir_all(Path::new(&pre_path)).unwrap();
