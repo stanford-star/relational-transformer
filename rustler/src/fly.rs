@@ -447,17 +447,19 @@ impl Sampler {
         let table_name = &self.dataset_tuples[dataset_idx].1;
         let mut vecs = Vecs::new(bs, ctx_size, self.d_text);
 
-        vecs.chunks_exact_mut(ctx_size, self.d_text)
-            .enumerate()
-            .par_bridge()
-            .for_each(|(i, slices)| {
-                let item = Item {
-                    dataset_idx: dataset_idx as i32,
-                    node_idx: node_idxs[i],
-                    table_name: table_name.clone(),
-                };
-                self.seq(&item, i, slices, 0, ctx_size);
-            });
+        py.allow_threads(|| {
+            vecs.chunks_exact_mut(ctx_size, self.d_text)
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, slices)| {
+                    let item = Item {
+                        dataset_idx: dataset_idx as i32,
+                        node_idx: node_idxs[i],
+                        table_name: table_name.clone(),
+                    };
+                    self.seq(&item, i, slices, 0, ctx_size);
+                });
+        });
 
         vecs.into_pyobject(py)
     }
