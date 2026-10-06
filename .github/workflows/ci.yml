@@ -43,6 +43,25 @@ jobs:
           name: wheels
           path: dist
 
+  # release.yml ships macOS wheels, so the suite runs there too: platform
+  # differences surface at `import rt` (torch allows only the file_system
+  # sharing strategy on macOS, and os.sched_getaffinity does not exist), which
+  # the Linux job cannot see. PyPI's macOS torch wheel is CPU/MPS-only and small,
+  # so no index override is needed.
+  test-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pip install maturin
+      - run: maturin build --release --out dist
+      - run: pip install dist/*.whl
+      - run: pip install pytest
+      - run: pytest -q
+
   # The lint scope lives in `[tool.ruff]` in `pyproject.toml`, not here: passing
   # paths as `args` does not replace this action's `src` default, it appends to
   # it, so a path list here would silently lint the excluded tree as well.

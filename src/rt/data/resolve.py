@@ -67,7 +67,8 @@ try:
     _mp.set_start_method("fork")
 except RuntimeError:
     pass
-torch.multiprocessing.set_sharing_strategy("file_descriptor")
+if "file_descriptor" in torch.multiprocessing.get_all_sharing_strategies():
+    torch.multiprocessing.set_sharing_strategy("file_descriptor")
 _soft, _hard = _resource.getrlimit(_resource.RLIMIT_NOFILE)
 if _soft < _hard:
     _resource.setrlimit(_resource.RLIMIT_NOFILE, (_hard, _hard))
