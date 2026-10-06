@@ -245,9 +245,9 @@ def test_batch_for_nodes_releases_the_gil(
         return [span["node_idx_offset"] + i % span["num_nodes"] for i in range(n)]
 
     tic = time.perf_counter()
-    sampler.batch_for_nodes_py(rows(256), 0, 64)
-    per_row = (time.perf_counter() - tic) / 256
-    n = int(min(max(0.5 / per_row, 256), 100_000))
+    sampler.batch_for_nodes_py(rows(2048), 0, 64)
+    per_row = (time.perf_counter() - tic) / 2048
+    n = int(min(max(1.0 / per_row, 2048), 60_000))
 
     started = threading.Event()
     call = {}
@@ -258,14 +258,15 @@ def test_batch_for_nodes_releases_the_gil(
         call["out"] = sampler.batch_for_nodes_py(rows(n), 0, 64)
         call["secs"] = time.perf_counter() - tic
 
-    tic = time.perf_counter()
     thread = threading.Thread(target=sample)
     thread.start()
     started.wait()
-    time.sleep(0.05)
-    main_secs = time.perf_counter() - tic
+    naps = 0
+    while thread.is_alive():
+        time.sleep(0.01)
+        naps += 1
     thread.join()
-    assert main_secs < call["secs"] / 2, (
-        f"the main thread was held for {main_secs:.3f}s of a {call['secs']:.3f}s "
+    assert naps * 0.01 >= call["secs"] / 4, (
+        f"the main thread woke {naps} times during a {call['secs']:.3f}s "
         f"batch_for_nodes_py call: the sampler holds the GIL while it samples"
     )
