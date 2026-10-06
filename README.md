@@ -38,13 +38,10 @@ pip install relational-transformer
 This installs the `rt` package, including the Rust sampler `rt.rustler`,
 _without any dependency on Rust_.
 
-Python 3.10 or newer. Prebuilt wheels cover Linux (x86_64 and aarch64, glibc
-2.28+) and macOS (Apple silicon and Intel); anywhere else pip builds from
-source, which needs a Rust toolchain. Running the model wants a GPU: RT's
-attention is compiled in bf16, which NVIDIA GPUs support from Ampere on (A100,
-L4, A10, H100, RTX 30/40 series). Older ones, including Colab's free T4, fall
-back to a dense path that needs far more memory and time. Apple silicon runs
-it through MPS, much more slowly.
+Requires Python 3.10+. Wheels are prebuilt for Linux (x86_64, aarch64) and
+macOS; elsewhere pip builds from source, which needs Rust. Running the model
+needs an NVIDIA GPU from the Ampere generation or newer (e.g. A100, L4, H100);
+older GPUs such as Colab's free T4 are not supported.
 
 ## Quickstart
 
