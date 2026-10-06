@@ -56,7 +56,7 @@ checkpoint. For more than a first look, [`examples/`](https://github.com/stanfor
 the full recipes on your own data in RelBench format: in-context prediction
 with a frozen checkpoint, or per-task fine-tuning. That format is a directory of
 Parquet tables with a `manifest.yaml` naming each table's primary key, foreign
-keys and time column, plus one directory of labelled splits per task; the BYOD
+keys and time column, plus one directory of labelled splits per task. The BYOD
 notebook writes one, and
 [`examples/preprocess`](https://github.com/stanford-star/relational-transformer/tree/main/examples/preprocess#run-it-on-your-own-data)
 shows the layout.
@@ -75,7 +75,7 @@ pixi run python -m examples.eval.plan        # or examples.pretrain.phases, ...
 ```
 
 `tests/test_smoke.py`, a short training run on a GPU, is skipped unless
-`data/relbench-preprocessed/rel-f1` exists; fetching it is described under
+`data/relbench-preprocessed/rel-f1` exists. Fetching it is described under
 [Data](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md#data).
 
 ## Examples
