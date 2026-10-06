@@ -487,6 +487,22 @@ pub fn main(cli: Cli) {
             table_type,
             df.shape()
         );
+        if let Some(tcol) = tcol_name.as_deref() {
+            match df.column(tcol).map(|c| c.dtype()) {
+                Ok(DataType::Datetime(_, _)) => {}
+                Ok(dtype) => eprintln!(
+                    "warning: time column {} of {} ({:?}) has dtype {}, not a date or \
+                     datetime, so its rows get no timestamp and are visible from every \
+                     seed time; cast it to a timestamp before preprocessing",
+                    tcol, table_name, table_type, dtype
+                ),
+                Err(_) => eprintln!(
+                    "warning: time column {} is not a column of {} ({:?}), so its rows \
+                     get no timestamp",
+                    tcol, table_name, table_type
+                ),
+            }
+        }
         let table_key = (table_name.clone(), table_type.clone());
 
         let num_rows = df.height() as i64;
