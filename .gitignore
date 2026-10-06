@@ -33,7 +33,10 @@ scratch_logs/
 # mini-shop.duckdb it produces is what the notebook uses.
 notebooks/make_duckdb.py
 
-# inference example: everything it writes (labels, dataset, preprocessed tensors)
+# byod notebook: what it writes when run from a clone (exported dataset,
+# preprocessed tensors)
+notebooks/mini-shop/
+notebooks/pre/
 
 # local-only build/publish helpers + staged dist artifacts (not committed)
 local/
