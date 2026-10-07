@@ -10,7 +10,6 @@ from rt.eval import main as evaluate
 from rt.train import main as train
 from rt.utils import log
 
-
 CTX_SIZES = [128, 256, 512, 1024]
 
 
