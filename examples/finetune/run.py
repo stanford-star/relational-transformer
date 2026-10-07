@@ -11,6 +11,9 @@ from rt.train import main as train
 from rt.utils import log
 
 
+CTX_SIZES = [128, 256, 512, 1024]
+
+
 def lcs_bw_pl_grid() -> list[tuple[int, int, bool]]:
     return [
         (lcs, bw, pl)
@@ -18,6 +21,10 @@ def lcs_bw_pl_grid() -> list[tuple[int, int, bool]]:
         for bw in (16, 64, 256)
         for pl in (True, False)
     ]
+
+
+def tune_configs() -> int:
+    return sum(1 for lcs, _, _ in lcs_bw_pl_grid() for c in CTX_SIZES if lcs <= c)
 
 
 def stage_dir(out_root: str, project: str, stage_id: str) -> Path:
@@ -274,7 +281,7 @@ def main(
     tune_id, tune_dir = stage("tune")
     tuning = tune_dir / "tuning.json"
     if not tuning.exists():
-        log(stage=tune_id, configs=len(lcs_bw_pl_grid()) * 4, rows=tune_rows)
+        log(stage=tune_id, configs=tune_configs(), rows=tune_rows)
         evaluate(
             **eval_args(
                 load_ckpt_path=str(checkpoint),
@@ -285,7 +292,7 @@ def main(
                 splits=["val"],
                 val_items=tune_rows,
                 test_items=None,
-                ctx_size_list=[128, 256, 512, 1024],
+                ctx_size_list=CTX_SIZES,
                 grid=lcs_bw_pl_grid(),
                 val_ensemble_size=selection_ensemble_size,
                 test_ensemble_size=1,
