@@ -40,7 +40,7 @@ repos:
         name: cargo clippy
         language: system
         entry: pixi run cargo clippy
-        args: [--manifest-path, rustler/Cargo.toml, --, -D, warnings]
+        args: [--manifest-path, rustler/Cargo.toml, --release, --, -D, warnings]
         types: [rust]
         pass_filenames: false
 
