@@ -8,8 +8,8 @@ the top 4 configs at 4 seeds on test, average and package.
 
 | entry | `<model>` | checkpoint | clf roc_auc | reg nmae | cost |
 |---|---|---|---|---|---|
-| RT-J (in-context) | `rt-j` | `stanford-star/rt-j` | 0.744512 | 0.323543 | ~200 GPU-h |
-| RT-PluRel (in-context) | `rt-plurel` | `stanford-star/rt-plurel` | 0.729828 | 0.329467 | ~200 GPU-h |
+| RT-J (in-context) | `rt-j` | `stanford-star/rt-j` | 0.744512 | 0.323543 | ~9.5 A100-h/task |
+| RT-PluRel (in-context) | `rt-plurel` | `stanford-star/rt-plurel` | 0.729828 | 0.329467 | ~9.5 A100-h/task |
 
 ```bash
 pixi run hf download stanford-star/relbench-preprocessed --repo-type dataset \

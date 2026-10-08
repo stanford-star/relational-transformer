@@ -8,10 +8,10 @@ notes on how the pieces work. For a first look, start with the
 | | what | cost |
 |---|---|---|
 | [`preprocess/`](preprocess/) | RelBench-format databases -> RT's tensor format | CPU per database, one GPU to embed |
-| [`pretrain/`](pretrain/) | PluRel, then the Join warm-started from it | thousands of GPU-h |
-| [`eval/`](eval/) | one checkpoint, one context, every test split | a few GPU-h |
-| [`icl/`](icl/) | leaderboard entries: RT-J and RT-PluRel in-context | ~200 GPU-h each |
-| [`finetune/`](finetune/) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned | ~135 GPU-h each |
+| [`pretrain/`](pretrain/) | PluRel, then the Join warm-started from it | 41 B200-h (~100 A100-h) to the released steps |
+| [`eval/`](eval/) | one checkpoint, one context, every test split | ~5 A100-min per task |
+| [`icl/`](icl/) | leaderboard entries: RT-J and RT-PluRel in-context | ~9.5 A100-h per task |
+| [`finetune/`](finetune/) | leaderboard entries: RT, RT-J and RT-PluRel fine-tuned | 6.4-8.6 A100-h per task |
 
 ## How a recipe runs
 

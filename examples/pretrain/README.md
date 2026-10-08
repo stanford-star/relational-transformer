@@ -26,12 +26,13 @@ The phases differ only in `load_ckpt_path`, `db_task_list` and `pre_dir`.
 Phase 2 warm-starts from the released `stanford-star/rt-plurel`, so it also
 runs on its own.
 
-| phase | released as | file | step |
-|---|---|---|--:|
-| 1 PluRel | `stanford-star/rt-plurel` | `best_live_reg.safetensors` | 8,000 |
-| 2 the Join | `stanford-star/rt-j` | `best_swa_clf.safetensors` | 9,000 |
+| phase | released as | file | step | context tokens | B200-h |
+|---|---|---|--:|--:|--:|
+| 1 PluRel | `stanford-star/rt-plurel` | `best_live_reg.safetensors` | 8,000 | 26.1B | 17.7 |
+| 2 the Join | `stanford-star/rt-j` | `best_swa_clf.safetensors` | 9,000 | 29.4B | 23.0 |
 
-Thousands of GPU-hours over many requeues. The phases were not re-run from
+Up to the released step, on 2 B200s (~2.5x an A100 per step). A context counts
+its full size in tokens, masked or not. The phases were not re-run from
 this tree.
 
 ## Run it on your own data

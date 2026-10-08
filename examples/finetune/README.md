@@ -8,8 +8,8 @@ per job, 21 jobs per model.
 
 | entry | `<model>` | warm start | clf roc_auc | reg nmae | cost |
 |---|---|---|--:|--:|--:|
-| RT-J (fine-tuned) | `rt-j` | `stanford-star/rt-j` | **0.7902** | **0.2711** | 135 GPU-h |
-| RT-PluRel (fine-tuned) | `rt-plurel` | `stanford-star/rt-plurel` | 0.7853 | 0.2757 | 181 GPU-h |
+| RT-J (fine-tuned) | `rt-j` | `stanford-star/rt-j` | **0.7902** | **0.2711** | 6.4 A100-h/task |
+| RT-PluRel (fine-tuned) | `rt-plurel` | `stanford-star/rt-plurel` | 0.7853 | 0.2757 | 8.6 A100-h/task |
 | RT | `rt` | none | 0.7776 | 0.2927 | |
 
 ```bash
