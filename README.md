@@ -28,6 +28,7 @@ This repo is linked to the following papers in the
 
 Models and datasets (including preprocessed versions) are available on
 [Hugging Face](https://huggingface.co/stanford-star).
+See also our repo on [agentic task curation for the Join corpus](https://github.com/stanford-star/agentic-task-gen).
 
 ## Installation
 
