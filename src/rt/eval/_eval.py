@@ -284,11 +284,7 @@ def _teardown_dist(ddp):
 
 
 def member_context_seed(context_seed: int, member: int) -> int:
-    mask = (1 << 64) - 1
-    z = (context_seed + 0x9E3779B97F4A7C15) & mask
-    z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & mask
-    z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & mask
-    return ((z ^ (z >> 31)) + member) & mask
+    return (context_seed + member * 0x9E3779B97F4A7C15) & ((1 << 64) - 1)
 
 
 def build_evaluator(
