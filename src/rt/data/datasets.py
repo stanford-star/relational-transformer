@@ -11,7 +11,6 @@ from torch.utils.data import Dataset, IterableDataset
 
 from rt.data.resolve import get_column_index, read_meta, resolve_pre_dir
 from rt.rustler import Sampler
-from rt.utils.relbench import import_relbench
 
 MAX_F2P_NBRS = 5
 
@@ -35,7 +34,7 @@ def _epoch_utc(ts) -> int:
 
 @cache
 def _split_timestamps(db_name: str, pre_dir: str) -> dict[str, int]:
-    relbench = import_relbench("a db_cutoff split")
+    import relbench
 
     source = read_meta(pre_dir, db_name).get("source")
     if not source:

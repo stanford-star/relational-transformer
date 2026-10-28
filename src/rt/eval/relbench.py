@@ -8,7 +8,6 @@ import numpy as np
 import sklearn.metrics as M
 
 from rt.data import read_meta, resolve_pre_dir
-from rt.utils.relbench import import_relbench
 
 
 @cache
@@ -24,7 +23,8 @@ def _seed_offset(pre_dir: str, db: str, table: str, split: str, embedder: str) -
 
 @cache
 def _load_relbench_task(source: str, table: str):
-    relbench = import_relbench("loading a relbench task")
+    import relbench
+
     return relbench.load_dataset(source).load_task(table)
 
 
@@ -119,9 +119,7 @@ def _emit_and_score(
             ret_path,
         )
 
-    evaluate_task = import_relbench(
-        "scoring a submission", "relbench.submit"
-    ).evaluate_task
+    from relbench.submit import evaluate_task
 
     metrics = evaluate_task(
         f"{task.db_name}/{task.table_name}", str(score_path), dataset=source

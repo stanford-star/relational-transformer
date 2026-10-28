@@ -32,6 +32,7 @@ dependencies = [
     "polars",
     "pyarrow",
     "pyyaml",
+    "relbench>=3",
     "safetensors",
     "scikit-learn",
     "sentence-transformers>=5",
@@ -71,7 +72,6 @@ ruff = "*"
 
 [tool.pixi.pypi-dependencies]
 relational-transformer = { path = ".", editable = true }
-relbench = { git = "https://github.com/stanford-star/relbench", rev = "bac62c99cf1a60fbfd7c61c5fd7cb183453b7997" }
 roach = { git = "https://github.com/rishabh-ranjan/roach", branch = "main" }
 
 [tool.ruff]
