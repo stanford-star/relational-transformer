@@ -34,9 +34,10 @@ scratch_logs/
 notebooks/make_duckdb.py
 
 # byod notebook: what it writes when run from a clone (exported dataset,
-# preprocessed tensors)
+# preprocessed tensors, predictions)
 notebooks/mini-shop/
 notebooks/pre/
+notebooks/preds/
 
 # local-only build/publish helpers + staged dist artifacts (not committed)
 local/

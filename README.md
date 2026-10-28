@@ -51,17 +51,16 @@ an A100 or L4 runtime.
 
 ## Bring your own database (BYOD)
 
+RT runs on any database in RelBench format: Parquet tables, a `manifest.yaml` naming
+their keys and time columns, and labelled splits per task. See RelBench's
+[BYOD guide](https://github.com/stanford-star/relbench/blob/main/byod/README.md) for the format.
 The [BYOD notebook](https://github.com/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb)
 ([open in Colab](https://colab.research.google.com/github/stanford-star/relational-transformer/blob/main/notebooks/byod.ipynb))
-preprocesses your database and predicts tasks you define in SQL with a released
-checkpoint. For more than a first look, [`examples/`](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md) runs
-the full recipes on your own data in RelBench format: in-context prediction
-with a frozen checkpoint, or per-task fine-tuning. That format is a directory of
-Parquet tables with a `manifest.yaml` naming each table's primary key, foreign
-keys and time column, plus one directory of labelled splits per task. The BYOD
-notebook writes one, and
-[`examples/preprocess`](https://github.com/stanford-star/relational-transformer/tree/main/examples/preprocess#run-it-on-your-own-data)
-shows the layout.
+builds one from a DuckDB database with RelBench, with tasks defined in SQL, then
+preprocesses it and predicts with a released checkpoint. For more than a first look,
+[`examples/`](https://github.com/stanford-star/relational-transformer/blob/main/examples/README.md)
+runs the full recipes on it: in-context prediction with a frozen checkpoint, or
+per-task fine-tuning.
 
 ## Development
 

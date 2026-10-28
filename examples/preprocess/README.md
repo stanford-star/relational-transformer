@@ -40,15 +40,9 @@ RelBench run.
 
 ## Run it on your own data
 
-Input is RelBench v3 format, local or on the Hub as `org/repo[/subdir]`:
-
-```
-<db>/
-  manifest.yaml
-  db/<table>.parquet
-  tasks/<task>/manifest.yaml
-  tasks/<task>/<split>.parquet
-```
+Input is a database in RelBench format
+([BYOD guide](https://github.com/stanford-star/relbench/blob/main/byod/README.md)),
+local or on the Hub as `org/repo[/subdir]`.
 
 ```python
 from examples.preprocess.plan import jobs
