@@ -30,6 +30,8 @@ use std::io::{BufReader, Read};
 use std::str;
 #[cfg(feature = "vecdb")]
 use std::sync::Mutex;
+use std::sync::Once;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 unsafe fn alloc_zeroed_vec<T>(len: usize) -> Vec<T> {
@@ -64,11 +66,32 @@ enum BuildError {
     NanTargetValue,
 }
 
+const TIMEOUT_MSG: &str = "timeout_per_item exceeded";
+
 #[inline]
 fn check_deadline(deadline: Instant) {
     if Instant::now() >= deadline {
-        panic!("timeout_per_item exceeded");
+        panic!("{}", TIMEOUT_MSG);
     }
+}
+
+fn panic_msg(info: &(dyn std::any::Any + Send)) -> &str {
+    info.downcast_ref::<String>()
+        .map(|s| s.as_str())
+        .or_else(|| info.downcast_ref::<&str>().copied())
+        .unwrap_or("unknown panic")
+}
+
+fn quiet_timeout_panics() {
+    static HOOK: Once = Once::new();
+    HOOK.call_once(|| {
+        let default = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            if panic_msg(info.payload()) != TIMEOUT_MSG {
+                default(info);
+            }
+        }));
+    });
 }
 
 const DEADLINE_CHECK_EVERY: usize = 1024;
@@ -342,6 +365,7 @@ pub struct Sampler {
     legacy_boolean: bool,
 
     timeout_per_item: f64,
+    num_timeouts: AtomicUsize,
 
     #[cfg_attr(not(feature = "vecdb"), allow(dead_code))]
     vector_db_path: Option<String>,
@@ -706,8 +730,10 @@ impl Sampler {
             quiet,
             legacy_boolean,
             timeout_per_item,
+            num_timeouts: AtomicUsize::new(0),
             vector_db_path,
         };
+        quiet_timeout_panics();
         sampler.create_items();
         if sampler.local_rank == 0 && !sampler.quiet {
             let num_dbs = sampler
@@ -908,18 +934,20 @@ impl Sampler {
                         let caught = std::panic::catch_unwind(std::panic::AssertUnwindSafe(
                             || self.seq_build(item, &mut slices, 0, ctx_size, deadline),
                         ));
-                        let failed = !matches!(caught, Ok(Ok(())));
-                        if failed {
-
-                            slices.is_targets.fill(false);
-                            slices.is_padding.fill(true);
-                            let db_name = &self.dataset_tuples[item.dataset_idx as usize].0;
-                            eprintln!(
-                                "\n\x1b[31meval: dropping item (db={}, table={}, node_idx={}): build failed/timed out\x1b[0m",
-                                db_name, item.table_name, item.node_idx
-                            );
-                        }
-                        failed
+                        let reason = match caught {
+                            Ok(Ok(())) => return false,
+                            Ok(Err(e)) => format!("{e:?}"),
+                            Err(p) if panic_msg(&*p) == TIMEOUT_MSG => self.timeout_reason(),
+                            Err(p) => panic_msg(&*p).to_string(),
+                        };
+                        slices.is_targets.fill(false);
+                        slices.is_padding.fill(true);
+                        let db_name = &self.dataset_tuples[item.dataset_idx as usize].0;
+                        eprintln!(
+                            "\n\x1b[31meval: dropping item (db={}, table={}, node_idx={}) from the metrics: {reason}\x1b[0m",
+                            db_name, item.table_name, item.node_idx
+                        );
+                        true
                     })
                     .collect();
                 for (i, &failed) in timed_out.iter().enumerate() {
@@ -955,6 +983,16 @@ impl Sampler {
         }
     }
 
+    fn timeout_reason(&self) -> String {
+        let n = self.num_timeouts.fetch_add(1, Ordering::Relaxed) + 1;
+        format!(
+            "building its context took longer than timeout_per_item={}s (timeouts so far on this worker: {n}). \
+             Neighborhoods of very high-degree nodes are slow to sample: raise timeout_per_item, \
+             or lower local_ctx_size / bfs_width",
+            self.timeout_per_item
+        )
+    }
+
     fn seq(&self, item: &Item, item_idx: usize, mut slices: Slices, step: u64, ctx_len: usize) {
         let mut current_item = item;
         let mut retry_seed = item_idx as u64;
@@ -968,11 +1006,13 @@ impl Sampler {
                 Ok(Ok(())) => break,
                 Ok(Err(_)) => {}
                 Err(panic_info) => {
-                    let msg = panic_info
-                        .downcast_ref::<String>()
-                        .map(|s| s.as_str())
-                        .or_else(|| panic_info.downcast_ref::<&str>().copied())
-                        .unwrap_or("unknown panic");
+                    let msg = match panic_msg(&*panic_info) {
+                        TIMEOUT_MSG => format!(
+                            "{}; drawing another item instead, which is harmless unless frequent",
+                            self.timeout_reason()
+                        ),
+                        m => m.to_string(),
+                    };
                     let db_name = &self.dataset_tuples[current_item.dataset_idx as usize].0;
                     let target_column = self.target_columns[current_item.dataset_idx as usize];
                     eprintln!(

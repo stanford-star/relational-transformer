@@ -66,6 +66,9 @@ preprocesses it and predicts with a released checkpoint. For more than a first l
 runs the full recipes on it: in-context prediction with a frozen checkpoint, or
 per-task fine-tuning.
 
+Preprocessing a large database (text embeddings included) can take a while, so smoke
+test on a subsample of it first to get to a first prediction quickly.
+
 ## Development
 
 We use [pixi](https://pixi.sh) to manage one self-contained
