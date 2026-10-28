@@ -5,9 +5,7 @@ import threading
 
 import numpy as np
 import orjson
-import torch
 from ml_dtypes import bfloat16
-from sentence_transformers import SentenceTransformer
 
 CHUNK = 1_000_000
 
@@ -39,7 +37,7 @@ def _watch_workers(pool, stop: threading.Event) -> None:
 
 
 @contextlib.contextmanager
-def _watched_pool(model: SentenceTransformer, devices: list[str]):
+def _watched_pool(model, devices: list[str]):
     pool = model.start_multi_process_pool(devices)
     stop = threading.Event()
     watchdog = threading.Thread(
@@ -67,6 +65,9 @@ def _watched_pool(model: SentenceTransformer, devices: list[str]):
 
 class TextEmbedder:
     def __init__(self, batch_size, embedder, device, chunk=CHUNK):
+        import torch
+        from sentence_transformers import SentenceTransformer
+
         device_type = torch.device(device).type
         self.model = SentenceTransformer(
             f"sentence-transformers/{embedder}",
@@ -79,6 +80,8 @@ class TextEmbedder:
         self.chunk = chunk
 
     def __call__(self, text_list, device):
+        import torch
+
         if isinstance(device, list):
             with _watched_pool(self.model, device) as pool:
                 out = [
@@ -121,6 +124,8 @@ def embed_texts(
     embedder,
 ):
     if device is None:
+        import torch
+
         if torch.cuda.is_available():
             n = torch.cuda.device_count()
             device = [f"cuda:{i}" for i in range(n)] if n > 1 else "cuda:0"
