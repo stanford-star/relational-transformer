@@ -16,7 +16,7 @@ and the recipes to pretrain, fine-tune, run inference with and test-time scale
 
 The current state of the repo reflects our latest work, [RT-J](https://star-project.stanford.edu/rt-j):
 
-[![RT-J launch video](https://star-project.stanford.edu/assets/img/rt-j/launch.gif)](https://star-project.stanford.edu/rt-j/#video)
+[![RT-J pretraining recipe](https://star-project.stanford.edu/assets/img/rt-j/recipe.png)](https://star-project.stanford.edu/rt-j)
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
