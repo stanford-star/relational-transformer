@@ -35,7 +35,7 @@ dependencies = [
     "safetensors",
     "scikit-learn",
     "sentence-transformers",
-    "torch",
+    "torch>=2.6",
     "wandb",
 ]
 
