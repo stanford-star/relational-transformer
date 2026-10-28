@@ -49,7 +49,7 @@ with no training: download one preprocessed database, predict every test row
 from its sampled context, score the AUROC (0.826 on an A100). A few minutes on
 an A100 or L4 runtime.
 
-## Bring your own database (BYOD)
+## Bring your own data (BYOD)
 
 RT runs on any database in RelBench format: Parquet tables, a `manifest.yaml` naming
 their keys and time columns, and labelled splits per task. See RelBench's
