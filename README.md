@@ -14,7 +14,7 @@ of the **Relational Transformer (RT)** architecture
 and the recipes to pretrain, fine-tune, run inference with and test-time scale
 **Relational Foundation Models (RFMs)** based on RT.
 
-The current state of the repo reflects our latest work, [RT-J](https://star-project.stanford.edu/rt-j), whose pretraining recipe is shown below:
+The current state of the repo reflects our NeurIPS 2026 work, [RT-J](https://star-project.stanford.edu/rt-j), whose pretraining recipe is shown below:
 
 [![RT-J pretraining recipe](https://star-project.stanford.edu/assets/img/rt-j/recipe.png)](https://star-project.stanford.edu/rt-j)
 
