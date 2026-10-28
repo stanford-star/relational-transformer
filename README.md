@@ -15,7 +15,8 @@ and the recipes to pretrain, fine-tune, run inference with and test-time scale
 **Relational Foundation Models (RFMs)** based on RT.
 
 The current state of the repo reflects our latest work, [RT-J](https://star-project.stanford.edu/rt-j):
-(todo video)
+
+[![RT-J launch video](https://star-project.stanford.edu/assets/img/rt-j/launch.gif)](https://star-project.stanford.edu/rt-j/#video)
 
 This repo is linked to the following papers in the
 [Stanford Tabular and Relational (STAR) project](https://star-project.stanford.edu) ecosystem:
