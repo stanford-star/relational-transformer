@@ -8,6 +8,7 @@ import numpy as np
 import sklearn.metrics as M
 
 from rt.data import read_meta, resolve_pre_dir
+from rt.utils.relbench import import_relbench
 
 
 @cache
@@ -23,15 +24,7 @@ def _seed_offset(pre_dir: str, db: str, table: str, split: str, embedder: str) -
 
 @cache
 def _load_relbench_task(source: str, table: str):
-    try:
-        import relbench
-    except ImportError as e:
-        raise ImportError(
-            "loading a relbench task needs the relbench package, which rt "
-            "cannot declare as a dependency (git-only). Install it with:\n"
-            '    pip install "relbench @ git+https://github.com/stanford-star/relbench@bac62c9"'
-        ) from e
-
+    relbench = import_relbench("loading a relbench task")
     return relbench.load_dataset(source).load_task(table)
 
 
@@ -126,14 +119,9 @@ def _emit_and_score(
             ret_path,
         )
 
-    try:
-        from relbench.submit import evaluate_task
-    except ImportError as e:
-        raise ImportError(
-            "scoring a submission needs the relbench package, which rt "
-            "cannot declare as a dependency (git-only). Install it with:\n"
-            '    pip install "relbench @ git+https://github.com/stanford-star/relbench@bac62c9"'
-        ) from e
+    evaluate_task = import_relbench(
+        "scoring a submission", "relbench.submit"
+    ).evaluate_task
 
     metrics = evaluate_task(
         f"{task.db_name}/{task.table_name}", str(score_path), dataset=source

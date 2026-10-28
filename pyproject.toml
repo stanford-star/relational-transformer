@@ -34,8 +34,9 @@ dependencies = [
     "pyyaml",
     "safetensors",
     "scikit-learn",
-    "sentence-transformers",
+    "sentence-transformers>=5",
     "torch>=2.6",
+    "transformers>=4.56",
     "wandb",
 ]
 

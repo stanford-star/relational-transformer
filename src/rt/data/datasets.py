@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, IterableDataset
 
 from rt.data.resolve import get_column_index, read_meta, resolve_pre_dir
 from rt.rustler import Sampler
+from rt.utils.relbench import import_relbench
 
 MAX_F2P_NBRS = 5
 
@@ -34,14 +35,7 @@ def _epoch_utc(ts) -> int:
 
 @cache
 def _split_timestamps(db_name: str, pre_dir: str) -> dict[str, int]:
-    try:
-        import relbench
-    except ImportError as e:
-        raise ImportError(
-            "a db_cutoff split needs the relbench package, which rt cannot "
-            "declare as a dependency (git-only). Install it with:\n"
-            '    pip install "relbench @ git+https://github.com/stanford-star/relbench@bac62c9"'
-        ) from e
+    relbench = import_relbench("a db_cutoff split")
 
     source = read_meta(pre_dir, db_name).get("source")
     if not source:
