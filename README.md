@@ -40,10 +40,6 @@ pip install relational-transformer
 This installs the `rt` package, including the Rust sampler `rt.rustler`,
 _without any dependency on Rust_.
 
-RT needs Python 3.10+ and PyTorch 2.6+ (for `flex_attention`). If the CUDA build
-pip picks for PyTorch does not match your driver, install PyTorch first following
-[pytorch.org](https://pytorch.org/get-started/locally/), then RT.
-
 ## Quickstart
 
 The [Quickstart notebook](https://github.com/stanford-star/relational-transformer/blob/main/notebooks/quickstart.ipynb)
